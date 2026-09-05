@@ -436,3 +436,107 @@ td { padding: 10px; border-bottom: 1px solid var(--line); }
 
 :focus-visible { outline: 2px solid var(--turmeric-600); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Professional redesign: green app bar + icon badges + step flow ---------- */
+
+.appbar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  background: var(--pasture-900);
+  color: var(--wheat-50);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.appbar .hamburger {
+  background: none; border: none; color: var(--wheat-50);
+  font-size: 1.3rem; cursor: pointer; display: none;
+}
+.appbar-brand {
+  font-family: var(--font-head); font-size: 1.15rem; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.appbar-brand .mark {
+  width: 28px; height: 28px; background: var(--turmeric-500);
+  border-radius: var(--radius-sm); display: inline-flex;
+  align-items: center; justify-content: center; font-size: 0.95rem;
+}
+.appbar-icons {
+  margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 1.05rem;
+}
+.appbar-icons .lang-pill {
+  font-size: 0.78rem; background: rgba(255,255,255,0.12);
+  padding: 4px 10px; border-radius: 999px; font-weight: 600;
+}
+.appbar-icons .notif { position: relative; }
+.appbar-icons .notif .dot {
+  position: absolute; top: -3px; right: -5px; width: 8px; height: 8px;
+  background: var(--coral-500); border-radius: 50%;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--nav-w) 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+.sidenav { grid-row: 2; }
+.main { grid-row: 2; }
+
+/* Rounded icon-badge cards (KisanRakshak-style stat cards) */
+.icon-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.icon-card .badge {
+  width: 40px; height: 40px;
+  background: var(--ok-100);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem;
+}
+.icon-card .title { font-weight: 700; font-size: 0.95rem; }
+.icon-card .value { font-family: var(--font-head); font-size: 1.2rem; color: var(--pasture-900); }
+
+/* Step flow: Take a picture -> See diagnosis -> Get vet advice */
+.step-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 20px 0;
+}
+.step-flow .step {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; text-align: center; flex: 1;
+}
+.step-flow .step .icon-circle {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--ok-100); color: var(--ok-500);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.step-flow .step .label { font-size: 0.85rem; font-weight: 600; color: var(--ink-900); }
+.step-flow .arrow { color: var(--ink-300); font-size: 1.2rem; }
+
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+@media (max-width: 860px) {
+  .appbar .hamburger { display: block; }
+  .app-shell { grid-template-columns: 1fr; }
+}
