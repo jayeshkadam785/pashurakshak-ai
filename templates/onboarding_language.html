@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PashuRakshak — Choose language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="onboard-shell">
+  <div class="onboard-brand"><span class="mark">🐄</span> PashuRakshak</div>
+  <div class="onboard-wrap">
+
+    <div class="onboard-banner">
+      <h2>भाषा चुनें · Let's pick a language</h2>
+      <p>Choose the language you're most comfortable with. You can change this later from the menu.</p>
+    </div>
+
+    <input type="text" class="onboard-search" id="lang-search" placeholder="🔍 Search language...">
+
+    <form method="POST" action="/onboarding/language" id="lang-form">
+      <div class="lang-grid" id="lang-grid">
+        {% for code, l in languages.items() %}
+        <div class="lang-card {{ 'selected' if code == selected else '' }}" data-code="{{ code }}" data-search="{{ l.name|lower }} {{ l.native|lower }} {{ code }}">
+          <div class="code-circle">{{ code|upper }}</div>
+          <div style="flex:1">
+            <div class="name">{{ l.native }}</div>
+            <div class="native">{{ l.name }} · {{ code }}</div>
+          </div>
+          <div class="radio-dot"></div>
+        </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="language" id="language-input" value="{{ selected or 'en' }}">
+      <button type="submit" class="btn btn-primary btn-block">Continue →</button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  const cards = document.querySelectorAll('.lang-card');
+  const input = document.getElementById('language-input');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      input.value = card.dataset.code;
+    });
+  });
+  document.getElementById('lang-search').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    cards.forEach(c => { c.style.display = c.dataset.search.includes(q) ? 'flex' : 'none'; });
+  });
+</script>
+</body>
+</html>
