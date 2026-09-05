@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PashuRakshak — Choose role</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="onboard-shell">
+  <div class="onboard-brand"><span class="mark">🐄</span> PashuRakshak</div>
+  <div class="onboard-wrap">
+
+    <h2 style="margin-bottom:4px;">Tell us about yourself</h2>
+    <p style="margin-bottom:22px;">Choose the role that best matches how you will use this app.</p>
+
+    {% if error %}
+    <div class="error-banner">⚠ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/onboarding/role" id="role-form">
+      <div class="role-grid">
+        {% for key, r in roles.items() %}
+        <div class="role-card {{ 'wide' if key == 'farmer' else '' }} {{ 'selected' if key == selected_role else '' }}" data-role="{{ key }}" data-auth="{{ 'true' if r.requires_auth else 'false' }}">
+          <div class="role-icon">{{ r.icon }}</div>
+          <div style="flex:1">
+            <div class="role-title">{{ r.label }}</div>
+            <p class="role-desc">{{ r.desc }}</p>
+            {% if r.requires_auth %}<span class="role-badge">🔒 Requires access code</span>{% endif %}
+          </div>
+          <div class="radio-dot"></div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <input type="hidden" name="role" id="role-input" value="{{ selected_role or '' }}">
+
+      <div class="access-box" id="access-box" style="display:{{ 'block' if (selected_role and roles[selected_role].requires_auth) else 'none' }};">
+        <div class="field" style="margin-bottom:0;">
+          <label>Access code</label>
+          <input type="text" name="access_code" placeholder="Enter your official access code">
+          <div class="hint">Issued by your taluka animal husbandry office. (Hackathon demo code: <strong>SATARA-VET-2026</strong>)</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Continue →</button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  const cards = document.querySelectorAll('.role-card');
+  const input = document.getElementById('role-input');
+  const accessBox = document.getElementById('access-box');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      input.value = card.dataset.role;
+      accessBox.style.display = card.dataset.auth === 'true' ? 'block' : 'none';
+    });
+  });
+</script>
+</body>
+</html>
