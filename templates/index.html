@@ -41,10 +41,17 @@
       </div>
     </div>
 
-    <h2>Report an animal health issue</h2>
-    <div class="card" style="margin-bottom:24px;">
-      <p>Take a photo or describe symptoms — flagged reports are shared with your nearest veterinary officer for triage.</p>
-      <a href="/report" class="btn btn-primary btn-block">Start a report</a>
+    <h2>{{ t('report_heading') }}</h2>
+    <div class="section-card">
+      <p>{{ t('report_body') }}</p>
+      <div class="step-flow">
+        <div class="step"><div class="icon-circle">📷</div><div class="label">Take a picture</div></div>
+        <div class="arrow">›</div>
+        <div class="step"><div class="icon-circle">🔍</div><div class="label">See diagnosis</div></div>
+        <div class="arrow">›</div>
+        <div class="step"><div class="icon-circle">🩺</div><div class="label">Get vet advice</div></div>
+      </div>
+      <a href="/report" class="btn btn-primary btn-block">{{ t('start_report') }}</a>
     </div>
 
     <h2>Recent advisories</h2>
