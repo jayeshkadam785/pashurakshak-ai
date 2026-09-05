@@ -4,22 +4,23 @@ PashuRakshak backend — Flask app.
 Serves the dashboard pages and two small JSON APIs:
   POST /api/triage   -> rule-based risk scoring for a single symptom report
   GET  /api/reports  -> list of recent reports (for the map/chart/table)
-  POST /api/reports  -> save a report (also runs triage) -- used once the
-                        farmer form is wired to persist, not required for
-                        the triage demo itself
+  POST /api/reports  -> save a report (also runs triage)
 
-Data persistence is optional: if SUPABASE_URL / SUPABASE_KEY are set as
-environment variables, reports are read from and written to a `reports`
-table in Supabase. Otherwise the app falls back to an in-memory list so
-the prototype still works end-to-end without any backend configured.
+Onboarding: a first-time visitor is routed through /onboarding/language
+then /onboarding/role before reaching the dashboard. Veterinary Officer
+and District Official roles require an access code (demo-only gate --
+see ROLE_ACCESS_CODE below).
 
-Deploy target: Vercel (Python serverless function). vercel.json routes
-all requests to this file.
+Data persistence is optional: if SUPABASE_URL / SUPABASE_KEY are set,
+reports are read/written to Supabase; otherwise an in-memory list is
+used so the prototype works end-to-end without any backend configured.
+
+Deploy target: Vercel (Python serverless function).
 """
 
 import os
 import datetime
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 
 app = Flask(
     __name__,
@@ -27,9 +28,10 @@ app = Flask(
     static_folder="../static",
 )
 
+app.secret_key = os.environ.get("SECRET_KEY", "pashurakshak-dev-secret-change-me")
+
 # ---------------------------------------------------------------------
-# Optional Supabase client. Falls back to in-memory storage if the
-# environment variables aren't set -- keeps local/demo use frictionless.
+# Optional Supabase client.
 # ---------------------------------------------------------------------
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -42,16 +44,165 @@ if SUPABASE_URL and SUPABASE_KEY:
     except Exception:
         supabase = None
 
-_MEMORY_REPORTS = []  # used only when Supabase isn't configured
+_MEMORY_REPORTS = []
+
+# ---------------------------------------------------------------------
+# Onboarding: languages, roles, translations
+# ---------------------------------------------------------------------
+
+LANGUAGES = {
+    "en": {"name": "English", "native": "English"},
+    "hi": {"name": "Hindi", "native": "हिन्दी"},
+    "mr": {"name": "Marathi", "native": "मराठी"},
+    "pa": {"name": "Punjabi", "native": "ਪੰਜਾਬੀ"},
+    "gu": {"name": "Gujarati", "native": "ગુજરાતી"},
+}
+
+ROLES = {
+    "farmer": {
+        "label": "Farmer",
+        "icon": "🧑‍🌾",
+        "desc": "Report symptoms, track your animals, get local advisories.",
+        "requires_auth": False,
+    },
+    "vet": {
+        "label": "Veterinary Officer",
+        "icon": "🩺",
+        "desc": "Review farmer reports, manage case triage, issue advisories.",
+        "requires_auth": True,
+    },
+    "official": {
+        "label": "District Official",
+        "icon": "🏛️",
+        "desc": "Monitor outbreak trends across villages and view aggregated dashboards.",
+        "requires_auth": True,
+    },
+}
+
+# Demo-only gate for privileged roles. In a real deployment this would
+# check against a verified officer database, not a shared static code.
+ROLE_ACCESS_CODE = os.environ.get("ROLE_ACCESS_CODE", "SATARA-VET-2026")
+
+TRANSLATIONS = {
+    "en": {
+        "greeting": "Namaskar",
+        "nav_home": "Home", "nav_report": "Report", "nav_dashboard": "Vet dashboard",
+        "nav_alerts": "Alerts", "nav_records": "Animal records",
+        "report_heading": "Report an animal health issue",
+        "report_body": "Take a photo or describe symptoms — flagged reports are shared with your nearest veterinary officer for triage.",
+        "start_report": "Start a report",
+        "recent_advisories": "Recent advisories",
+    },
+    "hi": {
+        "greeting": "नमस्कार",
+        "nav_home": "होम", "nav_report": "रिपोर्ट", "nav_dashboard": "पशु चिकित्सक डैशबोर्ड",
+        "nav_alerts": "सूचनाएं", "nav_records": "पशु रिकॉर्ड",
+        "report_heading": "पशु स्वास्थ्य समस्या दर्ज करें",
+        "report_body": "फोटो लें या लक्षण बताएं — चिन्हित रिपोर्ट आपके नज़दीकी पशु चिकित्सक के पास भेजी जाती हैं।",
+        "start_report": "रिपोर्ट शुरू करें",
+        "recent_advisories": "हाल की सूचनाएं",
+    },
+    "mr": {
+        "greeting": "नमस्कार",
+        "nav_home": "मुख्यपृष्ठ", "nav_report": "अहवाल", "nav_dashboard": "पशुवैद्यक डॅशबोर्ड",
+        "nav_alerts": "सूचना", "nav_records": "जनावरांच्या नोंदी",
+        "report_heading": "जनावराच्या आरोग्य समस्येची नोंद करा",
+        "report_body": "फोटो घ्या किंवा लक्षणे सांगा — नोंदवलेले अहवाल जवळच्या पशुवैद्यकाकडे पाठवले जातात।",
+        "start_report": "अहवाल सुरू करा",
+        "recent_advisories": "अलीकडील सूचना",
+    },
+    "pa": {
+        "greeting": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
+        "nav_home": "ਹੋਮ", "nav_report": "ਰਿਪੋਰਟ", "nav_dashboard": "ਵੈਟ ਡੈਸ਼ਬੋਰਡ",
+        "nav_alerts": "ਚੇਤਾਵਨੀਆਂ", "nav_records": "ਪਸ਼ੂ ਰਿਕਾਰਡ",
+        "report_heading": "ਪਸ਼ੂ ਸਿਹਤ ਸਮੱਸਿਆ ਦਰਜ ਕਰੋ",
+        "report_body": "ਫੋਟੋ ਲਓ ਜਾਂ ਲੱਛਣ ਦੱਸੋ — ਰਿਪੋਰਟ ਤੁਹਾਡੇ ਨਜ਼ਦੀਕੀ ਵੈਟਰਨਰੀ ਅਫ਼ਸਰ ਨੂੰ ਭੇਜੀ ਜਾਂਦੀ ਹੈ।",
+        "start_report": "ਰਿਪੋਰਟ ਸ਼ੁਰੂ ਕਰੋ",
+        "recent_advisories": "ਤਾਜ਼ਾ ਸੂਚਨਾਵਾਂ",
+    },
+    "gu": {
+        "greeting": "નમસ્તે",
+        "nav_home": "હોમ", "nav_report": "રિપોર્ટ", "nav_dashboard": "વેટ ડેશબોર્ડ",
+        "nav_alerts": "ચેતવણીઓ", "nav_records": "પ્રાણી રેકોર્ડ",
+        "report_heading": "પ્રાણી આરોગ્ય સમસ્યાની જાણ કરો",
+        "report_body": "ફોટો લો અથવા લક્ષણો જણાવો — નોંધાયેલા અહેવાલો તમારા નજીકના પશુચિકિત્સકને મોકલવામાં આવે છે.",
+        "start_report": "રિપોર્ટ શરૂ કરો",
+        "recent_advisories": "તાજેતરની સૂચનાઓ",
+    },
+}
+
+
+def t(key):
+    lang = session.get("language", "en")
+    table = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+    return table.get(key, TRANSLATIONS["en"].get(key, key))
+
+
+@app.context_processor
+def inject_i18n():
+    return {
+        "t": t,
+        "current_lang_label": session.get("language_label", "English"),
+        "current_role_label": session.get("role_label"),
+    }
+
+
+ONBOARDING_ENDPOINTS = {
+    "onboarding_language", "onboarding_language_post",
+    "onboarding_role", "onboarding_role_post",
+}
+
+
+@app.before_request
+def _require_onboarding():
+    if request.path.startswith("/static") or request.path.startswith("/api"):
+        return
+    if request.endpoint in ONBOARDING_ENDPOINTS:
+        return
+    if "language" not in session:
+        return redirect(url_for("onboarding_language"))
+    if "role" not in session:
+        return redirect(url_for("onboarding_role"))
+
+
+@app.route("/onboarding/language", methods=["GET"])
+def onboarding_language():
+    return render_template("onboarding_language.html", languages=LANGUAGES, selected=session.get("language"))
+
+
+@app.route("/onboarding/language", methods=["POST"])
+def onboarding_language_post():
+    code = request.form.get("language", "en")
+    if code not in LANGUAGES:
+        code = "en"
+    session["language"] = code
+    session["language_label"] = LANGUAGES[code]["native"]
+    return redirect(url_for("onboarding_role"))
+
+
+@app.route("/onboarding/role", methods=["GET"])
+def onboarding_role():
+    return render_template("onboarding_role.html", roles=ROLES, selected_role=session.get("role"), error=None)
+
+
+@app.route("/onboarding/role", methods=["POST"])
+def onboarding_role_post():
+    role = request.form.get("role")
+    if role not in ROLES:
+        return render_template("onboarding_role.html", roles=ROLES, selected_role=None,
+                                error="Please select a role to continue.")
+    if ROLES[role]["requires_auth"]:
+        code = (request.form.get("access_code") or "").strip()
+        if code != ROLE_ACCESS_CODE:
+            return render_template("onboarding_role.html", roles=ROLES, selected_role=role,
+                                    error="Incorrect access code. Please check with your taluka office and try again.")
+    session["role"] = role
+    session["role_label"] = ROLES[role]["label"]
+    return redirect(url_for("home"))
 
 
 # ---------------------------------------------------------------------
 # Rule-based triage engine
-#
-# This is intentionally simple and explainable -- a real deployment
-# would refine weights with veterinary input, but every rule here maps
-# to a specific, named clinical/epidemiological signal so it's honest
-# to demo and easy to justify to judges.
 # ---------------------------------------------------------------------
 
 HIGH_RISK_SYMPTOMS = {"lesions", "swelling", "death"}
@@ -59,14 +210,9 @@ MODERATE_RISK_SYMPTOMS = {"fever", "milk_drop", "diarrhea"}
 LOW_RISK_SYMPTOMS = {"lameness", "loss_appetite"}
 
 SYMPTOM_LABELS = {
-    "fever": "fever",
-    "lesions": "mouth/foot lesions",
-    "loss_appetite": "loss of appetite",
-    "lameness": "lameness",
-    "diarrhea": "diarrhoea",
-    "milk_drop": "sudden milk drop",
-    "swelling": "swelling/nodules",
-    "death": "sudden death",
+    "fever": "fever", "lesions": "mouth/foot lesions", "loss_appetite": "loss of appetite",
+    "lameness": "lameness", "diarrhea": "diarrhoea", "milk_drop": "sudden milk drop",
+    "swelling": "swelling/nodules", "death": "sudden death",
 }
 
 
@@ -76,21 +222,15 @@ def score_report(payload: dict) -> dict:
     days_since_onset = int(payload.get("days_since_onset") or 0)
 
     score = 0
-
-    # Symptom severity
     score += 3 * len(symptoms & HIGH_RISK_SYMPTOMS)
     score += 2 * len(symptoms & MODERATE_RISK_SYMPTOMS)
     score += 1 * len(symptoms & LOW_RISK_SYMPTOMS)
 
-    # Cluster signal: multiple animals affected at once suggests
-    # contagious spread rather than an isolated issue.
     if affected_count >= 5:
         score += 4
     elif affected_count >= 2:
         score += 2
 
-    # Onset recency: a fast-developing case is more urgent than a
-    # slow, weeks-old complaint.
     if days_since_onset <= 1:
         score += 2
     elif days_since_onset <= 3:
@@ -110,15 +250,13 @@ def score_report(payload: dict) -> dict:
         message = (
             f"{symptom_text.capitalize()} across {affected_count} animal(s), "
             f"reported within {days_since_onset} day(s), matches a pattern "
-            f"associated with fast-spreading disease (e.g. FMD, lumpy skin "
-            f"disease)."
+            f"associated with fast-spreading disease (e.g. FMD, lumpy skin disease)."
         )
         next_step = "Isolate affected animals now and contact your nearest veterinary officer today."
     elif level == "moderate":
         message = (
             f"{symptom_text.capitalize()} reported. Not an immediate outbreak "
-            f"signal, but worth a veterinary check, especially if more animals "
-            f"show symptoms."
+            f"signal, but worth a veterinary check, especially if more animals show symptoms."
         )
         next_step = "Monitor closely over the next 48 hours and schedule a vet visit if symptoms continue."
     else:
@@ -126,11 +264,8 @@ def score_report(payload: dict) -> dict:
         next_step = "Continue routine monitoring. Report again if symptoms worsen or spread to more animals."
 
     return {
-        "score": score,
-        "risk_level": level,
-        "risk_label": label,
-        "message": message,
-        "next_step": next_step,
+        "score": score, "risk_level": level, "risk_label": label,
+        "message": message, "next_step": next_step,
     }
 
 
@@ -142,16 +277,12 @@ DEMO_ADVISORIES = [
     {
         "title": "Suspected lumpy skin disease cluster — Wai taluka",
         "body": "3 herds reporting nodular skin lesions and fever within 5 km. Isolate affected animals and avoid moving cattle across villages.",
-        "severity": "high",
-        "issued_by": "Dept. of Animal Husbandry, Maharashtra",
-        "date": "today",
+        "severity": "high", "issued_by": "Dept. of Animal Husbandry, Maharashtra", "date": "today",
     },
     {
         "title": "Seasonal foot-rot risk — post-monsoon",
         "body": "Waterlogged sheds raise lameness risk. Keep bedding dry and inspect hooves weekly.",
-        "severity": "moderate",
-        "issued_by": "Dept. of Animal Husbandry, Maharashtra",
-        "date": "3 days ago",
+        "severity": "moderate", "issued_by": "Dept. of Animal Husbandry, Maharashtra", "date": "3 days ago",
     },
 ]
 
@@ -207,8 +338,7 @@ def api_reports_create():
 
     record = {
         "village": payload.get("village", "Unknown"),
-        "lat": payload.get("lat"),
-        "lng": payload.get("lng"),
+        "lat": payload.get("lat"), "lng": payload.get("lng"),
         "animal_type": payload.get("animal_type"),
         "symptoms": payload.get("symptoms") or [],
         "affected_count": payload.get("affected_count", 1),
@@ -225,7 +355,5 @@ def api_reports_create():
     return jsonify({**record, **triage}), 201
 
 
-# Local dev entrypoint. On Vercel, the `app` object above is imported
-# directly by the Python runtime -- this block never runs there.
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
