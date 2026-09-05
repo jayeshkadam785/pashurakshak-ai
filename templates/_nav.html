@@ -5,5 +5,6 @@
   <a href="/dashboard" class="{{ 'active' if active == 'dashboard' else '' }}">📊 Vet dashboard</a>
   <a href="/alerts" class="{{ 'active' if active == 'alerts' else '' }}">🔔 Alerts</a>
   <a href="/records" class="{{ 'active' if active == 'records' else '' }}">🩺 Animal records</a>
-  <div class="lang-toggle">भाषा: English ▾</div>
+  <div class="lang-toggle"><a href="/onboarding/language" style="color:inherit;text-decoration:none;">🌐 {{ current_lang_label }} ▾</a></div>
+{% if current_role_label %}<div class="lang-toggle" style="margin-top:2px;">👤 {{ current_role_label }}</div>{% endif %}
 </nav>
