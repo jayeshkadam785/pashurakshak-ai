@@ -155,3 +155,51 @@ function renderMap(reports) {
       .bindPopup(`<strong>${r.village}</strong><br>${r.animal_type} · ${(r.symptoms || []).join(", ")}<br>Risk: ${r.risk_level}`);
   });
 }
+
+
+// ---------- Official (district) dashboard ----------
+function initOfficialDashboard(blockSummary) {
+  renderBlockChart(blockSummary);
+}
+
+function renderBlockChart(blockSummary) {
+  const canvas = document.getElementById("block-chart");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: blockSummary.map((b) => b.block),
+      datasets: [{
+        label: "Open reports",
+        data: blockSummary.map((b) => b.open_reports),
+        backgroundColor: "#1f3d2b",
+      }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function exportBlockSummaryCSV() {
+  const table = document.getElementById("block-summary-table");
+  if (!table) return;
+  const rows = Array.from(table.querySelectorAll("tr"));
+  const csv = rows
+    .map((row) =>
+      Array.from(row.querySelectorAll("th,td"))
+        .map((cell) => `"${cell.innerText.trim()}"`)
+        .join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "block_summary.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
