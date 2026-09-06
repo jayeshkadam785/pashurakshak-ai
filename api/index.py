@@ -471,7 +471,28 @@ If the image is unclear, say so.
 # ============================================================
 # HOME
 # ============================================================
+@app.route("/login")
+def login_page():
+    return render_template(
+        "login.html",
+        supabase_url=SUPABASE_URL or "",
+        supabase_key=SUPABASE_KEY or ""
+    )
 
+
+@app.route("/vet/cases")
+def vet_cases_page():
+    return render_template("vet_cases.html")
+
+
+@app.route("/vaccination")
+def vaccination_page():
+    return render_template("vaccination.html")
+
+
+@app.route("/")
+def home():
+    ...
 @app.route("/")
 def home():
 
