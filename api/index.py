@@ -1,425 +1,861 @@
-"""
-PashuRakshak backend — Flask app.
-
-Serves the dashboard pages and two small JSON APIs:
-  POST /api/triage   -> rule-based risk scoring for a single symptom report
-  GET  /api/reports  -> list of recent reports (for the map/chart/table)
-  POST /api/reports  -> save a report (also runs triage)
-
-Onboarding: a first-time visitor is routed through /onboarding/language
-then /onboarding/role before reaching the dashboard. Veterinary Officer
-and District Official roles require an access code (demo-only gate --
-see ROLE_ACCESS_CODE below).
-
-Each role sees a different dashboard:
-  farmer   -> dashboard_farmer.html (my animals / my reports / reminders)
-  vet      -> dashboard_vet.html    (block-level case queue, map, chart)
-  official -> dashboard_official.html (district-wide totals, block compare)
-
-Data persistence is optional: if SUPABASE_URL / SUPABASE_KEY are set,
-reports are read/written to Supabase; otherwise an in-memory list is
-used so the prototype works end-to-end without any backend configured.
-
-Deploy target: Vercel (Python serverless function).
-"""
-
+````python
 import os
-import datetime
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+import json
+import base64
+import urllib.request
+import urllib.error
+from datetime import datetime
+
+from flask import Flask, jsonify, request, render_template
+
+try:
+    from supabase import create_client
+except Exception:
+    create_client = None
+
 
 app = Flask(
     __name__,
     template_folder="../templates",
-    static_folder="../static",
-    static_url_path="/static",
+    static_folder="../static"
 )
 
-app.secret_key = os.environ.get("SECRET_KEY", "pashurakshak-dev-secret-change-me")
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-# ---------------------------------------------------------------------
-# Optional Supabase client.
-# ---------------------------------------------------------------------
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+# Optional Gemini Vision API
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+ROLE_ACCESS_CODE = os.environ.get(
+    "ROLE_ACCESS_CODE",
+    "SATARA-VET-2026"
+)
+
 supabase = None
 
-if SUPABASE_URL and SUPABASE_KEY:
+if SUPABASE_URL and SUPABASE_KEY and create_client:
     try:
-        from supabase import create_client
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        supabase = create_client(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        )
     except Exception:
         supabase = None
 
+
+# Demo fallback when Supabase is unavailable
 _MEMORY_REPORTS = []
 
-# ---------------------------------------------------------------------
-# Onboarding: languages, roles, translations
-# ---------------------------------------------------------------------
 
-LANGUAGES = {
-    "en": {"name": "English", "native": "English"},
-    "hi": {"name": "Hindi", "native": "हिन्दी"},
-    "mr": {"name": "Marathi", "native": "मराठी"},
-    "pa": {"name": "Punjabi", "native": "ਪੰਜਾਬੀ"},
-    "gu": {"name": "Gujarati", "native": "ગુજરાતી"},
+# ============================================================
+# BASIC DATA
+# ============================================================
+
+HIGH_RISK_SYMPTOMS = {
+    "lesions": 4,
+    "swelling": 3,
+    "death": 6,
+    "bleeding": 4,
+    "difficulty_breathing": 5,
+    "abortion": 5,
 }
 
-ROLES = {
-    "farmer": {
-        "label": "Farmer",
-        "icon": "🧑‍🌾",
-        "desc": "Report symptoms, track your animals, get local advisories.",
-        "requires_auth": False,
-    },
-    "vet": {
-        "label": "Veterinary Officer",
-        "icon": "🩺",
-        "desc": "Review farmer reports, manage case triage, issue advisories.",
-        "requires_auth": True,
-    },
-    "official": {
-        "label": "District Official",
-        "icon": "🏛️",
-        "desc": "Monitor outbreak trends across villages and view aggregated dashboards.",
-        "requires_auth": True,
-    },
+MODERATE_SYMPTOMS = {
+    "fever": 3,
+    "milk_drop": 3,
+    "diarrhea": 3,
+    "cough": 2,
+    "nasal_discharge": 2,
+    "loss_weight": 2,
 }
 
-# Demo-only gate for privileged roles. In a real deployment this would
-# check against a verified officer database, not a shared static code.
-ROLE_ACCESS_CODE = os.environ.get("ROLE_ACCESS_CODE", "SATARA-VET-2026")
-
-TRANSLATIONS = {
-    "en": {
-        "greeting": "Namaskar",
-        "nav_home": "Home", "nav_report": "Report", "nav_dashboard": "Dashboard",
-        "nav_alerts": "Alerts", "nav_records": "Animal records",
-        "report_heading": "Report an animal health issue",
-        "report_body": "Take a photo or describe symptoms — flagged reports are shared with your nearest veterinary officer for triage.",
-        "start_report": "Start a report",
-        "recent_advisories": "Recent advisories",
-    },
-    "hi": {
-        "greeting": "नमस्कार",
-        "nav_home": "होम", "nav_report": "रिपोर्ट", "nav_dashboard": "डैशबोर्ड",
-        "nav_alerts": "सूचनाएं", "nav_records": "पशु रिकॉर्ड",
-        "report_heading": "पशु स्वास्थ्य समस्या दर्ज करें",
-        "report_body": "फोटो लें या लक्षण बताएं — चिन्हित रिपोर्ट आपके नज़दीकी पशु चिकित्सक के प��स भेजी जाती हैं।",
-        "start_report": "रिपोर्ट शुरू करें",
-        "recent_advisories": "हाल की सूचनाएं",
-    },
-    "mr": {
-        "greeting": "नमस्कार",
-        "nav_home": "मुख्यपृष्ठ", "nav_report": "अहवाल", "nav_dashboard": "डॅशबोर्ड",
-        "nav_alerts": "सूचना", "nav_records": "जनावरांच्या नोंदी",
-        "report_heading": "जनावराच्या आरोग्य समस्येची नोंद करा",
-        "report_body": "फोटो घ्या किंवा लक्षणे सांगा — नोंदवलेले अहवाल जवळच्या पशुवैद्यकाकडे पाठवले जातात.",
-        "start_report": "अहवाल सुरू करा",
-        "recent_advisories": "अलीकडील सूचना",
-    },
-    "pa": {
-        "greeting": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
-        "nav_home": "ਹੋਮ", "nav_report": "ਰਿਪੋਰਟ", "nav_dashboard": "ਡੈਸ਼ਬੋਰਡ",
-        "nav_alerts": "ਚੇਤਾਵਨੀਆਂ", "nav_records": "ਪਸ਼ੂ ਰਿਕਾਰਡ",
-        "report_heading": "ਪਸ਼ੂ ਸਿਹਤ ਸਮੱਸਿਆ ਦਰਜ ਕਰੋ",
-        "report_body": "ਫੋਟੋ ਲਓ ਜਾਂ ਲੱਛਣ ਦੱਸੋ — ਰਿਪੋਰਟ ਤੁਹਾਡੇ ਨਜ਼ਦੀਕੀ ਵੈਟਰਨਰੀ ਅਫ਼ਸਰ ਨੂੰ ਭੇਜੀ ਜਾਂਦੀ ਹੈ।",
-        "start_report": "ਰਿਪੋਰਟ ਸ਼ੁਰੂ ਕਰੋ",
-        "recent_advisories": "ਤਾਜ਼ਾ ਸੂਚਨਾਵਾਂ",
-    },
-    "gu": {
-        "greeting": "નમસ્તે",
-        "nav_home": "હોમ", "nav_report": "રિપોર્ટ", "nav_dashboard": "ડેશબોર્ડ",
-        "nav_alerts": "ચેતવણીઓ", "nav_records": "પ્રાણી રેકોર્ડ",
-        "report_heading": "પ્રાણી આરોગ્ય સમસ્યાની જાણ કરો",
-        "report_body": "ફોટો લો અથવા લક્ષણો જણાવો — નોંધાયેલા અહેવાલો તમારા નજીકના પશુચિકિત્સકને મોકલવામાં આવે છે.",
-        "start_report": "રિપોર્ટ શરૂ કરો",
-        "recent_advisories": "તાજેતરની સૂચનાઓ",
-    },
+LOW_RISK_SYMPTOMS = {
+    "lameness": 1,
+    "loss_appetite": 1,
+    "weakness": 1,
 }
 
 
-def t(key):
-    lang = session.get("language", "en")
-    table = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-    return table.get(key, TRANSLATIONS["en"].get(key, key))
+# ============================================================
+# UTILITY FUNCTIONS
+# ============================================================
+
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except Exception:
+        return default
 
 
-@app.context_processor
-def inject_i18n():
-    return {
-        "t": t,
-        "current_lang_label": session.get("language_label", "English"),
-        "current_role_label": session.get("role_label"),
-    }
+def normalize_symptoms(symptoms):
+    if symptoms is None:
+        return []
+
+    if isinstance(symptoms, str):
+        try:
+            parsed = json.loads(symptoms)
+            if isinstance(parsed, list):
+                return [
+                    str(x).strip().lower()
+                    for x in parsed
+                    if str(x).strip()
+                ]
+        except Exception:
+            pass
+
+        return [
+            x.strip().lower()
+            for x in symptoms.split(",")
+            if x.strip()
+        ]
+
+    if isinstance(symptoms, list):
+        return [
+            str(x).strip().lower()
+            for x in symptoms
+            if str(x).strip()
+        ]
+
+    return []
 
 
-ONBOARDING_ENDPOINTS = {
-    "onboarding_language", "onboarding_language_post",
-    "onboarding_role", "onboarding_role_post",
-}
+# ============================================================
+# ADVANCED EXPLAINABLE RISK ENGINE
+# ============================================================
 
+def score_report(data):
+    """
+    Explainable multi-signal livestock health risk engine.
 
-@app.before_request
-def _require_onboarding():
-    if request.path.startswith("/static") or request.path.startswith("/api"):
-        return
-    if request.endpoint in ONBOARDING_ENDPOINTS:
-        return
-    if "language" not in session:
-        return redirect(url_for("onboarding_language"))
-    if "role" not in session:
-        return redirect(url_for("onboarding_role"))
+    This is a decision-support / triage engine.
+    It is NOT a veterinary diagnosis.
+    """
 
+    symptoms = normalize_symptoms(
+        data.get("symptoms", [])
+    )
 
-@app.route("/onboarding/language", methods=["GET"])
-def onboarding_language():
-    return render_template("onboarding_language.html", languages=LANGUAGES, selected=session.get("language"))
+    animal_type = str(
+        data.get("animal_type", "unknown")
+    ).lower()
 
+    affected_count = max(
+        safe_int(data.get("affected_count"), 1),
+        1
+    )
 
-@app.route("/onboarding/language", methods=["POST"])
-def onboarding_language_post():
-    code = request.form.get("language", "en")
-    if code not in LANGUAGES:
-        code = "en"
-    session["language"] = code
-    session["language_label"] = LANGUAGES[code]["native"]
-    return redirect(url_for("onboarding_role"))
+    days_since_onset = max(
+        safe_int(data.get("days_since_onset"), 0),
+        0
+    )
 
-
-@app.route("/onboarding/role", methods=["GET"])
-def onboarding_role():
-    return render_template("onboarding_role.html", roles=ROLES, selected_role=session.get("role"), error=None)
-
-
-@app.route("/onboarding/role", methods=["POST"])
-def onboarding_role_post():
-    role = request.form.get("role")
-    if role not in ROLES:
-        return render_template("onboarding_role.html", roles=ROLES, selected_role=None,
-                                error="Please select a role to continue.")
-    if ROLES[role]["requires_auth"]:
-        code = (request.form.get("access_code") or "").strip()
-        if code != ROLE_ACCESS_CODE:
-            return render_template("onboarding_role.html", roles=ROLES, selected_role=role,
-                                    error="Incorrect access code. Please check with your taluka office and try again.")
-    session["role"] = role
-    session["role_label"] = ROLES[role]["label"]
-    return redirect(url_for("home"))
-
-
-# ---------------------------------------------------------------------
-# Rule-based triage engine
-# ---------------------------------------------------------------------
-
-HIGH_RISK_SYMPTOMS = {"lesions", "swelling", "death"}
-MODERATE_RISK_SYMPTOMS = {"fever", "milk_drop", "diarrhea"}
-LOW_RISK_SYMPTOMS = {"lameness", "loss_appetite"}
-
-SYMPTOM_LABELS = {
-    "fever": "fever", "lesions": "mouth/foot lesions", "loss_appetite": "loss of appetite",
-    "lameness": "lameness", "diarrhea": "diarrhoea", "milk_drop": "sudden milk drop",
-    "swelling": "swelling/nodules", "death": "sudden death",
-}
-
-
-def score_report(payload: dict) -> dict:
-    symptoms = set(payload.get("symptoms") or [])
-    affected_count = int(payload.get("affected_count") or 1)
-    days_since_onset = int(payload.get("days_since_onset") or 0)
+    vaccination_status = str(
+        data.get("vaccination_status", "unknown")
+    ).lower()
 
     score = 0
-    score += 3 * len(symptoms & HIGH_RISK_SYMPTOMS)
-    score += 2 * len(symptoms & MODERATE_RISK_SYMPTOMS)
-    score += 1 * len(symptoms & LOW_RISK_SYMPTOMS)
+    factors = []
 
-    if affected_count >= 5:
+    # --------------------------------------------------------
+    # Symptom score
+    # --------------------------------------------------------
+
+    for symptom in symptoms:
+
+        if symptom in HIGH_RISK_SYMPTOMS:
+            weight = HIGH_RISK_SYMPTOMS[symptom]
+            score += weight
+
+            factors.append({
+                "factor": symptom,
+                "impact": "high",
+                "points": weight
+            })
+
+        elif symptom in MODERATE_SYMPTOMS:
+            weight = MODERATE_SYMPTOMS[symptom]
+            score += weight
+
+            factors.append({
+                "factor": symptom,
+                "impact": "moderate",
+                "points": weight
+            })
+
+        elif symptom in LOW_RISK_SYMPTOMS:
+            weight = LOW_RISK_SYMPTOMS[symptom]
+            score += weight
+
+            factors.append({
+                "factor": symptom,
+                "impact": "low",
+                "points": weight
+            })
+
+    # --------------------------------------------------------
+    # Multiple affected animals
+    # --------------------------------------------------------
+
+    if affected_count >= 10:
+        score += 6
+
+        factors.append({
+            "factor": "10+ animals affected",
+            "impact": "high",
+            "points": 6
+        })
+
+    elif affected_count >= 5:
         score += 4
+
+        factors.append({
+            "factor": "5+ animals affected",
+            "impact": "moderate",
+            "points": 4
+        })
+
     elif affected_count >= 2:
         score += 2
 
-    if days_since_onset <= 1:
+        factors.append({
+            "factor": "multiple animals affected",
+            "impact": "moderate",
+            "points": 2
+        })
+
+    # --------------------------------------------------------
+    # Duration
+    # --------------------------------------------------------
+
+    if days_since_onset >= 7:
+        score += 4
+
+        factors.append({
+            "factor": "symptoms present for 7+ days",
+            "impact": "high",
+            "points": 4
+        })
+
+    elif days_since_onset >= 3:
         score += 2
-    elif days_since_onset <= 3:
+
+        factors.append({
+            "factor": "symptoms present for 3+ days",
+            "impact": "moderate",
+            "points": 2
+        })
+
+    # --------------------------------------------------------
+    # Vaccination
+    # --------------------------------------------------------
+
+    if vaccination_status in [
+        "unknown",
+        "not_vaccinated",
+        "overdue"
+    ]:
+
+        score += 2
+
+        factors.append({
+            "factor": "vaccination protection uncertain/overdue",
+            "impact": "moderate",
+            "points": 2
+        })
+
+    # --------------------------------------------------------
+    # Animal-specific adjustment
+    # --------------------------------------------------------
+
+    if animal_type in [
+        "cattle",
+        "buffalo",
+        "goat",
+        "sheep"
+    ]:
         score += 1
 
-    if score >= 7:
-        level, label = "high", "High"
-    elif score >= 3:
-        level, label = "moderate", "Moderate"
-    else:
-        level, label = "low", "Low"
+    # --------------------------------------------------------
+    # Convert to 0-100
+    # --------------------------------------------------------
 
-    named = [SYMPTOM_LABELS.get(s, s) for s in symptoms]
-    symptom_text = ", ".join(named) if named else "the symptoms described"
+    risk_score = min(
+        100,
+        round((score / 30) * 100)
+    )
 
-    if level == "high":
-        message = (
-            f"{symptom_text.capitalize()} across {affected_count} animal(s), "
-            f"reported within {days_since_onset} day(s), matches a pattern "
-            f"associated with fast-spreading disease (e.g. FMD, lumpy skin disease)."
-        )
-        next_step = "Isolate affected animals now and contact your nearest veterinary officer today."
-    elif level == "moderate":
-        message = (
-            f"{symptom_text.capitalize()} reported. Not an immediate outbreak "
-            f"signal, but worth a veterinary check, especially if more animals show symptoms."
-        )
-        next_step = "Monitor closely over the next 48 hours and schedule a vet visit if symptoms continue."
+    # --------------------------------------------------------
+    # Risk level
+    # --------------------------------------------------------
+
+    if risk_score >= 70:
+        risk_level = "HIGH"
+
+    elif risk_score >= 35:
+        risk_level = "MODERATE"
+
     else:
-        message = f"{symptom_text.capitalize()} reported at low severity and limited spread."
-        next_step = "Continue routine monitoring. Report again if symptoms worsen or spread to more animals."
+        risk_level = "LOW"
+
+    # --------------------------------------------------------
+    # Confidence
+    # --------------------------------------------------------
+
+    signal_count = (
+        len(symptoms)
+        + (1 if affected_count else 0)
+        + (1 if days_since_onset else 0)
+        + (1 if vaccination_status != "unknown" else 0)
+    )
+
+    confidence = min(
+        95,
+        50 + signal_count * 8
+    )
+
+    # --------------------------------------------------------
+    # Recommended action
+    # --------------------------------------------------------
+
+    if risk_level == "HIGH":
+
+        recommendation = (
+            "Isolate affected animals where practical, "
+            "avoid unnecessary movement, and contact a "
+            "veterinarian promptly."
+        )
+
+    elif risk_level == "MODERATE":
+
+        recommendation = (
+            "Monitor the affected animals closely, "
+            "record progression, review vaccination status, "
+            "and consult a veterinary professional."
+        )
+
+    else:
+
+        recommendation = (
+            "Continue monitoring, maintain hygiene and "
+            "preventive care, and report worsening symptoms."
+        )
 
     return {
-        "score": score, "risk_level": level, "risk_label": label,
-        "message": message, "next_step": next_step,
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "confidence": confidence,
+        "factors": factors,
+        "recommendation": recommendation,
+        "animal_type": animal_type,
+        "affected_count": affected_count,
+        "days_since_onset": days_since_onset,
+        "screening_type": "AI-assisted decision support",
+        "medical_disclaimer": (
+            "This result is a screening/triage aid and "
+            "does not replace veterinary diagnosis."
+        )
     }
 
 
-# ---------------------------------------------------------------------
-# Demo data (in-memory, for judges/hackathon demo — no real DB required)
-# ---------------------------------------------------------------------
+# ============================================================
+# GEMINI VISION IMAGE SCREENING
+# ============================================================
 
-DEMO_ADVISORIES = [
-    {
-        "title": "Suspected lumpy skin disease cluster — Wai taluka",
-        "body": "3 herds reporting nodular skin lesions and fever within 5 km. Isolate affected animals and avoid moving cattle across villages.",
-        "severity": "high", "issued_by": "Dept. of Animal Husbandry, Maharashtra", "date": "today",
-    },
-    {
-        "title": "Seasonal foot-rot risk — post-monsoon",
-        "body": "Waterlogged sheds raise lameness risk. Keep bedding dry and inspect hooves weekly.",
-        "severity": "moderate", "issued_by": "Dept. of Animal Husbandry, Maharashtra", "date": "3 days ago",
-    },
-]
+def gemini_image_screen(image_bytes, mime_type="image/jpeg"):
+    """
+    Optional Gemini Vision integration.
 
-DEMO_BLOCK_SUMMARY = [
-    {"block": "Satara", "villages_reporting": 9, "open_reports": 14, "high_risk": 3},
-    {"block": "Wai", "villages_reporting": 6, "open_reports": 8, "high_risk": 2},
-    {"block": "Koregaon", "villages_reporting": 4, "open_reports": 3, "high_risk": 0},
-    {"block": "Phaltan", "villages_reporting": 5, "open_reports": 6, "high_risk": 1},
-]
+    API key MUST be stored in Vercel Environment Variables.
+    Never put GEMINI_API_KEY in frontend or GitHub.
+    """
 
-DEMO_DISTRICT_TOTALS = {
-    "total_open_reports": 31,
-    "total_high_risk": 6,
-    "vaccination_coverage": 68,
-    "blocks_reporting": 4,
+    if not GEMINI_API_KEY:
+        return None
+
+    encoded_image = base64.b64encode(
+        image_bytes
+    ).decode("utf-8")
+
+    prompt = """
+You are assisting a livestock-health triage system.
+
+Analyze the provided livestock image for visible signs
+that may require veterinary attention.
+
+Do NOT give a definitive diagnosis.
+
+Return JSON with:
+
+{
+  "visible_signs": [],
+  "possible_categories": [],
+  "risk_level": "LOW|MODERATE|HIGH",
+  "confidence": 0,
+  "recommendation": ""
 }
 
-DEMO_MY_ANIMALS = [
-    {"tag_id": "COW-1042", "species": "Cattle", "breed": "Gir", "age": "4 yrs", "last_checkup": "12 Aug", "status": "healthy"},
-    {"tag_id": "COW-1043", "species": "Cattle", "breed": "Gir", "age": "2 yrs", "last_checkup": "3 days ago", "status": "under observation"},
-    {"tag_id": "GOAT-0231", "species": "Goat", "breed": "Osmanabadi", "age": "1 yr", "last_checkup": "1 month ago", "status": "healthy"},
-]
+Focus only on visible signs.
+If the image is unclear, say so.
+"""
 
-DEMO_MY_REPORTS = [
-    {"date": "3 days ago", "animal": "COW-1043", "symptoms": "Fever, loss of appetite", "status": "Under review", "risk": "moderate"},
-    {"date": "2 weeks ago", "animal": "COW-1042", "symptoms": "Lameness", "status": "Resolved", "risk": "low"},
-]
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": encoded_image
+                        }
+                    }
+                ]
+            }
+        ]
+    }
 
-DEMO_VACCINATION_DUE = [
-    {"animal": "COW-1042", "vaccine": "FMD booster", "due": "in 6 days"},
-    {"animal": "GOAT-0231", "vaccine": "PPR vaccine", "due": "in 18 days"},
-]
+    url = (
+        "https://generativelanguage.googleapis.com/"
+        "v1beta/models/gemini-2.0-flash:generateContent"
+        "?key="
+        + GEMINI_API_KEY
+    )
+
+    try:
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+
+        with urllib.request.urlopen(
+            req,
+            timeout=30
+        ) as response:
+
+            result = json.loads(
+                response.read().decode("utf-8")
+            )
+
+        text = (
+            result
+            .get("candidates", [{}])[0]
+            .get("content", {})
+            .get("parts", [{}])[0]
+            .get("text", "")
+        )
+
+        # Remove markdown JSON fences
+        text = text.replace(
+            "```json", ""
+        ).replace(
+            "```", ""
+        ).strip()
+
+        return json.loads(text)
+
+    except Exception:
+        return None
 
 
-# ---------------------------------------------------------------------
-# Page routes
-# ---------------------------------------------------------------------
+# ============================================================
+# HOME
+# ============================================================
 
 @app.route("/")
 def home():
-    return render_template("index.html", active="home", advisories=DEMO_ADVISORIES)
 
-
-@app.route("/report")
-def report_page():
-    return render_template("report.html", active="report")
-
-
-@app.route("/dashboard")
-def dashboard_page():
-    role = session.get("role")
-
-    if role == "vet":
+    try:
         return render_template(
-            "dashboard_vet.html", active="dashboard", role=role,
-            open_reports=14, high_risk=3, villages_reporting=9,
+            "index.html"
         )
 
-    if role == "official":
-        return render_template(
-            "dashboard_official.html", active="dashboard", role=role,
-            block_summary=DEMO_BLOCK_SUMMARY, totals=DEMO_DISTRICT_TOTALS,
+    except Exception:
+        return jsonify({
+            "app": "PashuRakshak AI",
+            "status": "running"
+        })
+
+
+# ============================================================
+# TRIAGE API
+# ============================================================
+
+@app.route(
+    "/api/triage",
+    methods=["POST"]
+)
+def triage():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    result = score_report(data)
+
+    return jsonify({
+        "success": True,
+        "result": result
+    })
+
+
+# ============================================================
+# IMAGE SCREENING API
+# ============================================================
+
+@app.route(
+    "/api/image-screen",
+    methods=["POST"]
+)
+def image_screen():
+
+    if "image" not in request.files:
+
+        return jsonify({
+            "success": False,
+            "error": "No image uploaded"
+        }), 400
+
+    image = request.files["image"]
+
+    image_bytes = image.read()
+
+    if not image_bytes:
+
+        return jsonify({
+            "success": False,
+            "error": "Empty image"
+        }), 400
+
+    # Limit approximately 8 MB
+    if len(image_bytes) > 8 * 1024 * 1024:
+
+        return jsonify({
+            "success": False,
+            "error": "Image too large. Maximum size is 8 MB."
+        }), 413
+
+    mime_type = (
+        image.mimetype
+        or "image/jpeg"
+    )
+
+    ai_result = gemini_image_screen(
+        image_bytes,
+        mime_type
+    )
+
+    # Demo fallback if Gemini is not configured
+    if not ai_result:
+
+        ai_result = {
+            "visible_signs": [
+                "Image screening service not configured"
+            ],
+            "possible_categories": [],
+            "risk_level": "MODERATE",
+            "confidence": 50,
+            "recommendation": (
+                "Image received successfully. "
+                "Veterinary review is recommended."
+            )
+        }
+
+    return jsonify({
+        "success": True,
+        "result": ai_result,
+        "screening_type": "AI image screening",
+        "medical_disclaimer": (
+            "Image screening is an assistive tool and "
+            "does not provide a definitive veterinary diagnosis."
         )
-
-    if role == "farmer":
-        return render_template(
-            "dashboard_farmer.html", active="dashboard", role=role,
-            my_animals=DEMO_MY_ANIMALS, my_reports=DEMO_MY_REPORTS,
-            vaccination_due=DEMO_VACCINATION_DUE,
-        )
-
-    return redirect(url_for("onboarding_role"))
+    })
 
 
-@app.route("/alerts")
-def alerts_page():
-    return render_template("alerts.html", active="alerts", advisories=DEMO_ADVISORIES)
+# ============================================================
+# REPORT STORAGE
+# ============================================================
 
-@app.route("/switch-role")
-def switch_role():
-    session.pop("role", None)
-    session.pop("role_label", None)
-    return redirect(url_for("onboarding_role"))
-  
-@app.route("/records")
-def records_page():
-    return render_template("records.html", active="records")
+def save_report(report):
 
-
-# ---------------------------------------------------------------------
-# API routes
-# ---------------------------------------------------------------------
-
-@app.route("/api/triage", methods=["POST"])
-def api_triage():
-    payload = request.get_json(force=True, silent=True) or {}
-    result = score_report(payload)
-    return jsonify(result)
-
-
-@app.route("/api/reports", methods=["GET"])
-def api_reports_list():
     if supabase:
-        res = supabase.table("reports").select("*").order("date", desc=True).limit(100).execute()
-        return jsonify(res.data)
-    return jsonify(_MEMORY_REPORTS)
+
+        try:
+
+            response = (
+                supabase
+                .table("reports")
+                .insert(report)
+                .execute()
+            )
+
+            if response.data:
+                return response.data[0]
+
+        except Exception:
+            pass
+
+    report["id"] = (
+        len(_MEMORY_REPORTS) + 1
+    )
+
+    _MEMORY_REPORTS.append(
+        report
+    )
+
+    return report
 
 
-@app.route("/api/reports", methods=["POST"])
-def api_reports_create():
-    payload = request.get_json(force=True, silent=True) or {}
-    triage = score_report(payload)
+def get_reports():
 
-    record = {
-        "village": payload.get("village", "Unknown"),
-        "lat": payload.get("lat"), "lng": payload.get("lng"),
-        "animal_type": payload.get("animal_type"),
-        "symptoms": payload.get("symptoms") or [],
-        "affected_count": payload.get("affected_count", 1),
-        "notes": payload.get("notes", ""),
-        "risk_level": triage["risk_level"],
-        "date": datetime.date.today().isoformat(),
+    if supabase:
+
+        try:
+
+            response = (
+                supabase
+                .table("reports")
+                .select("*")
+                .order(
+                    "created_at",
+                    desc=True
+                )
+                .execute()
+            )
+
+            if response.data:
+                return response.data
+
+        except Exception:
+            pass
+
+    return list(
+        reversed(_MEMORY_REPORTS)
+    )
+
+
+# ============================================================
+# REPORTS GET / POST
+# ============================================================
+
+@app.route(
+    "/api/reports",
+    methods=["GET", "POST"]
+)
+def reports():
+
+    if request.method == "GET":
+
+        return jsonify({
+            "success": True,
+            "reports": get_reports()
+        })
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    result = score_report(data)
+
+    report = {
+        "village": data.get(
+            "village",
+            "Satara"
+        ),
+
+        "block": data.get(
+            "block"
+        ),
+
+        "lat": data.get(
+            "lat"
+        ),
+
+        "lng": data.get(
+            "lng"
+        ),
+
+        "animal_type": data.get(
+            "animal_type",
+            "unknown"
+        ),
+
+        "symptoms": normalize_symptoms(
+            data.get("symptoms", [])
+        ),
+
+        "affected_count": result[
+            "affected_count"
+        ],
+
+        "days_since_onset": result[
+            "days_since_onset"
+        ],
+
+        "notes": data.get(
+            "notes",
+            ""
+        ),
+
+        "risk_level": result[
+            "risk_level"
+        ],
+
+        "risk_score": result[
+            "risk_score"
+        ],
+
+        "reported_by": data.get(
+            "reported_by"
+        ),
+
+        "date": datetime.utcnow().date().isoformat(),
+
+        "created_at": datetime.utcnow().isoformat(),
+
+        "confidence": result[
+            "confidence"
+        ],
+
+        "risk_factors": result[
+            "factors"
+        ]
     }
 
-    if supabase:
-        supabase.table("reports").insert(record).execute()
-    else:
-        _MEMORY_REPORTS.append(record)
+    saved = save_report(
+        report
+    )
 
-    return jsonify({**record, **triage}), 201
+    return jsonify({
+        "success": True,
+        "report": saved,
+        "risk": result
+    })
 
+
+# ============================================================
+# DASHBOARD ROUTES
+# ============================================================
+
+@app.route(
+    "/dashboard"
+)
+def dashboard():
+
+    return render_template(
+        "dashboard.html"
+    )
+
+
+@app.route(
+    "/dashboard/farmer"
+)
+def dashboard_farmer():
+
+    return render_template(
+        "dashboard_farmer.html"
+    )
+
+
+@app.route(
+    "/dashboard/vet"
+)
+def dashboard_vet():
+
+    return render_template(
+        "dashboard_vet.html"
+    )
+
+
+@app.route(
+    "/dashboard/official"
+)
+def dashboard_official():
+
+    return render_template(
+        "dashboard_official.html"
+    )
+
+
+# ============================================================
+# REPORT PAGE
+# ============================================================
+
+@app.route(
+    "/report"
+)
+def report_page():
+
+    return render_template(
+        "report.html"
+    )
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.route(
+    "/api/health"
+)
+def health():
+
+    return jsonify({
+        "success": True,
+        "app": "PashuRakshak AI",
+        "status": "healthy",
+        "supabase": bool(supabase),
+        "image_ai": bool(GEMINI_API_KEY),
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+
+# ============================================================
+# ERROR HANDLERS
+# ============================================================
+
+@app.errorhandler(404)
+def not_found(error):
+
+    return jsonify({
+        "success": False,
+        "error": "Endpoint not found"
+    }), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+
+    return jsonify({
+        "success": False,
+        "error": "Internal server error"
+    }), 500
+
+
+# ============================================================
+# VERCEL ENTRY POINT
+# ============================================================
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+
+    app.run(
+        host="0.0.0.0",
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
+        debug=True
+    )
+````
