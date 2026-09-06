@@ -27,21 +27,37 @@ app = Flask(
 # FEATURE BLUEPRINT
 # ============================================================
 
+FEATURE_BLUEPRINT_ERROR = None
+
 try:
     from feature_routes import feature_bp
     app.register_blueprint(feature_bp)
+
 except Exception as exc:
     feature_bp = None
-    print("Feature blueprint could not be loaded:", exc)
+    FEATURE_BLUEPRINT_ERROR = str(exc)
+
+    print(
+        "Feature blueprint could not be loaded:",
+        exc
+    )
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+SUPABASE_URL = os.environ.get(
+    "SUPABASE_URL"
+)
+
+SUPABASE_KEY = os.environ.get(
+    "SUPABASE_KEY"
+)
+
+GEMINI_API_KEY = os.environ.get(
+    "GEMINI_API_KEY"
+)
 
 ROLE_ACCESS_CODE = os.environ.get(
     "ROLE_ACCESS_CODE",
@@ -55,14 +71,26 @@ ROLE_ACCESS_CODE = os.environ.get(
 
 supabase = None
 
-if SUPABASE_URL and SUPABASE_KEY and create_client:
+if (
+    SUPABASE_URL
+    and SUPABASE_KEY
+    and create_client
+):
+
     try:
+
         supabase = create_client(
             SUPABASE_URL,
             SUPABASE_KEY
         )
+
     except Exception as exc:
-        print("Supabase initialization failed:", exc)
+
+        print(
+            "Supabase initialization failed:",
+            exc
+        )
+
         supabase = None
 
 
@@ -78,26 +106,43 @@ _MEMORY_REPORTS = []
 # ============================================================
 
 HIGH_RISK_SYMPTOMS = {
+
     "lesions": 4,
+
     "swelling": 3,
+
     "death": 6,
+
     "bleeding": 4,
+
     "difficulty_breathing": 5,
+
     "abortion": 5,
 }
 
+
 MODERATE_SYMPTOMS = {
+
     "fever": 3,
+
     "milk_drop": 3,
+
     "diarrhea": 3,
+
     "cough": 2,
+
     "nasal_discharge": 2,
+
     "loss_weight": 2,
 }
 
+
 LOW_RISK_SYMPTOMS = {
+
     "lameness": 1,
+
     "loss_appetite": 1,
+
     "weakness": 1,
 }
 
@@ -106,46 +151,87 @@ LOW_RISK_SYMPTOMS = {
 # UTILITY
 # ============================================================
 
-def safe_int(value, default=0):
+def safe_int(
+    value,
+    default=0
+):
+
     try:
+
         return int(value)
+
     except Exception:
+
         return default
 
 
-def normalize_symptoms(symptoms):
+def normalize_symptoms(
+    symptoms
+):
 
     if symptoms is None:
+
         return []
 
-    if isinstance(symptoms, str):
+
+    if isinstance(
+        symptoms,
+        str
+    ):
 
         try:
-            parsed = json.loads(symptoms)
 
-            if isinstance(parsed, list):
+            parsed = json.loads(
+                symptoms
+            )
+
+            if isinstance(
+                parsed,
+                list
+            ):
+
                 return [
-                    str(x).strip().lower()
+
+                    str(x)
+                    .strip()
+                    .lower()
+
                     for x in parsed
+
                     if str(x).strip()
                 ]
 
         except Exception:
+
             pass
 
+
         return [
+
             x.strip().lower()
+
             for x in symptoms.split(",")
+
             if x.strip()
         ]
 
-    if isinstance(symptoms, list):
+
+    if isinstance(
+        symptoms,
+        list
+    ):
 
         return [
-            str(x).strip().lower()
+
+            str(x)
+            .strip()
+            .lower()
+
             for x in symptoms
+
             if str(x).strip()
         ]
+
 
     return []
 
@@ -154,41 +240,66 @@ def normalize_symptoms(symptoms):
 # AI RISK ENGINE
 # ============================================================
 
-def score_report(data):
+def score_report(
+    data
+):
 
     symptoms = normalize_symptoms(
-        data.get("symptoms", [])
+        data.get(
+            "symptoms",
+            []
+        )
     )
+
 
     animal_type = str(
-        data.get("animal_type", "unknown")
-    ).lower()
-
-    affected_count = max(
-        safe_int(
-            data.get("affected_count"),
-            1
-        ),
-        1
-    )
-
-    days_since_onset = max(
-        safe_int(
-            data.get("days_since_onset"),
-            0
-        ),
-        0
-    )
-
-    vaccination_status = str(
         data.get(
-            "vaccination_status",
+            "animal_type",
             "unknown"
         )
     ).lower()
 
+
+    affected_count = max(
+
+        safe_int(
+            data.get(
+                "affected_count"
+            ),
+            1
+        ),
+
+        1
+    )
+
+
+    days_since_onset = max(
+
+        safe_int(
+            data.get(
+                "days_since_onset"
+            ),
+            0
+        ),
+
+        0
+    )
+
+
+    vaccination_status = str(
+
+        data.get(
+            "vaccination_status",
+            "unknown"
+        )
+
+    ).lower()
+
+
     score = 0
+
     factors = []
+
 
     # --------------------------------------------------------
     # SYMPTOMS
@@ -198,39 +309,57 @@ def score_report(data):
 
         if symptom in HIGH_RISK_SYMPTOMS:
 
-            weight = HIGH_RISK_SYMPTOMS[symptom]
+            weight = HIGH_RISK_SYMPTOMS[
+                symptom
+            ]
 
             score += weight
 
             factors.append({
+
                 "factor": symptom,
+
                 "impact": "high",
+
                 "points": weight
             })
+
 
         elif symptom in MODERATE_SYMPTOMS:
 
-            weight = MODERATE_SYMPTOMS[symptom]
+            weight = MODERATE_SYMPTOMS[
+                symptom
+            ]
 
             score += weight
 
             factors.append({
+
                 "factor": symptom,
+
                 "impact": "moderate",
+
                 "points": weight
             })
+
 
         elif symptom in LOW_RISK_SYMPTOMS:
 
-            weight = LOW_RISK_SYMPTOMS[symptom]
+            weight = LOW_RISK_SYMPTOMS[
+                symptom
+            ]
 
             score += weight
 
             factors.append({
+
                 "factor": symptom,
+
                 "impact": "low",
+
                 "points": weight
             })
+
 
     # --------------------------------------------------------
     # AFFECTED ANIMALS
@@ -241,30 +370,51 @@ def score_report(data):
         score += 6
 
         factors.append({
-            "factor": "10+ animals affected",
-            "impact": "high",
-            "points": 6
+
+            "factor":
+                "10+ animals affected",
+
+            "impact":
+                "high",
+
+            "points":
+                6
         })
+
 
     elif affected_count >= 5:
 
         score += 4
 
         factors.append({
-            "factor": "5+ animals affected",
-            "impact": "moderate",
-            "points": 4
+
+            "factor":
+                "5+ animals affected",
+
+            "impact":
+                "moderate",
+
+            "points":
+                4
         })
+
 
     elif affected_count >= 2:
 
         score += 2
 
         factors.append({
-            "factor": "multiple animals affected",
-            "impact": "moderate",
-            "points": 2
+
+            "factor":
+                "multiple animals affected",
+
+            "impact":
+                "moderate",
+
+            "points":
+                2
         })
+
 
     # --------------------------------------------------------
     # DURATION
@@ -275,92 +425,149 @@ def score_report(data):
         score += 4
 
         factors.append({
-            "factor": "symptoms present for 7+ days",
-            "impact": "high",
-            "points": 4
+
+            "factor":
+                "symptoms present for 7+ days",
+
+            "impact":
+                "high",
+
+            "points":
+                4
         })
+
 
     elif days_since_onset >= 3:
 
         score += 2
 
         factors.append({
-            "factor": "symptoms present for 3+ days",
-            "impact": "moderate",
-            "points": 2
+
+            "factor":
+                "symptoms present for 3+ days",
+
+            "impact":
+                "moderate",
+
+            "points":
+                2
         })
+
 
     # --------------------------------------------------------
     # VACCINATION
     # --------------------------------------------------------
 
     if vaccination_status in [
+
         "unknown",
+
         "not_vaccinated",
+
         "overdue"
+
     ]:
 
         score += 2
 
         factors.append({
+
             "factor":
                 "vaccination protection uncertain/overdue",
-            "impact": "moderate",
-            "points": 2
+
+            "impact":
+                "moderate",
+
+            "points":
+                2
         })
+
 
     # --------------------------------------------------------
     # ANIMAL TYPE
     # --------------------------------------------------------
 
     if animal_type in [
+
         "cattle",
+
         "buffalo",
+
         "goat",
+
         "sheep"
+
     ]:
+
         score += 1
+
 
     # --------------------------------------------------------
     # SCORE
     # --------------------------------------------------------
 
     risk_score = min(
+
         100,
-        round((score / 30) * 100)
+
+        round(
+            (score / 30) * 100
+        )
     )
+
 
     if risk_score >= 70:
 
         risk_level = "HIGH"
 
+
     elif risk_score >= 35:
 
         risk_level = "MODERATE"
 
+
     else:
 
         risk_level = "LOW"
+
 
     # --------------------------------------------------------
     # CONFIDENCE
     # --------------------------------------------------------
 
     signal_count = (
+
         len(symptoms)
-        + (1 if affected_count else 0)
-        + (1 if days_since_onset else 0)
+
         + (
             1
-            if vaccination_status != "unknown"
+            if affected_count
+            else 0
+        )
+
+        + (
+            1
+            if days_since_onset
+            else 0
+        )
+
+        + (
+            1
+            if vaccination_status
+            != "unknown"
             else 0
         )
     )
 
+
     confidence = min(
+
         95,
-        50 + signal_count * 8
+
+        50
+        + signal_count * 8
     )
+
 
     # --------------------------------------------------------
     # RECOMMENDATION
@@ -369,37 +576,61 @@ def score_report(data):
     if risk_level == "HIGH":
 
         recommendation = (
+
             "Isolate affected animals where practical, "
             "avoid unnecessary movement, and contact a "
             "veterinarian promptly."
         )
 
+
     elif risk_level == "MODERATE":
 
         recommendation = (
+
             "Monitor affected animals closely, "
             "record progression, review vaccination "
             "status, and consult a veterinary professional."
         )
 
+
     else:
 
         recommendation = (
+
             "Continue monitoring, maintain hygiene and "
             "preventive care, and report worsening symptoms."
         )
 
+
     return {
-        "risk_level": risk_level,
-        "risk_score": risk_score,
-        "confidence": confidence,
-        "factors": factors,
-        "recommendation": recommendation,
-        "animal_type": animal_type,
-        "affected_count": affected_count,
-        "days_since_onset": days_since_onset,
+
+        "risk_level":
+            risk_level,
+
+        "risk_score":
+            risk_score,
+
+        "confidence":
+            confidence,
+
+        "factors":
+            factors,
+
+        "recommendation":
+            recommendation,
+
+        "animal_type":
+            animal_type,
+
+        "affected_count":
+            affected_count,
+
+        "days_since_onset":
+            days_since_onset,
+
         "screening_type":
             "AI-assisted decision support",
+
         "medical_disclaimer":
             "This result is a screening/triage aid "
             "and does not replace veterinary diagnosis."
@@ -416,13 +647,17 @@ def gemini_image_screen(
 ):
 
     if not GEMINI_API_KEY:
+
         return None
+
 
     encoded_image = base64.b64encode(
         image_bytes
     ).decode("utf-8")
 
+
     prompt = """
+
 You are assisting a livestock-health triage system.
 
 Analyze the provided livestock image for visible
@@ -445,17 +680,30 @@ Focus only on visible signs.
 If the image is unclear, say so.
 """
 
+
     payload = {
+
         "contents": [
+
             {
+
                 "parts": [
+
                     {
-                        "text": prompt
+
+                        "text":
+                            prompt
                     },
+
                     {
+
                         "inline_data": {
-                            "mime_type": mime_type,
-                            "data": encoded_image
+
+                            "mime_type":
+                                mime_type,
+
+                            "data":
+                                encoded_image
                         }
                     }
                 ]
@@ -463,52 +711,99 @@ If the image is unclear, say so.
         ]
     }
 
+
     url = (
+
         "https://generativelanguage.googleapis.com/"
+
         "v1beta/models/gemini-2.0-flash:"
+
         "generateContent?key="
+
         + GEMINI_API_KEY
     )
+
 
     try:
 
         req = urllib.request.Request(
+
             url,
+
             data=json.dumps(
                 payload
             ).encode("utf-8"),
+
             headers={
+
                 "Content-Type":
                     "application/json"
             },
+
             method="POST"
         )
 
+
         with urllib.request.urlopen(
+
             req,
+
             timeout=30
+
         ) as response:
 
             result = json.loads(
-                response.read().decode("utf-8")
+
+                response
+                .read()
+                .decode("utf-8")
             )
 
-        text = (
-            result
-            .get("candidates", [{}])[0]
-            .get("content", {})
-            .get("parts", [{}])[0]
-            .get("text", "")
-        )
 
         text = (
+
+            result
+            .get(
+                "candidates",
+                [{}]
+            )[0]
+
+            .get(
+                "content",
+                {}
+            )
+
+            .get(
+                "parts",
+                [{}]
+            )[0]
+
+            .get(
+                "text",
+                ""
+            )
+        )
+
+
+        text = (
+
             text
-            .replace("```json", "")
-            .replace("```", "")
+            .replace(
+                "```json",
+                ""
+            )
+            .replace(
+                "```",
+                ""
+            )
             .strip()
         )
 
-        return json.loads(text)
+
+        return json.loads(
+            text
+        )
+
 
     except Exception as exc:
 
@@ -528,9 +823,14 @@ If the image is unclear, say so.
 def login_page():
 
     return render_template(
+
         "login.html",
-        supabase_url=SUPABASE_URL or "",
-        supabase_key=SUPABASE_KEY or ""
+
+        supabase_url=
+            SUPABASE_URL or "",
+
+        supabase_key=
+            SUPABASE_KEY or ""
     )
 
 
@@ -560,20 +860,28 @@ def home():
     try:
 
         return render_template(
+
             "index.html",
 
             farmer_name="Farmer",
+
             village="Satara",
+
             block="Maharashtra",
+
             herd_size=6,
 
             risk_level="low",
+
             risk_label="Low",
+
             risk_note=
                 "No unusual case clusters nearby",
 
             reports_week=2,
+
             vaccination_due=1,
+
             active_advisories=1,
 
             nearest_facility=
@@ -585,6 +893,7 @@ def home():
             advisories=[],
 
             t=lambda key: {
+
                 "report_heading":
                     "Report an animal health issue",
 
@@ -609,15 +918,27 @@ def home():
 
                 "nav_records":
                     "Records"
-            }.get(key, key)
+
+            }.get(
+                key,
+                key
+            )
         )
+
 
     except Exception as exc:
 
         return jsonify({
-            "app": "PashuRakshak AI",
-            "status": "error",
-            "template_error": str(exc)
+
+            "app":
+                "PashuRakshak AI",
+
+            "status":
+                "error",
+
+            "template_error":
+                str(exc)
+
         }), 500
 
 
@@ -635,11 +956,19 @@ def triage():
         silent=True
     ) or {}
 
-    result = score_report(data)
+
+    result = score_report(
+        data
+    )
+
 
     return jsonify({
-        "success": True,
-        "result": result
+
+        "success":
+            True,
+
+        "result":
+            result
     })
 
 
@@ -656,58 +985,96 @@ def image_screen():
     if "image" not in request.files:
 
         return jsonify({
-            "success": False,
-            "error": "No image uploaded"
+
+            "success":
+                False,
+
+            "error":
+                "No image uploaded"
+
         }), 400
 
-    image = request.files["image"]
+
+    image = request.files[
+        "image"
+    ]
+
 
     image_bytes = image.read()
+
 
     if not image_bytes:
 
         return jsonify({
-            "success": False,
-            "error": "Empty image"
+
+            "success":
+                False,
+
+            "error":
+                "Empty image"
+
         }), 400
+
 
     if len(image_bytes) > 8 * 1024 * 1024:
 
         return jsonify({
-            "success": False,
+
+            "success":
+                False,
+
             "error":
                 "Image too large. Maximum size is 8 MB."
+
         }), 413
 
+
     mime_type = (
+
         image.mimetype
+
         or "image/jpeg"
     )
 
+
     ai_result = gemini_image_screen(
+
         image_bytes,
+
         mime_type
     )
+
 
     if not ai_result:
 
         ai_result = {
+
             "visible_signs": [
+
                 "Image screening service not configured"
             ],
+
             "possible_categories": [],
-            "risk_level": "MODERATE",
-            "confidence": 50,
+
+            "risk_level":
+                "MODERATE",
+
+            "confidence":
+                50,
+
             "recommendation":
                 "Image received successfully. "
                 "Veterinary review is recommended."
         }
 
+
     return jsonify({
 
-        "success": True,
+        "success":
+            True,
 
-        "result": ai_result,
+        "result":
+            ai_result,
 
         "screening_type":
             "AI image screening",
@@ -723,22 +1090,34 @@ def image_screen():
 # REPORT STORAGE
 # ============================================================
 
-def save_report(report):
+def save_report(
+    report
+):
 
     if supabase:
 
         try:
 
             response = (
+
                 supabase
-                .table("reports")
-                .insert(report)
+
+                .table(
+                    "reports"
+                )
+
+                .insert(
+                    report
+                )
+
                 .execute()
             )
+
 
             if response.data:
 
                 return response.data[0]
+
 
         except Exception as exc:
 
@@ -747,13 +1126,20 @@ def save_report(report):
                 exc
             )
 
+
     report["id"] = (
-        len(_MEMORY_REPORTS) + 1
+
+        len(
+            _MEMORY_REPORTS
+        )
+        + 1
     )
+
 
     _MEMORY_REPORTS.append(
         report
     )
+
 
     return report
 
@@ -765,19 +1151,28 @@ def get_reports():
         try:
 
             response = (
+
                 supabase
-                .table("reports")
+
+                .table(
+                    "reports"
+                )
+
                 .select("*")
+
                 .order(
                     "created_at",
                     desc=True
                 )
+
                 .execute()
             )
+
 
             if response.data:
 
                 return response.data
+
 
         except Exception as exc:
 
@@ -785,6 +1180,7 @@ def get_reports():
                 "Supabase report fetch failed:",
                 exc
             )
+
 
     return list(
         reversed(
@@ -806,15 +1202,24 @@ def reports():
     if request.method == "GET":
 
         return jsonify({
-            "success": True,
-            "reports": get_reports()
+
+            "success":
+                True,
+
+            "reports":
+                get_reports()
         })
+
 
     data = request.get_json(
         silent=True
     ) or {}
 
-    result = score_report(data)
+
+    result = score_report(
+        data
+    )
+
 
     report = {
 
@@ -825,13 +1230,19 @@ def reports():
             ),
 
         "block":
-            data.get("block"),
+            data.get(
+                "block"
+            ),
 
         "lat":
-            data.get("lat"),
+            data.get(
+                "lat"
+            ),
 
         "lng":
-            data.get("lng"),
+            data.get(
+                "lng"
+            ),
 
         "animal_type":
             data.get(
@@ -848,10 +1259,14 @@ def reports():
             ),
 
         "affected_count":
-            result["affected_count"],
+            result[
+                "affected_count"
+            ],
 
         "days_since_onset":
-            result["days_since_onset"],
+            result[
+                "days_since_onset"
+            ],
 
         "notes":
             data.get(
@@ -860,10 +1275,14 @@ def reports():
             ),
 
         "risk_level":
-            result["risk_level"],
+            result[
+                "risk_level"
+            ],
 
         "risk_score":
-            result["risk_score"],
+            result[
+                "risk_score"
+            ],
 
         "reported_by":
             data.get(
@@ -880,23 +1299,32 @@ def reports():
             .isoformat(),
 
         "confidence":
-            result["confidence"],
+            result[
+                "confidence"
+            ],
 
         "risk_factors":
-            result["factors"]
+            result[
+                "factors"
+            ]
     }
+
 
     saved = save_report(
         report
     )
 
+
     return jsonify({
 
-        "success": True,
+        "success":
+            True,
 
-        "report": saved,
+        "report":
+            saved,
 
-        "risk": result
+        "risk":
+            result
     })
 
 
@@ -957,7 +1385,8 @@ def health():
 
     return jsonify({
 
-        "success": True,
+        "success":
+            True,
 
         "app":
             "PashuRakshak AI",
@@ -974,6 +1403,21 @@ def health():
         "feature_blueprint":
             bool(feature_bp),
 
+        "feature_blueprint_error":
+            FEATURE_BLUEPRINT_ERROR,
+
+        "environment": {
+
+            "SUPABASE_URL":
+                bool(SUPABASE_URL),
+
+            "SUPABASE_KEY":
+                bool(SUPABASE_KEY),
+
+            "GEMINI_API_KEY":
+                bool(GEMINI_API_KEY)
+        },
+
         "timestamp":
             datetime.utcnow()
             .isoformat()
@@ -989,10 +1433,12 @@ def not_found(error):
 
     return jsonify({
 
-        "success": False,
+        "success":
+            False,
 
         "error":
             "Endpoint not found"
+
     }), 404
 
 
@@ -1001,10 +1447,12 @@ def server_error(error):
 
     return jsonify({
 
-        "success": False,
+        "success":
+            False,
 
         "error":
             "Internal server error"
+
     }), 500
 
 
@@ -1019,6 +1467,7 @@ if __name__ == "__main__":
         host="0.0.0.0",
 
         port=int(
+
             os.environ.get(
                 "PORT",
                 5000
