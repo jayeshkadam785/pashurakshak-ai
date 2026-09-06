@@ -11,6 +11,11 @@ then /onboarding/role before reaching the dashboard. Veterinary Officer
 and District Official roles require an access code (demo-only gate --
 see ROLE_ACCESS_CODE below).
 
+Each role sees a different dashboard:
+  farmer   -> dashboard_farmer.html (my animals / my reports / reminders)
+  vet      -> dashboard_vet.html    (block-level case queue, map, chart)
+  official -> dashboard_official.html (district-wide totals, block compare)
+
 Data persistence is optional: if SUPABASE_URL / SUPABASE_KEY are set,
 reports are read/written to Supabase; otherwise an in-memory list is
 used so the prototype works end-to-end without any backend configured.
@@ -87,7 +92,7 @@ ROLE_ACCESS_CODE = os.environ.get("ROLE_ACCESS_CODE", "SATARA-VET-2026")
 TRANSLATIONS = {
     "en": {
         "greeting": "Namaskar",
-        "nav_home": "Home", "nav_report": "Report", "nav_dashboard": "Vet dashboard",
+        "nav_home": "Home", "nav_report": "Report", "nav_dashboard": "Dashboard",
         "nav_alerts": "Alerts", "nav_records": "Animal records",
         "report_heading": "Report an animal health issue",
         "report_body": "Take a photo or describe symptoms — flagged reports are shared with your nearest veterinary officer for triage.",
@@ -96,25 +101,25 @@ TRANSLATIONS = {
     },
     "hi": {
         "greeting": "नमस्कार",
-        "nav_home": "होम", "nav_report": "रिपोर्ट", "nav_dashboard": "पशु चिकित्सक डैशबोर्ड",
+        "nav_home": "होम", "nav_report": "रिपोर्ट", "nav_dashboard": "डैशबोर्ड",
         "nav_alerts": "सूचनाएं", "nav_records": "पशु रिकॉर्ड",
         "report_heading": "पशु स्वास्थ्य समस्या दर्ज करें",
-        "report_body": "फोटो लें या लक्षण बताएं — चिन्हित रिपोर्ट आपके नज़दीकी पशु चिकित्सक के पास भेजी जाती हैं।",
+        "report_body": "फोटो लें या लक्षण बताएं — चिन्हित रिपोर्ट आपके नज़दीकी पशु चिकित्सक के प��स भेजी जाती हैं।",
         "start_report": "रिपोर्ट शुरू करें",
         "recent_advisories": "हाल की सूचनाएं",
     },
     "mr": {
         "greeting": "नमस्कार",
-        "nav_home": "मुख्यपृष्ठ", "nav_report": "अहवाल", "nav_dashboard": "पशुवैद्यक डॅशबोर्ड",
+        "nav_home": "मुख्यपृष्ठ", "nav_report": "अहवाल", "nav_dashboard": "डॅशबोर्ड",
         "nav_alerts": "सूचना", "nav_records": "जनावरांच्या नोंदी",
         "report_heading": "जनावराच्या आरोग्य समस्येची नोंद करा",
-        "report_body": "फोटो घ्या किंवा लक्षणे सांगा — नोंदवलेले अहवाल जवळच्या पशुवैद्यकाकडे पाठवले जातात।",
+        "report_body": "फोटो घ्या किंवा लक्षणे सांगा — नोंदवलेले अहवाल जवळच्या पशुवैद्यकाकडे पाठवले जातात.",
         "start_report": "अहवाल सुरू करा",
         "recent_advisories": "अलीकडील सूचना",
     },
     "pa": {
         "greeting": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
-        "nav_home": "ਹੋਮ", "nav_report": "ਰਿਪੋਰਟ", "nav_dashboard": "ਵੈਟ ਡੈਸ਼ਬੋਰਡ",
+        "nav_home": "ਹੋਮ", "nav_report": "ਰਿਪੋਰਟ", "nav_dashboard": "ਡੈਸ਼ਬੋਰਡ",
         "nav_alerts": "ਚੇਤਾਵਨੀਆਂ", "nav_records": "ਪਸ਼ੂ ਰਿਕਾਰਡ",
         "report_heading": "ਪਸ਼ੂ ਸਿਹਤ ਸਮੱਸਿਆ ਦਰਜ ਕਰੋ",
         "report_body": "ਫੋਟੋ ਲਓ ਜਾਂ ਲੱਛਣ ਦੱਸੋ — ਰਿਪੋਰਟ ਤੁਹਾਡੇ ਨਜ਼ਦੀਕੀ ਵੈਟਰਨਰੀ ਅਫ਼ਸਰ ਨੂੰ ਭੇਜੀ ਜਾਂਦੀ ਹੈ।",
@@ -123,7 +128,7 @@ TRANSLATIONS = {
     },
     "gu": {
         "greeting": "નમસ્તે",
-        "nav_home": "હોમ", "nav_report": "રિપોર્ટ", "nav_dashboard": "વેટ ડેશબોર્ડ",
+        "nav_home": "હોમ", "nav_report": "રિપોર્ટ", "nav_dashboard": "ડેશબોર્ડ",
         "nav_alerts": "ચેતવણીઓ", "nav_records": "પ્રાણી રેકોર્ડ",
         "report_heading": "પ્રાણી આરોગ્ય સમસ્યાની જાણ કરો",
         "report_body": "ફોટો લો અથવા લક્ષણો જણાવો — નોંધાયેલા અહેવાલો તમારા નજીકના પશુચિકિત્સકને મોકલવામાં આવે છે.",
@@ -271,7 +276,7 @@ def score_report(payload: dict) -> dict:
 
 
 # ---------------------------------------------------------------------
-# Page routes
+# Demo data (in-memory, for judges/hackathon demo — no real DB required)
 # ---------------------------------------------------------------------
 
 DEMO_ADVISORIES = [
@@ -287,6 +292,40 @@ DEMO_ADVISORIES = [
     },
 ]
 
+DEMO_BLOCK_SUMMARY = [
+    {"block": "Satara", "villages_reporting": 9, "open_reports": 14, "high_risk": 3},
+    {"block": "Wai", "villages_reporting": 6, "open_reports": 8, "high_risk": 2},
+    {"block": "Koregaon", "villages_reporting": 4, "open_reports": 3, "high_risk": 0},
+    {"block": "Phaltan", "villages_reporting": 5, "open_reports": 6, "high_risk": 1},
+]
+
+DEMO_DISTRICT_TOTALS = {
+    "total_open_reports": 31,
+    "total_high_risk": 6,
+    "vaccination_coverage": 68,
+    "blocks_reporting": 4,
+}
+
+DEMO_MY_ANIMALS = [
+    {"tag_id": "COW-1042", "species": "Cattle", "breed": "Gir", "age": "4 yrs", "last_checkup": "12 Aug", "status": "healthy"},
+    {"tag_id": "COW-1043", "species": "Cattle", "breed": "Gir", "age": "2 yrs", "last_checkup": "3 days ago", "status": "under observation"},
+    {"tag_id": "GOAT-0231", "species": "Goat", "breed": "Osmanabadi", "age": "1 yr", "last_checkup": "1 month ago", "status": "healthy"},
+]
+
+DEMO_MY_REPORTS = [
+    {"date": "3 days ago", "animal": "COW-1043", "symptoms": "Fever, loss of appetite", "status": "Under review", "risk": "moderate"},
+    {"date": "2 weeks ago", "animal": "COW-1042", "symptoms": "Lameness", "status": "Resolved", "risk": "low"},
+]
+
+DEMO_VACCINATION_DUE = [
+    {"animal": "COW-1042", "vaccine": "FMD booster", "due": "in 6 days"},
+    {"animal": "GOAT-0231", "vaccine": "PPR vaccine", "due": "in 18 days"},
+]
+
+
+# ---------------------------------------------------------------------
+# Page routes
+# ---------------------------------------------------------------------
 
 @app.route("/")
 def home():
@@ -300,7 +339,28 @@ def report_page():
 
 @app.route("/dashboard")
 def dashboard_page():
-    return render_template("dashboard.html", active="dashboard")
+    role = session.get("role")
+
+    if role == "vet":
+        return render_template(
+            "dashboard_vet.html", active="dashboard", role=role,
+            open_reports=14, high_risk=3, villages_reporting=9,
+        )
+
+    if role == "official":
+        return render_template(
+            "dashboard_official.html", active="dashboard", role=role,
+            block_summary=DEMO_BLOCK_SUMMARY, totals=DEMO_DISTRICT_TOTALS,
+        )
+
+    if role == "farmer":
+        return render_template(
+            "dashboard_farmer.html", active="dashboard", role=role,
+            my_animals=DEMO_MY_ANIMALS, my_reports=DEMO_MY_REPORTS,
+            vaccination_due=DEMO_VACCINATION_DUE,
+        )
+
+    return redirect(url_for("onboarding_role"))
 
 
 @app.route("/alerts")
