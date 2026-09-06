@@ -1,4 +1,3 @@
-````python
 import os
 import json
 import base64
@@ -19,7 +18,8 @@ app = Flask(
     template_folder="../templates",
     static_folder="../static"
 )
-
+from feature_routes import feature_bp
+app.register_blueprint(feature_bp)
 # ============================================================
 # CONFIGURATION
 # ============================================================
