@@ -3,65 +3,339 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>PashuRakshak AI — Login</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07110c;color:#eef8f0;font-family:system-ui,sans-serif}
-.card{width:min(440px,92vw);padding:30px;border-radius:22px;background:#0d1b12;border:1px solid #294332}
-h1{margin:0 0 5px}.sub{color:#9db1a3;margin-bottom:25px}
-label{display:block;margin:13px 0 6px;color:#b8cabc}
-input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #36513f;background:#0a160e;color:#fff}
-button{width:100%;padding:13px;margin-top:15px;border:0;border-radius:10px;background:#2ca86b;color:#fff;font-weight:800;cursor:pointer}
-#msg{display:none;margin-top:15px;padding:12px;border-radius:10px;background:#14281a}
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:#07110c;
+  color:#eef8f0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.card{
+  width:min(440px,92vw);
+  padding:30px;
+  border-radius:22px;
+  background:#0d1b12;
+  border:1px solid #294332;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.logo{
+  font-size:42px;
+  text-align:center;
+  margin-bottom:10px;
+}
+
+h1{
+  margin:0;
+  text-align:center;
+}
+
+.sub{
+  color:#9db1a3;
+  text-align:center;
+  margin:8px 0 25px;
+}
+
+label{
+  display:block;
+  margin:13px 0 6px;
+  color:#b8cabc;
+  font-size:14px;
+}
+
+input,
+select{
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:1px solid #36513f;
+  background:#0a160e;
+  color:#fff;
+  outline:none;
+}
+
+input:focus,
+select:focus{
+  border-color:#2ca86b;
+}
+
+button{
+  width:100%;
+  padding:13px;
+  margin-top:15px;
+  border:0;
+  border-radius:10px;
+  background:#2ca86b;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.signup{
+  background:#183b26;
+}
+
+#msg{
+  display:none;
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  background:#14281a;
+  color:#bde8c8;
+  font-size:14px;
+}
 </style>
 </head>
-<body data-supabase-url="{{ supabase_url }}" data-supabase-key="{{ supabase_key }}">
+
+<body
+  data-supabase-url="{{ supabase_url }}"
+  data-supabase-key="{{ supabase_key }}"
+>
+
 <div class="card">
-<h1>🐄 PashuRakshak AI</h1>
-<div class="sub">Secure livestock health platform</div>
 
-<label>Email</label>
-<input id="email" type="email" placeholder="you@example.com">
+  <div class="logo">🐄</div>
 
-<label>Password</label>
-<input id="password" type="password" placeholder="Password">
+  <h1>PashuRakshak AI</h1>
 
-<label>Role</label>
-<select id="role">
-<option value="farmer">👨‍🌾 Farmer</option>
-<option value="vet">🩺 Veterinarian</option>
-<option value="officer">🏛️ Government Officer</option>
-<option value="admin">🔐 Admin</option>
-</select>
+  <div class="sub">
+    Secure Livestock Health Platform
+  </div>
 
-<button id="login">Sign in</button>
-<button id="signup" style="background:#183b26">Create account</button>
-<div id="msg"></div>
+
+  <label for="email">Email</label>
+
+  <input
+    id="email"
+    type="email"
+    placeholder="you@example.com"
+    autocomplete="email"
+  >
+
+
+  <label for="password">Password</label>
+
+  <input
+    id="password"
+    type="password"
+    placeholder="Password"
+    autocomplete="current-password"
+  >
+
+
+  <label for="role">Select Role</label>
+
+  <select id="role">
+
+    <option value="farmer">
+      👨‍🌾 Farmer
+    </option>
+
+    <option value="vet">
+      🩺 Veterinarian
+    </option>
+
+    <option value="officer">
+      🏛️ Government Officer
+    </option>
+
+    <option value="admin">
+      🔐 Admin
+    </option>
+
+  </select>
+
+
+  <button id="login">
+    Sign In
+  </button>
+
+
+  <button id="signup" class="signup">
+    Create Account
+  </button>
+
+
+  <div id="msg"></div>
+
 </div>
 
+
 <script src="/static/auth.js"></script>
+
 <script>
-const msg=document.getElementById("msg");
-function show(t){msg.textContent=t;msg.style.display="block"}
 
-login.onclick=async()=>{
- try{
-  const r=await PashuAuth.login(email.value.trim(),password.value);
-  if(r.error) throw r.error;
-  PashuAuth.setRole(role.value);
-  const routes={farmer:"/dashboard/farmer",vet:"/vet/cases",officer:"/dashboard/official",admin:"/dashboard/official"};
-  location.href=routes[role.value]||"/";
- }catch(e){show(e.message)}
+const msg = document.getElementById("msg");
+
+function showMessage(text){
+
+  msg.textContent = text;
+  msg.style.display = "block";
+
+}
+
+
+// LOGIN
+document.getElementById("login").onclick = async function(){
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const role =
+    document.getElementById("role").value;
+
+
+  if(!email || !password){
+
+    showMessage("Please enter email and password.");
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await PashuAuth.login(
+        email,
+        password
+      );
+
+
+    if(result.error){
+
+      throw result.error;
+
+    }
+
+
+    PashuAuth.setRole(role);
+
+
+    const routes = {
+
+      farmer:
+        "/dashboard/farmer",
+
+      vet:
+        "/vet/cases",
+
+      officer:
+        "/dashboard/official",
+
+      admin:
+        "/dashboard/official"
+
+    };
+
+
+    window.location.href =
+      routes[role] || "/";
+
+
+  }catch(error){
+
+    showMessage(
+      error.message ||
+      "Login failed."
+    );
+
+  }
+
 };
 
-signup.onclick=async()=>{
- try{
-  const r=await PashuAuth.signup(email.value.trim(),password.value,role.value);
-  if(r.error) throw r.error;
-  show("Account created. Check email if confirmation is enabled, then sign in.");
- }catch(e){show(e.message)}
+
+// SIGN UP
+document.getElementById("signup").onclick = async function(){
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const role =
+    document.getElementById("role").value;
+
+
+  if(!email || !password){
+
+    showMessage(
+      "Please enter email and password."
+    );
+
+    return;
+
+  }
+
+
+  if(password.length < 6){
+
+    showMessage(
+      "Password must contain at least 6 characters."
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await PashuAuth.signup(
+        email,
+        password,
+        role
+      );
+
+
+    if(result.error){
+
+      throw result.error;
+
+    }
+
+
+    showMessage(
+      "Account created successfully. " +
+      "Check your email if confirmation is enabled, " +
+      "then sign in."
+    );
+
+
+  }catch(error){
+
+    showMessage(
+      error.message ||
+      "Account creation failed."
+    );
+
+  }
+
 };
+
 </script>
+
 </body>
 </html>
