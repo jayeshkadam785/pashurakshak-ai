@@ -275,4 +275,4 @@ def dashboard_kpis():
         })
 
     except Exception as exc:
-        return jsonify({"success": False, "error": str(exc)}), 500
+        return jsonify({"success": False, "error": str(exc)}), 500 
