@@ -50,7 +50,7 @@ ROLE_ACCESS_CODE = os.environ.get(
 
 
 # ============================================================
-# SUPABASE CLIENT
+# SUPABASE
 # ============================================================
 
 supabase = None
@@ -67,7 +67,7 @@ if SUPABASE_URL and SUPABASE_KEY and create_client:
 
 
 # ============================================================
-# DEMO MEMORY STORAGE
+# MEMORY FALLBACK
 # ============================================================
 
 _MEMORY_REPORTS = []
@@ -103,7 +103,7 @@ LOW_RISK_SYMPTOMS = {
 
 
 # ============================================================
-# UTILITY FUNCTIONS
+# UTILITY
 # ============================================================
 
 def safe_int(value, default=0):
@@ -151,17 +151,10 @@ def normalize_symptoms(symptoms):
 
 
 # ============================================================
-# AI-ASSISTED LIVESTOCK RISK ENGINE
+# AI RISK ENGINE
 # ============================================================
 
 def score_report(data):
-
-    """
-    Explainable livestock health triage engine.
-
-    This is a decision-support system.
-    It is NOT a definitive veterinary diagnosis.
-    """
 
     symptoms = normalize_symptoms(
         data.get("symptoms", [])
@@ -240,7 +233,7 @@ def score_report(data):
             })
 
     # --------------------------------------------------------
-    # MULTIPLE ANIMALS
+    # AFFECTED ANIMALS
     # --------------------------------------------------------
 
     if affected_count >= 10:
@@ -310,7 +303,8 @@ def score_report(data):
         score += 2
 
         factors.append({
-            "factor": "vaccination protection uncertain/overdue",
+            "factor":
+                "vaccination protection uncertain/overdue",
             "impact": "moderate",
             "points": 2
         })
@@ -325,21 +319,16 @@ def score_report(data):
         "goat",
         "sheep"
     ]:
-
         score += 1
 
     # --------------------------------------------------------
-    # RISK SCORE
+    # SCORE
     # --------------------------------------------------------
 
     risk_score = min(
         100,
         round((score / 30) * 100)
     )
-
-    # --------------------------------------------------------
-    # RISK LEVEL
-    # --------------------------------------------------------
 
     if risk_score >= 70:
 
@@ -401,26 +390,16 @@ def score_report(data):
         )
 
     return {
-
         "risk_level": risk_level,
-
         "risk_score": risk_score,
-
         "confidence": confidence,
-
         "factors": factors,
-
         "recommendation": recommendation,
-
         "animal_type": animal_type,
-
         "affected_count": affected_count,
-
         "days_since_onset": days_since_onset,
-
         "screening_type":
             "AI-assisted decision support",
-
         "medical_disclaimer":
             "This result is a screening/triage aid "
             "and does not replace veterinary diagnosis."
@@ -467,22 +446,15 @@ If the image is unclear, say so.
 """
 
     payload = {
-
         "contents": [
-
             {
-
                 "parts": [
-
                     {
                         "text": prompt
                     },
-
                     {
                         "inline_data": {
-
                             "mime_type": mime_type,
-
                             "data": encoded_image
                         }
                     }
@@ -501,18 +473,14 @@ If the image is unclear, say so.
     try:
 
         req = urllib.request.Request(
-
             url,
-
             data=json.dumps(
                 payload
             ).encode("utf-8"),
-
             headers={
                 "Content-Type":
                     "application/json"
             },
-
             method="POST"
         )
 
@@ -553,7 +521,7 @@ If the image is unclear, say so.
 
 
 # ============================================================
-# HOME
+# AUTH / FEATURE PAGES
 # ============================================================
 
 @app.route("/login")
@@ -582,21 +550,75 @@ def vaccination_page():
     )
 
 
+# ============================================================
+# HOME
+# ============================================================
+
 @app.route("/")
 def home():
 
     try:
 
         return render_template(
-            "index.html"
+            "index.html",
+
+            farmer_name="Farmer",
+            village="Satara",
+            block="Maharashtra",
+            herd_size=6,
+
+            risk_level="low",
+            risk_label="Low",
+            risk_note=
+                "No unusual case clusters nearby",
+
+            reports_week=2,
+            vaccination_due=1,
+            active_advisories=1,
+
+            nearest_facility=
+                "Satara Veterinary Dispensary",
+
+            facility_distance=
+                "3.2 km away",
+
+            advisories=[],
+
+            t=lambda key: {
+                "report_heading":
+                    "Report an animal health issue",
+
+                "report_body":
+                    "Take a photo or describe symptoms "
+                    "to get an early health-risk assessment.",
+
+                "start_report":
+                    "Start Report",
+
+                "nav_home":
+                    "Home",
+
+                "nav_report":
+                    "Report",
+
+                "nav_dashboard":
+                    "Dashboard",
+
+                "nav_alerts":
+                    "Alerts",
+
+                "nav_records":
+                    "Records"
+            }.get(key, key)
         )
 
-    except Exception:
+    except Exception as exc:
 
         return jsonify({
             "app": "PashuRakshak AI",
-            "status": "running"
-        })
+            "status": "error",
+            "template_error": str(exc)
+        }), 500
 
 
 # ============================================================
@@ -616,9 +638,7 @@ def triage():
     result = score_report(data)
 
     return jsonify({
-
         "success": True,
-
         "result": result
     })
 
@@ -672,17 +692,12 @@ def image_screen():
     if not ai_result:
 
         ai_result = {
-
             "visible_signs": [
                 "Image screening service not configured"
             ],
-
             "possible_categories": [],
-
             "risk_level": "MODERATE",
-
             "confidence": 50,
-
             "recommendation":
                 "Image received successfully. "
                 "Veterinary review is recommended."
@@ -779,7 +794,7 @@ def get_reports():
 
 
 # ============================================================
-# REPORTS GET / POST
+# REPORT API
 # ============================================================
 
 @app.route(
@@ -791,9 +806,7 @@ def reports():
     if request.method == "GET":
 
         return jsonify({
-
             "success": True,
-
             "reports": get_reports()
         })
 
@@ -835,14 +848,10 @@ def reports():
             ),
 
         "affected_count":
-            result[
-                "affected_count"
-            ],
+            result["affected_count"],
 
         "days_since_onset":
-            result[
-                "days_since_onset"
-            ],
+            result["days_since_onset"],
 
         "notes":
             data.get(
@@ -851,14 +860,10 @@ def reports():
             ),
 
         "risk_level":
-            result[
-                "risk_level"
-            ],
+            result["risk_level"],
 
         "risk_score":
-            result[
-                "risk_score"
-            ],
+            result["risk_score"],
 
         "reported_by":
             data.get(
@@ -875,14 +880,10 @@ def reports():
             .isoformat(),
 
         "confidence":
-            result[
-                "confidence"
-            ],
+            result["confidence"],
 
         "risk_factors":
-            result[
-                "factors"
-            ]
+            result["factors"]
     }
 
     saved = save_report(
