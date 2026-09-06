@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PashuRakshak AI — Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07110c;color:#eef8f0;font-family:system-ui,sans-serif}
+.card{width:min(440px,92vw);padding:30px;border-radius:22px;background:#0d1b12;border:1px solid #294332}
+h1{margin:0 0 5px}.sub{color:#9db1a3;margin-bottom:25px}
+label{display:block;margin:13px 0 6px;color:#b8cabc}
+input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #36513f;background:#0a160e;color:#fff}
+button{width:100%;padding:13px;margin-top:15px;border:0;border-radius:10px;background:#2ca86b;color:#fff;font-weight:800;cursor:pointer}
+#msg{display:none;margin-top:15px;padding:12px;border-radius:10px;background:#14281a}
+</style>
+</head>
+<body data-supabase-url="{{ supabase_url }}" data-supabase-key="{{ supabase_key }}">
+<div class="card">
+<h1>🐄 PashuRakshak AI</h1>
+<div class="sub">Secure livestock health platform</div>
+
+<label>Email</label>
+<input id="email" type="email" placeholder="you@example.com">
+
+<label>Password</label>
+<input id="password" type="password" placeholder="Password">
+
+<label>Role</label>
+<select id="role">
+<option value="farmer">👨‍🌾 Farmer</option>
+<option value="vet">🩺 Veterinarian</option>
+<option value="officer">🏛️ Government Officer</option>
+<option value="admin">🔐 Admin</option>
+</select>
+
+<button id="login">Sign in</button>
+<button id="signup" style="background:#183b26">Create account</button>
+<div id="msg"></div>
+</div>
+
+<script src="/static/auth.js"></script>
+<script>
+const msg=document.getElementById("msg");
+function show(t){msg.textContent=t;msg.style.display="block"}
+
+login.onclick=async()=>{
+ try{
+  const r=await PashuAuth.login(email.value.trim(),password.value);
+  if(r.error) throw r.error;
+  PashuAuth.setRole(role.value);
+  const routes={farmer:"/dashboard/farmer",vet:"/vet/cases",officer:"/dashboard/official",admin:"/dashboard/official"};
+  location.href=routes[role.value]||"/";
+ }catch(e){show(e.message)}
+};
+
+signup.onclick=async()=>{
+ try{
+  const r=await PashuAuth.signup(email.value.trim(),password.value,role.value);
+  if(r.error) throw r.error;
+  show("Account created. Check email if confirmation is enabled, then sign in.");
+ }catch(e){show(e.message)}
+};
+</script>
+</body>
+</html>

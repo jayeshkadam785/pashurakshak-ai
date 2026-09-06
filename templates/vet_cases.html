@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PashuRakshak — Vet Cases</title>
+<style>
+body{margin:0;background:#07110c;color:#eef8f0;font-family:system-ui,sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:28px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.card{margin-top:20px;padding:20px;border:1px solid #294332;border-radius:18px;background:#0d1b12}
+.case{padding:16px;margin:12px 0;border:1px solid #294332;border-radius:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+select,textarea{width:100%;box-sizing:border-box;padding:11px;border-radius:9px;background:#09150d;color:#fff;border:1px solid #36513f;margin-top:8px}
+button{padding:11px 15px;border:0;border-radius:9px;background:#2ca86b;color:#fff;font-weight:800;cursor:pointer;margin-top:10px}
+.muted{color:#9db1a3}
+</style>
+</head>
+<body data-protected="true">
+<div class="wrap">
+<div class="top">
+<div><h1>🩺 Vet Case Verification</h1><div class="muted">Review → verify → treat → close.</div></div>
+<button data-logout>Logout</button>
+</div>
+<div id="cases" class="card">Loading...</div>
+</div>
+
+<script src="/static/auth.js"></script>
+<script src="/static/features.js"></script>
+<script>
+let reports=[];
+
+async function load(){
+ try{
+  const r=await PashuAuth.authFetch("/api/reports");
+  const d=await r.json();
+  reports=d.reports||[];
+  render();
+ }catch(e){
+  document.getElementById("cases").textContent=e.message;
+ }
+}
+
+function render(){
+ const box=document.getElementById("cases");
+ if(!reports.length){box.innerHTML="<p>No cases found.</p>";return}
+
+ box.innerHTML=reports.map(x=>`
+ <div class="case">
+  <div class="grid">
+   <div><b>Case:</b> ${x.id??"—"}</div>
+   <div><b>Village:</b> ${x.village??"—"}</div>
+   <div><b>Animal:</b> ${x.animal_type??"—"}</div>
+   <div><b>Risk:</b> ${x.risk_level??"—"} (${x.risk_score??0})</div>
+   <div><b>Affected:</b> ${x.affected_count??0}</div>
+   <div><b>Status:</b> ${x.case_status??"UNDER_REVIEW"}</div>
+  </div>
+  <p class="muted">${Array.isArray(x.symptoms)?x.symptoms.join(", "):(x.symptoms||"No symptoms")}</p>
+  <select id="status-${x.id}">
+   <option>UNDER_REVIEW</option>
+   <option>VERIFIED</option>
+   <option>ISOLATED</option>
+   <option>TREATMENT</option>
+   <option>CLOSED</option>
+   <option>REJECTED</option>
+  </select>
+  <textarea id="note-${x.id}" placeholder="Vet notes, diagnosis and treatment"></textarea>
+  <button onclick="updateCase('${x.id}')">Update Case</button>
+ </div>`).join("");
+}
+
+async function updateCase(id){
+ try{
+  const status=document.getElementById("status-"+id).value;
+  const note=document.getElementById("note-"+id).value;
+
+  await PashuFeatures.verifyCase(id,{
+   case_status:status,
+   vet_notes:note
+  });
+
+  alert("Case updated successfully");
+  load();
+ }catch(e){alert(e.message)}
+}
+
+load();
+</script>
+</body>
+</html>
