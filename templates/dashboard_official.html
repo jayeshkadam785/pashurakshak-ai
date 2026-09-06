@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PashuRakshak — District dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  {% include "_nav.html" %}
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>District surveillance dashboard</h1>
+        <div class="loc">Satara district · aggregated across all blocks</div>
+      </div>
+      <button class="btn btn-ghost" onclick="exportBlockSummaryCSV()">⬇ Export CSV</button>
+    </div>
+
+    <div class="grid-3">
+      <div class="icon-card">
+        <div class="badge">📋</div>
+        <div class="title">Open reports (district)</div>
+        <div class="value">{{ totals.total_open_reports }}</div>
+      </div>
+      <div class="icon-card">
+        <div class="badge" style="background:var(--coral-100); color:var(--coral-500);">⚠️</div>
+        <div class="title">High-risk villages</div>
+        <div class="value" style="color:var(--coral-500);">{{ totals.total_high_risk }}</div>
+      </div>
+      <div class="icon-card">
+        <div class="badge">🏘️</div>
+        <div class="title">Blocks reporting</div>
+        <div class="value">{{ totals.blocks_reporting }}</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Vaccination coverage</h3>
+        <div style="display:flex; align-items:baseline; gap:8px;">
+          <div style="font-family:var(--font-head); font-size:2.2rem; color:var(--pasture-900);">{{ totals.vaccination_coverage }}%</div>
+          <div style="color:var(--ink-600); font-size:0.9rem;">of registered livestock, district-wide</div>
+        </div>
+        <div style="background:var(--wheat-100); border-radius:999px; height:10px; margin-top:14px; overflow:hidden;">
+          <div style="background:var(--ok-500); height:100%; width:{{ totals.vaccination_coverage }}%;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Reports by block</h3>
+        <canvas id="block-chart" height="180"></canvas>
+      </div>
+    </div>
+
+    <h2>Block-wise summary</h2>
+    <div class="card" style="padding:0; overflow:hidden;" id="block-summary-table">
+      <table>
+        <thead><tr><th>Block</th><th>Villages reporting</th><th>Open reports</th><th>High-risk</th></tr></thead>
+        <tbody>
+          {% for b in block_summary %}
+          <tr>
+            <td>{{ b.block }}</td>
+            <td>{{ b.villages_reporting }}</td>
+            <td>{{ b.open_reports }}</td>
+            <td>{% if b.high_risk > 0 %}<span class="tag high">{{ b.high_risk }}</span>{% else %}<span class="tag low">0</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+  const BLOCK_SUMMARY = {{ block_summary|tojson }};
+  initOfficialDashboard(BLOCK_SUMMARY);
+</script>
+</body>
+</html>
