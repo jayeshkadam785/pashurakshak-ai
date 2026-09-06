@@ -1,15 +1,11 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PashuRakshak — Vet dashboard</title>
+<title>PashuRakshak — My dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -18,43 +14,77 @@
   <main class="main">
     <div class="topbar">
       <div>
-        <h1>Block surveillance dashboard</h1>
-        <div class="loc">Satara block · updated live from farmer reports</div>
+        <h1>My dashboard</h1>
+        <div class="loc">Your animals, reports and reminders</div>
       </div>
+      <a href="/report" class="btn btn-primary">+ Report an issue</a>
     </div>
 
     <div class="grid-3">
-      <div class="card"><div class="stat-row"><span class="l">Open reports</span><span class="n">{{ open_reports or 14 }}</span></div></div>
-      <div class="card"><div class="stat-row"><span class="l">High-risk flags</span><span class="n" style="color:var(--coral-500)">{{ high_risk or 3 }}</span></div></div>
-      <div class="card"><div class="stat-row"><span class="l">Villages reporting</span><span class="n">{{ villages_reporting or 9 }}</span></div></div>
+      <div class="icon-card">
+        <div class="badge">🐄</div>
+        <div class="title">My animals</div>
+        <div class="value">{{ my_animals|length }}</div>
+      </div>
+      <div class="icon-card">
+        <div class="badge">📋</div>
+        <div class="title">Reports filed</div>
+        <div class="value">{{ my_reports|length }}</div>
+      </div>
+      <div class="icon-card">
+        <div class="badge" style="background:var(--amber-100); color:#8a6413;">💉</div>
+        <div class="title">Vaccinations due</div>
+        <div class="value" style="color:#8a6413;">{{ vaccination_due|length }}</div>
+      </div>
     </div>
 
-    <div class="grid-2">
-      <div class="card" id="map">
-        <h3>Case density by village</h3>
-        <div id="risk-map"></div>
-      </div>
-      <div class="card">
-        <h3>Reports over last 14 days</h3>
-        <canvas id="trend-chart" height="220"></canvas>
-      </div>
-    </div>
-
-    <h2>Case list</h2>
-    <div class="card" style="padding:0; overflow:hidden;">
+    <h2>My animals</h2>
+    <div class="card" style="padding:0; overflow:hidden; margin-bottom:24px;">
       <table>
-        <thead>
-          <tr><th>Village</th><th>Animal</th><th>Symptoms</th><th>Reported</th><th>Risk</th><th></th></tr>
-        </thead>
-        <tbody id="case-table-body">
-          <!-- populated by app.js from /api/reports -->
+        <thead><tr><th>Tag ID</th><th>Species</th><th>Breed</th><th>Age</th><th>Last checkup</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in my_animals %}
+          <tr>
+            <td>{{ a.tag_id }}</td><td>{{ a.species }}</td><td>{{ a.breed }}</td>
+            <td>{{ a.age }}</td><td>{{ a.last_checkup }}</td>
+            <td>{% if a.status == 'healthy' %}<span class="tag low">Healthy</span>{% else %}<span class="tag moderate">{{ a.status|capitalize }}</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="grid-2">
+      <div>
+        <h2>My recent reports</h2>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table>
+            <thead><tr><th>Date</th><th>Animal</th><th>Symptoms</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for r in my_reports %}
+              <tr>
+                <td>{{ r.date }}</td><td>{{ r.animal }}</td><td>{{ r.symptoms }}</td>
+                <td><span class="tag {{ r.risk }}">{{ r.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h2>Vaccination reminders</h2>
+        {% for v in vaccination_due %}
+        <div class="advisory">
+          <div class="sev moderate"></div>
+          <div>
+            <strong>{{ v.animal }} — {{ v.vaccine }}</strong>
+            <div class="meta">Due {{ v.due }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </main>
 </div>
-
-<script src="/static/app.js"></script>
-<script>initDashboard();</script>
 </body>
 </html>
