@@ -367,7 +367,12 @@ def dashboard_page():
 def alerts_page():
     return render_template("alerts.html", active="alerts", advisories=DEMO_ADVISORIES)
 
-
+@app.route("/switch-role")
+def switch_role():
+    session.pop("role", None)
+    session.pop("role_label", None)
+    return redirect(url_for("onboarding_role"))
+  
 @app.route("/records")
 def records_page():
     return render_template("records.html", active="records")
