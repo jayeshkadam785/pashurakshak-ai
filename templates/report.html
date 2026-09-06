@@ -1,80 +1,1395 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PashuRakshak — Report symptom</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PashuRakshak AI | Report Animal Health</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #f5f7fb;
+            color: #172033;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: auto;
+            padding: 30px 18px 60px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #123c2d, #20734d);
+            color: white;
+            border-radius: 22px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 12px 35px rgba(0,0,0,.12);
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: .88;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 25px rgba(20,30,50,.07);
+            border: 1px solid #e8ecf2;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin: 14px 0 7px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #d7dde7;
+            border-radius: 12px;
+            outline: none;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #2e8b61;
+            box-shadow: 0 0 0 3px rgba(46,139,97,.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .symptoms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+
+        .symptom {
+            border: 1px solid #d9e0e8;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .symptom:hover {
+            transform: translateY(-1px);
+        }
+
+        .symptom.active {
+            background: #dff5e9;
+            border-color: #38a169;
+            color: #166534;
+            font-weight: 700;
+        }
+
+        .voice-box {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .voice-btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 13px 18px;
+            cursor: pointer;
+            font-weight: 800;
+            background: #172033;
+            color: white;
+        }
+
+        .voice-btn.recording {
+            background: #c62828;
+        }
+
+        .voice-status {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 18px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafcff;
+        }
+
+        .upload-area:hover {
+            border-color: #2e8b61;
+            background: #f3fbf6;
+        }
+
+        .preview {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .preview img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 15px;
+            background: #f1f5f9;
+        }
+
+        .gps-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .gps-btn {
+            white-space: nowrap;
+            border: 0;
+            border-radius: 12px;
+            background: #e8f0ff;
+            color: #164e9c;
+            padding: 0 16px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            border: 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #16834d, #2ea968);
+            color: white;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .submit-btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            display: none;
+            border-radius: 20px;
+            padding: 22px;
+            margin-top: 20px;
+            border: 1px solid #dce4ed;
+        }
+
+        .result.high {
+            background: #fff1f1;
+            border-color: #ef9a9a;
+        }
+
+        .result.moderate {
+            background: #fff9e8;
+            border-color: #f0c36b;
+        }
+
+        .result.low {
+            background: #effaf3;
+            border-color: #86d39e;
+        }
+
+        .risk-title {
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .score {
+            font-size: 42px;
+            font-weight: 900;
+            margin: 5px 0;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin: 12px 0 18px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #e11d48;
+            transition: width .7s ease;
+        }
+
+        .factor {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(0,0,0,.07);
+            font-size: 14px;
+        }
+
+        .ai-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 14px;
+            background: #f5f7fb;
+        }
+
+        .disclaimer {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 14px;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            color: #64748b;
+        }
+
+        @media(max-width: 700px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .page {
+                padding: 18px 12px 40px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="app-shell">
-  {% include "_nav.html" %}
 
-  <main class="main">
-    <div class="topbar">
-      <div>
-        <h1>Report a symptom</h1>
-        <p style="margin:0">A few details help us flag risk faster — this takes under a minute.</p>
-      </div>
+<div class="page">
+
+    <div class="header">
+        <h1>🐄 PashuRakshak AI</h1>
+        <p>Report livestock health problems and get instant AI-assisted risk assessment.</p>
     </div>
 
-    <form id="report-form" class="card" style="max-width:640px;">
-      <div class="field">
-        <label>Animal type</label>
-        <div class="chip-group" data-name="animal_type">
-          <div class="chip" data-value="cattle">Cattle</div>
-          <div class="chip" data-value="buffalo">Buffalo</div>
-          <div class="chip" data-value="goat">Goat / Sheep</div>
-          <div class="chip" data-value="poultry">Poultry</div>
+
+    <!-- BASIC INFORMATION -->
+
+    <div class="card">
+
+        <h2>🐮 Animal Information</h2>
+
+        <div class="grid">
+
+            <div>
+                <label for="animalType">
+                    Animal Type
+                </label>
+
+                <select id="animalType">
+                    <option value="cattle">Cattle</option>
+                    <option value="buffalo">Buffalo</option>
+                    <option value="goat">Goat</option>
+                    <option value="sheep">Sheep</option>
+                    <option value="poultry">Poultry</option>
+                    <option value="pig">Pig</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="affectedCount">
+                    Number of Animals Affected
+                </label>
+
+                <input
+                    id="affectedCount"
+                    type="number"
+                    min="1"
+                    value="1"
+                >
+            </div>
+
         </div>
-      </div>
 
-      <div class="field">
-        <label>Number of animals affected</label>
-        <input type="number" name="affected_count" min="1" value="1">
-      </div>
+        <div class="grid">
 
-      <div class="field">
-        <label>Symptoms observed</label>
-        <div class="chip-group" data-name="symptoms">
-          <div class="chip" data-value="fever">Fever</div>
-          <div class="chip" data-value="lesions">Mouth/foot lesions</div>
-          <div class="chip" data-value="loss_appetite">Loss of appetite</div>
-          <div class="chip" data-value="lameness">Lameness</div>
-          <div class="chip" data-value="diarrhea">Diarrhoea</div>
-          <div class="chip" data-value="milk_drop">Sudden milk drop</div>
-          <div class="chip" data-value="swelling">Swelling / nodules</div>
-          <div class="chip" data-value="death">Sudden death</div>
+            <div>
+                <label for="onsetDays">
+                    Days Since Symptoms Started
+                </label>
+
+                <input
+                    id="onsetDays"
+                    type="number"
+                    min="0"
+                    value="1"
+                >
+            </div>
+
+            <div>
+                <label for="vaccination">
+                    Vaccination Status
+                </label>
+
+                <select id="vaccination">
+                    <option value="up_to_date">Up to date</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="not_vaccinated">Not vaccinated</option>
+                    <option value="unknown">Unknown</option>
+                </select>
+            </div>
+
         </div>
-      </div>
 
-      <div class="field">
-        <label>Days since symptoms started</label>
-        <input type="number" name="days_since_onset" min="0" value="1">
-      </div>
-
-      <div class="field">
-        <label>Photo (optional)</label>
-        <input type="file" name="photo" accept="image/*" capture="environment">
-      </div>
-
-      <div class="field">
-        <label>Additional notes</label>
-        <textarea name="notes" placeholder="Anything else the vet should know"></textarea>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block">Submit report</button>
-    </form>
-
-    <div id="result" class="card-outline" style="max-width:640px; margin-top:18px; display:none;">
-      <h3>Triage result</h3>
-      <div id="result-body"></div>
     </div>
-  </main>
+
+
+    <!-- SYMPTOMS -->
+
+    <div class="card">
+
+        <h2>🩺 Symptoms</h2>
+
+        <p>
+            Select all symptoms you have observed.
+        </p>
+
+        <div class="symptoms">
+
+            <button class="symptom" data-value="fever">
+                🌡️ Fever
+            </button>
+
+            <button class="symptom" data-value="diarrhea">
+                💧 Diarrhea
+            </button>
+
+            <button class="symptom" data-value="cough">
+                😮‍💨 Cough
+            </button>
+
+            <button class="symptom" data-value="nasal_discharge">
+                🤧 Nasal Discharge
+            </button>
+
+            <button class="symptom" data-value="milk_drop">
+                🥛 Milk Drop
+            </button>
+
+            <button class="symptom" data-value="loss_appetite">
+                🍽️ Loss of Appetite
+            </button>
+
+            <button class="symptom" data-value="lameness">
+                🦵 Lameness
+            </button>
+
+            <button class="symptom" data-value="weakness">
+                🐄 Weakness
+            </button>
+
+            <button class="symptom" data-value="swelling">
+                🔴 Swelling
+            </button>
+
+            <button class="symptom" data-value="lesions">
+                🩹 Skin Lesions
+            </button>
+
+            <button class="symptom" data-value="bleeding">
+                🩸 Bleeding
+            </button>
+
+            <button class="symptom" data-value="difficulty_breathing">
+                🫁 Difficulty Breathing
+            </button>
+
+            <button class="symptom" data-value="abortion">
+                ⚠️ Abortion
+            </button>
+
+            <button class="symptom" data-value="death">
+                ☠️ Animal Death
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- VOICE REPORTING -->
+
+    <div class="card">
+
+        <h2>🎙️ Voice-Based Reporting</h2>
+
+        <p>
+            Speak the symptoms in your local language.
+        </p>
+
+        <div class="voice-box">
+
+            <button
+                id="voiceBtn"
+                class="voice-btn"
+                type="button"
+            >
+                🎙️ Start Voice Report
+            </button>
+
+            <span
+                id="voiceStatus"
+                class="voice-status"
+            >
+                Ready
+            </span>
+
+        </div>
+
+        <textarea
+            id="voiceText"
+            placeholder="Your voice report will appear here..."
+        ></textarea>
+
+        <div style="margin-top:10px">
+
+            <select id="voiceLanguage">
+
+                <option value="mr-IN">
+                    मराठी
+                </option>
+
+                <option value="hi-IN">
+                    हिन्दी
+                </option>
+
+                <option value="en-IN">
+                    English
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- IMAGE SCREENING -->
+
+    <div class="card">
+
+        <h2>📸 AI Image Disease Screening</h2>
+
+        <p>
+            Upload a clear photo of the affected animal or visible symptoms.
+        </p>
+
+        <label class="upload-area">
+
+            📷 Click to capture / upload photo
+
+            <input
+                id="animalImage"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+            >
+
+        </label>
+
+        <div
+            id="imagePreview"
+            class="preview"
+        >
+            <img
+                id="previewImg"
+                alt="Animal preview"
+            >
+        </div>
+
+        <button
+            id="screenImageBtn"
+            class="submit-btn"
+            type="button"
+            style="display:none"
+        >
+            🔍 Screen Image with AI
+        </button>
+
+        <div
+            id="imageResult"
+            class="ai-result"
+            style="display:none"
+        ></div>
+
+    </div>
+
+
+    <!-- LOCATION -->
+
+    <div class="card">
+
+        <h2>📍 Location</h2>
+
+        <p>
+            Location helps veterinary teams identify disease clusters.
+        </p>
+
+        <div class="gps-row">
+
+            <input
+                id="latitude"
+                type="text"
+                placeholder="Latitude"
+                readonly
+            >
+
+            <input
+                id="longitude"
+                type="text"
+                placeholder="Longitude"
+                readonly
+            >
+
+            <button
+                id="gpsBtn"
+                class="gps-btn"
+                type="button"
+            >
+                📍 Get GPS
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- NOTES -->
+
+    <div class="card">
+
+        <h2>📝 Additional Information</h2>
+
+        <textarea
+            id="notes"
+            placeholder="Describe anything else you observed..."
+        ></textarea>
+
+        <button
+            id="submitBtn"
+            class="submit-btn"
+        >
+            🚀 Submit Health Report
+        </button>
+
+        <div
+            id="loader"
+            class="loader"
+        >
+            ⏳ Analyzing health signals...
+        </div>
+
+    </div>
+
+
+    <!-- AI RISK RESULT -->
+
+    <div
+        id="riskResult"
+        class="result"
+    >
+
+        <div class="risk-title">
+            AI Health Risk Assessment
+        </div>
+
+        <div
+            id="riskLevel"
+            class="risk-title"
+        >
+            --
+        </div>
+
+        <div
+            id="riskScore"
+            class="score"
+        >
+            0/100
+        </div>
+
+        <div class="progress">
+            <div
+                id="riskProgress"
+                class="progress-bar"
+            ></div>
+        </div>
+
+        <div>
+            Confidence:
+            <strong id="confidence">
+                --
+            </strong>
+        </div>
+
+        <h3>Why this risk level?</h3>
+
+        <div id="factors"></div>
+
+        <h3>Recommended Action</h3>
+
+        <p id="recommendation"></p>
+
+        <div class="disclaimer">
+            ⚠️ AI-assisted screening only. This does not replace
+            examination or diagnosis by a qualified veterinarian.
+        </div>
+
+    </div>
+
 </div>
 
-<script src="/static/app.js"></script>
+
+<script>
+
+    // ========================================================
+    // SYMPTOM SELECTION
+    // ========================================================
+
+    const symptomButtons =
+        document.querySelectorAll(".symptom");
+
+    symptomButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                button.classList.toggle(
+                    "active"
+                );
+
+            }
+        );
+
+    });
+
+
+    function getSymptoms() {
+
+        return Array.from(
+            document.querySelectorAll(
+                ".symptom.active"
+            )
+        ).map(
+            button =>
+                button.dataset.value
+        );
+
+    }
+
+
+    // ========================================================
+    // IMAGE PREVIEW
+    // ========================================================
+
+    const imageInput =
+        document.getElementById(
+            "animalImage"
+        );
+
+    const preview =
+        document.getElementById(
+            "imagePreview"
+        );
+
+    const previewImg =
+        document.getElementById(
+            "previewImg"
+        );
+
+    const screenImageBtn =
+        document.getElementById(
+            "screenImageBtn"
+        );
+
+    imageInput.addEventListener(
+        "change",
+        () => {
+
+            const file =
+                imageInput.files[0];
+
+            if (!file) return;
+
+            const reader =
+                new FileReader();
+
+            reader.onload =
+                event => {
+
+                    previewImg.src =
+                        event.target.result;
+
+                    preview.style.display =
+                        "block";
+
+                    screenImageBtn.style.display =
+                        "block";
+                };
+
+            reader.readAsDataURL(file);
+
+        }
+    );
+
+
+    // ========================================================
+    // AI IMAGE SCREENING
+    // ========================================================
+
+    screenImageBtn.addEventListener(
+        "click",
+        async () => {
+
+            const file =
+                imageInput.files[0];
+
+            if (!file) return;
+
+            screenImageBtn.disabled =
+                true;
+
+            screenImageBtn.textContent =
+                "⏳ Analyzing...";
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "image",
+                file
+            );
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/image-screen",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!data.success) {
+                    throw new Error(
+                        data.error ||
+                        "Image screening failed"
+                    );
+                }
+
+                const result =
+                    data.result;
+
+                const box =
+                    document.getElementById(
+                        "imageResult"
+                    );
+
+                const signs =
+                    result.visible_signs ||
+                    [];
+
+                const categories =
+                    result.possible_categories ||
+                    [];
+
+                box.innerHTML = `
+                    <strong>🔎 AI Screening Result</strong>
+
+                    <p>
+                        <b>Risk:</b>
+                        ${result.risk_level || "UNKNOWN"}
+                    </p>
+
+                    <p>
+                        <b>Confidence:</b>
+                        ${result.confidence || 0}%
+                    </p>
+
+                    <p>
+                        <b>Visible Signs:</b>
+                        ${signs.length
+                            ? signs.join(", ")
+                            : "None identified"}
+                    </p>
+
+                    <p>
+                        <b>Possible Categories:</b>
+                        ${categories.length
+                            ? categories.join(", ")
+                            : "None identified"}
+                    </p>
+
+                    <p>
+                        <b>Recommendation:</b>
+                        ${result.recommendation || ""}
+                    </p>
+                `;
+
+                box.style.display =
+                    "block";
+
+            } catch (error) {
+
+                alert(
+                    "Image screening error: " +
+                    error.message
+                );
+
+            } finally {
+
+                screenImageBtn.disabled =
+                    false;
+
+                screenImageBtn.textContent =
+                    "🔍 Screen Image with AI";
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // GPS
+    // ========================================================
+
+    document
+        .getElementById("gpsBtn")
+        .addEventListener(
+            "click",
+            () => {
+
+                if (!navigator.geolocation) {
+
+                    alert(
+                        "GPS is not supported by this browser."
+                    );
+
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+
+                    position => {
+
+                        document
+                            .getElementById(
+                                "latitude"
+                            )
+                            .value =
+                            position.coords.latitude
+                                .toFixed(6);
+
+                        document
+                            .getElementById(
+                                "longitude"
+                            )
+                            .value =
+                            position.coords.longitude
+                                .toFixed(6);
+
+                    },
+
+                    () => {
+
+                        alert(
+                            "Unable to get your location. Please allow GPS permission."
+                        );
+
+                    },
+
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000
+                    }
+
+                );
+
+            }
+        );
+
+
+    // ========================================================
+    // VOICE REPORTING
+    // ========================================================
+
+    const voiceBtn =
+        document.getElementById(
+            "voiceBtn"
+        );
+
+    const voiceStatus =
+        document.getElementById(
+            "voiceStatus"
+        );
+
+    const voiceText =
+        document.getElementById(
+            "voiceText"
+        );
+
+    const voiceLanguage =
+        document.getElementById(
+            "voiceLanguage"
+        );
+
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if (!SpeechRecognition) {
+
+        voiceBtn.disabled = true;
+
+        voiceStatus.textContent =
+            "Voice recognition is not supported in this browser.";
+
+    } else {
+
+        const recognition =
+            new SpeechRecognition();
+
+        recognition.continuous = false;
+
+        recognition.interimResults = true;
+
+
+        voiceBtn.addEventListener(
+            "click",
+            () => {
+
+                recognition.lang =
+                    voiceLanguage.value;
+
+                recognition.start();
+
+                voiceBtn.classList.add(
+                    "recording"
+                );
+
+                voiceBtn.textContent =
+                    "🔴 Listening...";
+
+                voiceStatus.textContent =
+                    "Speak your animal symptoms.";
+
+            }
+        );
+
+
+        recognition.onresult =
+            event => {
+
+                let transcript = "";
+
+                for (
+                    let i =
+                        event.resultIndex;
+                    i < event.results.length;
+                    i++
+                ) {
+
+                    transcript +=
+                        event.results[i][0].transcript;
+
+                }
+
+                voiceText.value =
+                    transcript;
+
+            };
+
+
+        recognition.onend =
+            () => {
+
+                voiceBtn.classList.remove(
+                    "recording"
+                );
+
+                voiceBtn.textContent =
+                    "🎙️ Start Voice Report";
+
+                voiceStatus.textContent =
+                    "Voice captured.";
+
+            };
+
+
+        recognition.onerror =
+            event => {
+
+                voiceBtn.classList.remove(
+                    "recording"
+                );
+
+                voiceBtn.textContent =
+                    "🎙️ Start Voice Report";
+
+                voiceStatus.textContent =
+                    "Voice error: " +
+                    event.error;
+
+            };
+
+    }
+
+
+    // ========================================================
+    // SUBMIT REPORT
+    // ========================================================
+
+    document
+        .getElementById("submitBtn")
+        .addEventListener(
+            "click",
+            async () => {
+
+                const submitBtn =
+                    document.getElementById(
+                        "submitBtn"
+                    );
+
+                const loader =
+                    document.getElementById(
+                        "loader"
+                    );
+
+                const symptoms =
+                    getSymptoms();
+
+                if (!symptoms.length) {
+
+                    alert(
+                        "Please select at least one symptom."
+                    );
+
+                    return;
+                }
+
+
+                const payload = {
+
+                    animal_type:
+                        document
+                            .getElementById(
+                                "animalType"
+                            )
+                            .value,
+
+                    affected_count:
+                        Number(
+                            document
+                                .getElementById(
+                                    "affectedCount"
+                                )
+                                .value
+                        ),
+
+                    days_since_onset:
+                        Number(
+                            document
+                                .getElementById(
+                                    "onsetDays"
+                                )
+                                .value
+                        ),
+
+                    vaccination_status:
+                        document
+                            .getElementById(
+                                "vaccination"
+                            )
+                            .value,
+
+                    symptoms:
+
+                        symptoms,
+
+                    notes:
+                        document
+                            .getElementById(
+                                "notes"
+                            )
+                            .value,
+
+                    village:
+                        "Satara",
+
+                    lat:
+                        document
+                            .getElementById(
+                                "latitude"
+                            )
+                            .value || null,
+
+                    lng:
+                        document
+                            .getElementById(
+                                "longitude"
+                            )
+                            .value || null
+
+                };
+
+
+                submitBtn.disabled =
+                    true;
+
+                loader.style.display =
+                    "block";
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/reports",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        throw new Error(
+                            data.error ||
+                            "Unable to submit report."
+                        );
+
+                    }
+
+
+                    showRiskResult(
+                        data.risk
+                    );
+
+
+                    document
+                        .getElementById(
+                            "riskResult"
+                        )
+                        .scrollIntoView({
+                            behavior: "smooth"
+                        });
+
+
+                } catch (error) {
+
+                    alert(
+                        "Report submission failed: " +
+                        error.message
+                    );
+
+                } finally {
+
+                    submitBtn.disabled =
+                        false;
+
+                    loader.style.display =
+                        "none";
+
+                }
+
+            }
+        );
+
+
+    // ========================================================
+    // DISPLAY RISK RESULT
+    // ========================================================
+
+    function showRiskResult(
+        result
+    ) {
+
+        const box =
+            document.getElementById(
+                "riskResult"
+            );
+
+        const level =
+            String(
+                result.risk_level ||
+                "LOW"
+            ).toLowerCase();
+
+
+        box.className =
+            "result " +
+            level;
+
+        box.style.display =
+            "block";
+
+
+        document
+            .getElementById(
+                "riskLevel"
+            )
+            .textContent =
+            level.toUpperCase();
+
+
+        document
+            .getElementById(
+                "riskScore"
+            )
+            .textContent =
+            `${result.risk_score || 0}/100`;
+
+
+        document
+            .getElementById(
+                "confidence"
+            )
+            .textContent =
+            `${result.confidence || 0}%`;
+
+
+        document
+            .getElementById(
+                "riskProgress"
+            )
+            .style.width =
+            `${result.risk_score || 0}%`;
+
+
+        document
+            .getElementById(
+                "recommendation"
+            )
+            .textContent =
+            result.recommendation ||
+            "Consult a veterinarian.";
+
+
+        const factors =
+            document.getElementById(
+                "factors"
+            );
+
+
+        factors.innerHTML = "";
+
+
+        const riskFactors =
+            result.factors || [];
+
+
+        if (!riskFactors.length) {
+
+            factors.innerHTML =
+                "<p>No major contributing factors recorded.</p>";
+
+            return;
+        }
+
+
+        riskFactors.forEach(
+            factor => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "factor";
+
+                row.innerHTML = `
+                    <span>
+                        ${factor.factor}
+                    </span>
+
+                    <strong>
+                        +${factor.points}
+                    </strong>
+                `;
+
+                factors.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+</script>
+
 </body>
 </html>
+```
