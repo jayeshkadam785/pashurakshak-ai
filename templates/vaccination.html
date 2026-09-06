@@ -3,68 +3,474 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PashuRakshak — Vaccination</title>
+
+<title>PashuRakshak AI — Vaccination Tracking</title>
+
 <style>
-body{margin:0;background:#07110c;color:#eef8f0;font-family:system-ui,sans-serif}
-.wrap{max-width:1000px;margin:auto;padding:28px}
-.card{margin-top:18px;padding:22px;border:1px solid #294332;border-radius:18px;background:#0d1b12}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-label{color:#b8cabc;font-size:13px}
-input,textarea{width:100%;box-sizing:border-box;padding:11px;margin-top:5px;border-radius:9px;border:1px solid #36513f;background:#09150d;color:#fff}
-button{padding:12px 16px;margin-top:14px;border:0;border-radius:9px;background:#2ca86b;color:#fff;font-weight:800}
-.row{padding:12px 0;border-bottom:1px solid #26392b}
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#07110c;
+  color:#eef8f0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.wrap{
+  max-width:1050px;
+  margin:auto;
+  padding:28px;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.card{
+  margin-top:20px;
+  padding:22px;
+  border:1px solid #294332;
+  border-radius:18px;
+  background:#0d1b12;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(210px,1fr));
+  gap:14px;
+}
+
+label{
+  display:block;
+  color:#b8cabc;
+  font-size:13px;
+}
+
+input,
+textarea{
+  width:100%;
+  padding:11px;
+  margin-top:6px;
+  border-radius:9px;
+  border:1px solid #36513f;
+  background:#09150d;
+  color:#fff;
+  outline:none;
+}
+
+input:focus,
+textarea:focus{
+  border-color:#2ca86b;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+button{
+  padding:12px 16px;
+  margin-top:15px;
+  border:0;
+  border-radius:9px;
+  background:#2ca86b;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.logout{
+  background:#7b2929;
+}
+
+.row{
+  padding:14px 0;
+  border-bottom:1px solid #26392b;
+}
+
+.row:last-child{
+  border-bottom:0;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:20px;
+  background:#183b26;
+  color:#9ee7b7;
+  font-size:12px;
+  font-weight:700;
+}
+
+.muted{
+  color:#9db1a3;
+}
+
+#message{
+  display:none;
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  background:#14281a;
+}
 </style>
 </head>
+
+
 <body data-protected="true">
+
 <div class="wrap">
-<h1>💉 Vaccination Tracking</h1>
 
-<div class="card">
-<form id="form">
-<div class="grid">
-<label>Species<input name="species" placeholder="Cattle" required></label>
-<label>Animal ID<input name="animal_id" placeholder="TAG-001"></label>
-<label>Vaccine<input name="vaccine_name" placeholder="FMD" required></label>
-<label>Vaccination date<input name="vaccination_date" type="date" required></label>
-<label>Next due date<input name="next_due_date" type="date"></label>
-<label>Batch number<input name="batch_number"></label>
-<label>Administered by<input name="administered_by"></label>
-</div>
-<label>Notes<textarea name="notes"></textarea></label>
-<button>Save Vaccination</button>
-</form>
+  <div class="header">
+
+    <div>
+      <h1>💉 Vaccination Tracking</h1>
+
+      <div class="muted">
+        Track livestock vaccination and upcoming doses
+      </div>
+    </div>
+
+    <button
+      class="logout"
+      data-logout
+    >
+      Logout
+    </button>
+
+  </div>
+
+
+  <!-- ADD VACCINATION -->
+
+  <div class="card">
+
+    <h2>Add Vaccination Record</h2>
+
+    <form id="vaccinationForm">
+
+      <div class="grid">
+
+        <label>
+          Species
+          <input
+            name="species"
+            placeholder="Cattle"
+            required
+          >
+        </label>
+
+
+        <label>
+          Animal ID / Tag
+          <input
+            name="animal_id"
+            placeholder="TAG-001"
+          >
+        </label>
+
+
+        <label>
+          Vaccine Name
+          <input
+            name="vaccine_name"
+            placeholder="FMD"
+            required
+          >
+        </label>
+
+
+        <label>
+          Vaccination Date
+          <input
+            name="vaccination_date"
+            type="date"
+            required
+          >
+        </label>
+
+
+        <label>
+          Next Due Date
+          <input
+            name="next_due_date"
+            type="date"
+          >
+        </label>
+
+
+        <label>
+          Batch Number
+          <input
+            name="batch_number"
+            placeholder="Batch number"
+          >
+        </label>
+
+
+        <label>
+          Administered By
+          <input
+            name="administered_by"
+            placeholder="Veterinarian name"
+          >
+        </label>
+
+      </div>
+
+
+      <label style="margin-top:14px">
+        Notes
+
+        <textarea
+          name="notes"
+          placeholder="Additional vaccination notes..."
+        ></textarea>
+
+      </label>
+
+
+      <button type="submit">
+        💾 Save Vaccination
+      </button>
+
+    </form>
+
+
+    <div id="message"></div>
+
+  </div>
+
+
+  <!-- RECORDS -->
+
+  <div class="card">
+
+    <h2>📋 Recent Vaccination Records</h2>
+
+    <div id="list">
+      Loading records...
+    </div>
+
+  </div>
+
 </div>
 
-<div class="card">
-<h2>Recent records</h2>
-<div id="list">Loading...</div>
-</div>
-</div>
 
 <script src="/static/auth.js"></script>
 <script src="/static/features.js"></script>
+
+
 <script>
-async function load(){
- try{
-  const d=await PashuFeatures.vaccinations();
-  document.getElementById("list").innerHTML=(d.records||[]).map(x=>
-   `<div class="row"><b>${x.vaccine_name||"Vaccine"}</b> — ${x.species||"Animal"} — ${x.vaccination_date||"—"} → next: ${x.next_due_date||"—"}</div>`
-  ).join("") || "No records yet.";
- }catch(e){document.getElementById("list").textContent=e.message}
+
+const form =
+  document.getElementById(
+    "vaccinationForm"
+  );
+
+const list =
+  document.getElementById("list");
+
+const message =
+  document.getElementById("message");
+
+
+function showMessage(text){
+
+  message.textContent = text;
+
+  message.style.display = "block";
+
 }
 
-document.getElementById("form").onsubmit=async e=>{
- e.preventDefault();
- try{
-  const payload=Object.fromEntries(new FormData(e.target).entries());
-  await PashuFeatures.addVaccination(payload);
-  alert("Vaccination saved");
-  e.target.reset();
-  load();
- }catch(e){alert(e.message)}
-};
 
-load();
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+async function loadVaccinations(){
+
+  list.innerHTML =
+    "Loading records...";
+
+
+  try{
+
+    const data =
+      await PashuFeatures.vaccinations();
+
+
+    const records =
+      data.records || [];
+
+
+    if(!records.length){
+
+      list.innerHTML = `
+        <div class="muted">
+          No vaccination records yet.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    list.innerHTML =
+      records.map(record => `
+
+        <div class="row">
+
+          <div>
+
+            <span class="badge">
+              ${escapeHtml(
+                record.vaccine_name ||
+                "Vaccine"
+              )}
+            </span>
+
+          </div>
+
+
+          <p>
+
+            <b>Species:</b>
+            ${escapeHtml(
+              record.species || "—"
+            )}
+
+            &nbsp; | &nbsp;
+
+            <b>Animal:</b>
+            ${escapeHtml(
+              record.animal_id || "—"
+            )}
+
+          </p>
+
+
+          <p class="muted">
+
+            Vaccinated:
+            ${escapeHtml(
+              record.vaccination_date || "—"
+            )}
+
+            &nbsp; → &nbsp;
+
+            Next Due:
+            ${escapeHtml(
+              record.next_due_date || "Not set"
+            )}
+
+          </p>
+
+
+          ${
+            record.administered_by
+            ? `<p class="muted">
+                 By:
+                 ${escapeHtml(
+                   record.administered_by
+                 )}
+               </p>`
+            : ""
+          }
+
+        </div>
+
+      `).join("");
+
+
+  }catch(error){
+
+    list.innerHTML = `
+      <div class="muted">
+        ❌ ${escapeHtml(
+          error.message ||
+          "Unable to load records."
+        )}
+      </div>
+    `;
+
+  }
+
+}
+
+
+form.addEventListener(
+  "submit",
+  async function(event){
+
+    event.preventDefault();
+
+    message.style.display =
+      "none";
+
+
+    try{
+
+      const payload =
+        Object.fromEntries(
+          new FormData(form).entries()
+        );
+
+
+      await PashuFeatures
+        .addVaccination(payload);
+
+
+      showMessage(
+        "✅ Vaccination record saved successfully."
+      );
+
+
+      form.reset();
+
+
+      await loadVaccinations();
+
+
+    }catch(error){
+
+      showMessage(
+        "❌ " +
+        (
+          error.message ||
+          "Failed to save vaccination."
+        )
+      );
+
+    }
+
+  }
+);
+
+
+loadVaccinations();
+
 </script>
+
 </body>
 </html>
