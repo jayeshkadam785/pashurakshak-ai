@@ -937,8 +937,29 @@ def dashboard_vet():
 @app.route("/dashboard/official")
 def dashboard_official():
 
+    reports = get_reports()
+
+    totals = {
+        "total_open_reports": len(reports),
+        "total_reports": len(reports),
+        "high_risk_reports": sum(
+            1 for r in reports
+            if str(r.get("risk_level", "")).upper() == "HIGH"
+        ),
+        "moderate_risk_reports": sum(
+            1 for r in reports
+            if str(r.get("risk_level", "")).upper() == "MODERATE"
+        ),
+        "low_risk_reports": sum(
+            1 for r in reports
+            if str(r.get("risk_level", "")).upper() == "LOW"
+        )
+    }
+
     return render_template(
-        "dashboard_official.html"
+        "dashboard_official.html",
+        totals=totals,
+        reports=reports
     )
 
 
