@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -41,12 +42,12 @@ body{
   margin:12px 0;
   border:1px solid #294332;
   border-radius:14px;
+  background:#0a1710;
 }
 
 .grid{
   display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(220px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:12px;
 }
 
@@ -82,6 +83,11 @@ button:hover{
   opacity:.9;
 }
 
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .logout{
   background:#7b2929;
 }
@@ -110,11 +116,49 @@ button:hover{
   padding:30px;
   color:#9db1a3;
 }
+
+.loading{
+  text-align:center;
+  padding:30px;
+  color:#9db1a3;
+}
+
+.error-box{
+  border:1px solid #7b2929;
+  background:#24100f;
+  color:#ffb0a8;
+  padding:18px;
+  border-radius:12px;
+}
+
+.status-badge{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#183b28;
+  color:#8ff0b5;
+  font-size:.8rem;
+  font-weight:800;
+}
+
+.header-info{
+  margin-top:8px;
+  font-size:.85rem;
+  color:#769080;
+}
 </style>
 </head>
 
-
-<body data-protected="true">
+<!--
+  IMPORTANT:
+  Only the Supabase publishable key is exposed to the browser.
+  NEVER put SUPABASE_KEY / sb_secret key here.
+-->
+<body
+  data-protected="true"
+  data-supabase-url="{{ supabase_url }}"
+  data-supabase-key="{{ supabase_publishable_key }}"
+>
 
 <div class="wrap">
 
@@ -126,86 +170,46 @@ button:hover{
       <div class="muted">
         Review → Verify → Treat → Close
       </div>
+
+      <div class="header-info">
+        PashuRakshak AI · Veterinary Response Center
+      </div>
     </div>
 
     <button
       class="logout"
       data-logout
+      type="button"
     >
       Logout
     </button>
 
   </div>
 
-
   <div
     id="cases"
     class="card"
   >
-    Loading cases...
+    <div class="loading">
+      🔄 Checking authentication and loading cases...
+    </div>
   </div>
 
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/static/auth.js"></script>
 <script src="/static/features.js"></script>
-
 
 <script>
 
 let reports = [];
+let pageReady = false;
 
 
-async function loadCases(){
-
-  const box =
-    document.getElementById("cases");
-
-  box.innerHTML =
-    "Loading cases...";
-
-
-  try{
-
-    const response =
-      await PashuAuth.authFetch(
-        "/api/reports"
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "Unable to load cases."
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    reports =
-      data.reports || [];
-
-
-    renderCases();
-
-
-  }catch(error){
-
-    box.innerHTML = `
-      <div class="empty">
-        ❌ ${escapeHtml(error.message)}
-      </div>
-    `;
-
-  }
-
-}
-
+/* ============================================================
+   HTML ESCAPE
+   ============================================================ */
 
 function escapeHtml(value){
 
@@ -219,29 +223,45 @@ function escapeHtml(value){
 }
 
 
+/* ============================================================
+   RISK CLASS
+   ============================================================ */
+
 function riskClass(level){
 
   const value =
     String(level || "")
       .toLowerCase();
 
-  if(value === "high")
+  if(value === "high"){
     return "risk-high";
+  }
 
-  if(value === "moderate")
+  if(value === "moderate"){
     return "risk-moderate";
+  }
 
   return "risk-low";
 
 }
 
 
+/* ============================================================
+   SYMPTOMS
+   ============================================================ */
+
 function symptomsText(symptoms){
 
   if(Array.isArray(symptoms)){
 
+    if(!symptoms.length){
+      return "No symptoms recorded";
+    }
+
     return symptoms
-      .map(x => escapeHtml(x))
+      .map(function(x){
+        return escapeHtml(x);
+      })
       .join(", ");
 
   }
@@ -253,6 +273,171 @@ function symptomsText(symptoms){
 }
 
 
+/* ============================================================
+   AUTH CHECK
+   ============================================================ */
+
+async function ensureAuthenticated(){
+
+  try{
+
+    if(!window.PashuAuth){
+
+      throw new Error(
+        "Authentication system failed to load."
+      );
+
+    }
+
+    const session =
+      await window.PashuAuth.session();
+
+    if(!session){
+
+      window.location.href = "/login";
+      return false;
+
+    }
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      "Authentication check failed:",
+      error
+    );
+
+    window.location.href = "/login";
+    return false;
+
+  }
+
+}
+
+
+/* ============================================================
+   LOAD CASES
+   ============================================================ */
+
+async function loadCases(){
+
+  const box =
+    document.getElementById("cases");
+
+  box.innerHTML = `
+    <div class="loading">
+      🔄 Loading veterinary cases...
+    </div>
+  `;
+
+  try{
+
+    const authenticated =
+      await ensureAuthenticated();
+
+    if(!authenticated){
+      return;
+    }
+
+
+    const response =
+      await window.PashuAuth.authFetch(
+        "/api/reports"
+      );
+
+
+    /*
+      If the backend rejects the token, do not silently
+      continue as an unauthenticated page.
+    */
+    if(response.status === 401 ||
+       response.status === 403){
+
+      box.innerHTML = `
+        <div class="error-box">
+          ❌ Your login session has expired.
+          <br><br>
+          Please login again.
+        </div>
+      `;
+
+      setTimeout(function(){
+        window.location.href = "/login";
+      },1500);
+
+      return;
+
+    }
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Unable to load veterinary cases. HTTP " +
+        response.status
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if(data.success === false){
+
+      throw new Error(
+        data.error ||
+        "Unable to load cases."
+      );
+
+    }
+
+
+    reports =
+      Array.isArray(data.reports)
+        ? data.reports
+        : [];
+
+
+    pageReady = true;
+
+    renderCases();
+
+
+  }catch(error){
+
+    console.error(
+      "Load cases failed:",
+      error
+    );
+
+    box.innerHTML = `
+      <div class="error-box">
+        ❌ ${escapeHtml(
+          error.message ||
+          "Failed to load cases."
+        )}
+        <br><br>
+        <button
+          type="button"
+          onclick="loadCases()"
+        >
+          🔄 Retry
+        </button>
+      </div>
+    `;
+
+  }
+
+}
+
+
+/* ============================================================
+   RENDER CASES
+   ============================================================ */
+
 function renderCases(){
 
   const box =
@@ -263,10 +448,14 @@ function renderCases(){
 
     box.innerHTML = `
       <div class="empty">
-        <h3>No livestock cases found</h3>
+
+        <h3>📋 No livestock cases found</h3>
+
         <p>
-          New farmer reports will appear here.
+          New farmer reports will appear here
+          for veterinary verification.
         </p>
+
       </div>
     `;
 
@@ -276,14 +465,26 @@ function renderCases(){
 
 
   box.innerHTML =
-    reports.map(caseData => {
+    reports.map(function(caseData){
+
+      const rawId =
+        caseData.id || "";
 
       const id =
-        escapeHtml(caseData.id || "");
+        escapeHtml(rawId);
+
 
       const level =
         String(
           caseData.risk_level || "LOW"
+        ).toUpperCase();
+
+
+      const currentStatus =
+        String(
+          caseData.case_status ||
+          caseData.status ||
+          "UNDER_REVIEW"
         ).toUpperCase();
 
 
@@ -298,12 +499,22 @@ function renderCases(){
             ${id || "—"}
           </div>
 
+
           <div>
             <b>Village</b><br>
             ${escapeHtml(
               caseData.village || "—"
             )}
           </div>
+
+
+          <div>
+            <b>Block</b><br>
+            ${escapeHtml(
+              caseData.block || "—"
+            )}
+          </div>
+
 
           <div>
             <b>Animal</b><br>
@@ -312,69 +523,111 @@ function renderCases(){
             )}
           </div>
 
+
           <div>
             <b>Risk</b><br>
+
             <span class="${riskClass(level)}">
+
               ${level}
+
               (${escapeHtml(
                 caseData.risk_score ?? 0
               )})
+
             </span>
+
           </div>
+
 
           <div>
             <b>Affected</b><br>
+
             ${escapeHtml(
               caseData.affected_count ?? 0
             )}
+
           </div>
 
+
           <div>
-            <b>Status</b><br>
-            ${escapeHtml(
-              caseData.case_status ||
-              "UNDER_REVIEW"
-            )}
+            <b>Current Status</b><br>
+
+            <span class="status-badge">
+              ${escapeHtml(currentStatus)}
+            </span>
+
           </div>
 
         </div>
 
 
         <p class="muted">
+
           <b>Symptoms:</b>
+
           ${symptomsText(
             caseData.symptoms
           )}
+
         </p>
 
 
         <label>
+
           <b>Update Status</b>
+
         </label>
 
-        <select id="status-${id}">
 
-          <option value="UNDER_REVIEW">
+        <select
+          id="status-${id}"
+        >
+
+          <option
+            value="UNDER_REVIEW"
+            ${currentStatus === "UNDER_REVIEW" ? "selected" : ""}
+          >
             UNDER REVIEW
           </option>
 
-          <option value="VERIFIED">
+
+          <option
+            value="VERIFIED"
+            ${currentStatus === "VERIFIED" ? "selected" : ""}
+          >
             VERIFIED
           </option>
 
-          <option value="ISOLATED">
+
+          <option
+            value="ISOLATED"
+            ${currentStatus === "ISOLATED" ? "selected" : ""}
+          >
             ISOLATED
           </option>
 
-          <option value="TREATMENT">
+
+          <option
+            value="TREATMENT"
+            ${currentStatus === "TREATMENT" ? "selected" : ""}
+          >
             TREATMENT
           </option>
 
-          <option value="CLOSED">
+
+          <option
+            value="CLOSED"
+            ${currentStatus === "CLOSED" ? "selected" : ""}
+          >
             CLOSED
           </option>
 
-          <option value="REJECTED">
+
+          <option
+            value="REJECTED"
+            ${currentStatus === "REJECTED" ? "selected" : ""}
+          >
             REJECTED
           </option>
 
@@ -388,9 +641,10 @@ function renderCases(){
 
 
         <button
+          type="button"
           onclick="updateCase('${id}')"
         >
-          Update Case
+          ✅ Update Case
         </button>
 
       </div>
@@ -402,6 +656,10 @@ function renderCases(){
 }
 
 
+/* ============================================================
+   UPDATE CASE
+   ============================================================ */
+
 async function updateCase(id){
 
   try{
@@ -411,20 +669,41 @@ async function updateCase(id){
         "status-" + id
       );
 
+
     const noteElement =
       document.getElementById(
         "note-" + id
       );
 
 
+    if(!statusElement ||
+       !noteElement){
+
+      throw new Error(
+        "Case form could not be loaded."
+      );
+
+    }
+
+
     const status =
       statusElement.value;
+
 
     const note =
       noteElement.value.trim();
 
 
-    await PashuFeatures.verifyCase(
+    if(!window.PashuFeatures){
+
+      throw new Error(
+        "Feature API is not available."
+      );
+
+    }
+
+
+    await window.PashuFeatures.verifyCase(
       id,
       {
         case_status: status,
@@ -443,10 +722,17 @@ async function updateCase(id){
 
   }catch(error){
 
+    console.error(
+      "Case update failed:",
+      error
+    );
+
     alert(
       "❌ " +
-      (error.message ||
-       "Failed to update case.")
+      (
+        error.message ||
+        "Failed to update case."
+      )
     );
 
   }
@@ -454,9 +740,21 @@ async function updateCase(id){
 }
 
 
-loadCases();
+/* ============================================================
+   START
+   ============================================================ */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function(){
+
+    loadCases();
+
+  }
+);
 
 </script>
 
 </body>
 </html>
+```
