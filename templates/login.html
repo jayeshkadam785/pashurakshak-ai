@@ -9,9 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -56,8 +54,7 @@ label{
   font-size:14px;
 }
 
-input,
-select{
+input,select{
   width:100%;
   padding:13px;
   border-radius:10px;
@@ -67,8 +64,7 @@ select{
   outline:none;
 }
 
-input:focus,
-select:focus{
+input:focus,select:focus{
   border-color:#2ca86b;
 }
 
@@ -88,6 +84,11 @@ button:hover{
   opacity:.9;
 }
 
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .signup{
   background:#183b26;
 }
@@ -100,6 +101,7 @@ button:hover{
   background:#14281a;
   color:#bde8c8;
   font-size:14px;
+  line-height:1.5;
 }
 </style>
 </head>
@@ -119,7 +121,6 @@ button:hover{
     Secure Livestock Health Platform
   </div>
 
-
   <label for="email">Email</label>
 
   <input
@@ -128,7 +129,6 @@ button:hover{
     placeholder="you@example.com"
     autocomplete="email"
   >
-
 
   <label for="password">Password</label>
 
@@ -139,61 +139,109 @@ button:hover{
     autocomplete="current-password"
   >
 
-
   <label for="role">Select Role</label>
 
   <select id="role">
-
-    <option value="farmer">
-      👨‍🌾 Farmer
-    </option>
-
-    <option value="vet">
-      🩺 Veterinarian
-    </option>
-
-    <option value="officer">
-      🏛️ Government Officer
-    </option>
-
-    <option value="admin">
-      🔐 Admin
-    </option>
-
+    <option value="farmer">👨‍🌾 Farmer</option>
+    <option value="vet">🩺 Veterinarian</option>
+    <option value="officer">🏛️ Government Officer</option>
+    <option value="admin">🔐 Admin</option>
   </select>
-
 
   <button id="login">
     Sign In
   </button>
 
-
   <button id="signup" class="signup">
     Create Account
   </button>
-
 
   <div id="msg"></div>
 
 </div>
 
-
 <script src="/static/auth.js"></script>
 
 <script>
-
 const msg = document.getElementById("msg");
+const loginBtn = document.getElementById("login");
+const signupBtn = document.getElementById("signup");
 
 function showMessage(text){
-
   msg.textContent = text;
   msg.style.display = "block";
+}
+
+function getRole(){
+  return document.getElementById("role").value;
+}
+
+function getRoute(role){
+  const routes = {
+    farmer: "/dashboard/farmer",
+    vet: "/vet/cases",
+    officer: "/dashboard/official",
+    admin: "/dashboard/official"
+  };
+
+  return routes[role] || "/dashboard/farmer";
+}
+
+/*
+ * Handle Supabase email-confirmation callback.
+ * After clicking the confirmation link, Supabase may return
+ * the user to this page with a session in the browser.
+ */
+async function handleAuthCallback(){
+
+  try{
+
+    if(!window.PashuAuth || !PashuAuth.client){
+      return;
+    }
+
+    const session = await PashuAuth.session();
+
+    if(session && session.user){
+
+      const savedRole =
+        localStorage.getItem("pashu_role") || "farmer";
+
+      /*
+       * Only redirect automatically when the URL contains
+       * Supabase authentication callback parameters.
+       */
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+
+      if(
+        hash.includes("access_token") ||
+        hash.includes("refresh_token") ||
+        search.includes("code=")
+      ){
+
+        showMessage("Email confirmed successfully. Opening dashboard...");
+
+        setTimeout(function(){
+          window.location.href = getRoute(savedRole);
+        }, 700);
+
+      }
+
+    }
+
+  }catch(error){
+
+    console.error("Auth callback error:", error);
+
+  }
 
 }
 
 
-// LOGIN
-document.getElementById("login").onclick = async function(){
+/* LOGIN */
+
+loginBtn.onclick = async function(){
 
   const email =
     document.getElementById("email").value.trim();
@@ -202,8 +250,7 @@ document.getElementById("login").onclick = async function(){
     document.getElementById("password").value;
 
   const role =
-    document.getElementById("role").value;
-
+    getRole();
 
   if(!email || !password){
 
@@ -212,61 +259,59 @@ document.getElementById("login").onclick = async function(){
 
   }
 
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Signing in...";
 
   try{
 
     const result =
-      await PashuAuth.login(
-        email,
-        password
-      );
-
+      await PashuAuth.login(email,password);
 
     if(result.error){
-
       throw result.error;
+    }
+
+    if(!result.data || !result.data.session){
+
+      throw new Error(
+        "Login requires email confirmation. Please confirm your email first."
+      );
 
     }
 
-
     PashuAuth.setRole(role);
 
+    showMessage("Login successful. Opening dashboard...");
 
-    const routes = {
+    setTimeout(function(){
 
-      farmer:
-        "/dashboard/farmer",
+      window.location.href =
+        getRoute(role);
 
-      vet:
-        "/vet/cases",
-
-      officer:
-        "/dashboard/official",
-
-      admin:
-        "/dashboard/official"
-
-    };
-
-
-    window.location.href =
-      routes[role] || "/";
-
+    },500);
 
   }catch(error){
 
+    console.error("Login error:",error);
+
     showMessage(
       error.message ||
-      "Login failed."
+      "Login failed. Please check your email and password."
     );
+
+  }finally{
+
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Sign In";
 
   }
 
 };
 
 
-// SIGN UP
-document.getElementById("signup").onclick = async function(){
+/* SIGN UP */
+
+signupBtn.onclick = async function(){
 
   const email =
     document.getElementById("email").value.trim();
@@ -275,8 +320,7 @@ document.getElementById("signup").onclick = async function(){
     document.getElementById("password").value;
 
   const role =
-    document.getElementById("role").value;
-
+    getRole();
 
   if(!email || !password){
 
@@ -288,7 +332,6 @@ document.getElementById("signup").onclick = async function(){
 
   }
 
-
   if(password.length < 6){
 
     showMessage(
@@ -299,6 +342,8 @@ document.getElementById("signup").onclick = async function(){
 
   }
 
+  signupBtn.disabled = true;
+  signupBtn.textContent = "Creating account...";
 
   try{
 
@@ -309,31 +354,64 @@ document.getElementById("signup").onclick = async function(){
         role
       );
 
-
     if(result.error){
-
       throw result.error;
+    }
+
+    PashuAuth.setRole(role);
+
+    /*
+     * Supabase returns a user but no session when
+     * email confirmation is required.
+     */
+    if(result.data && result.data.session){
+
+      showMessage(
+        "Account created successfully. Opening dashboard..."
+      );
+
+      setTimeout(function(){
+
+        window.location.href =
+          getRoute(role);
+
+      },700);
+
+    }else{
+
+      showMessage(
+        "Account created successfully. " +
+        "Please check your email and click the confirmation link. " +
+        "After confirmation, return here and sign in."
+      );
 
     }
 
-
-    showMessage(
-      "Account created successfully. " +
-      "Check your email if confirmation is enabled, " +
-      "then sign in."
-    );
-
-
   }catch(error){
+
+    console.error("Signup error:",error);
 
     showMessage(
       error.message ||
       "Account creation failed."
     );
 
+  }finally{
+
+    signupBtn.disabled = false;
+    signupBtn.textContent = "Create Account";
+
   }
 
 };
+
+
+/* CHECK EMAIL CONFIRMATION CALLBACK */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  handleAuthCallback
+);
 
 </script>
 
