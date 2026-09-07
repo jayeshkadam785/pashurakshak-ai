@@ -79,7 +79,7 @@ if (
 
         print(
             "Supabase initialization failed:",
-            exc
+             repr(exc)
         )
 
         supabase = None
