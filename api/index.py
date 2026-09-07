@@ -49,11 +49,11 @@ except Exception as exc:
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 
-# IMPORTANT:
-# This is backend/server-only. NEVER send this to the browser.
+# Backend/server-only key.
+# NEVER send this key to the browser.
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-# This key is safe to send to the frontend.
+# Safe frontend publishable key.
 SUPABASE_PUBLISHABLE_KEY = os.environ.get(
     "SUPABASE_PUBLISHABLE_KEY",
     ""
@@ -129,7 +129,6 @@ HIGH_RISK_SYMPTOMS = {
     "abortion": 5,
 }
 
-
 MODERATE_SYMPTOMS = {
     "fever": 3,
     "milk_drop": 3,
@@ -138,7 +137,6 @@ MODERATE_SYMPTOMS = {
     "nasal_discharge": 2,
     "loss_weight": 2,
 }
-
 
 LOW_RISK_SYMPTOMS = {
     "lameness": 1,
@@ -284,7 +282,6 @@ def score_report(data):
                 "points": weight
             })
 
-
     # --------------------------------------------------------
     # AFFECTED ANIMALS
     # --------------------------------------------------------
@@ -319,7 +316,6 @@ def score_report(data):
             "points": 2
         })
 
-
     # --------------------------------------------------------
     # DURATION
     # --------------------------------------------------------
@@ -344,7 +340,6 @@ def score_report(data):
             "points": 2
         })
 
-
     # --------------------------------------------------------
     # VACCINATION
     # --------------------------------------------------------
@@ -358,14 +353,10 @@ def score_report(data):
         score += 2
 
         factors.append({
-            "factor":
-                "vaccination protection uncertain/overdue",
-            "impact":
-                "moderate",
-            "points":
-                2
+            "factor": "vaccination protection uncertain/overdue",
+            "impact": "moderate",
+            "points": 2
         })
-
 
     # --------------------------------------------------------
     # ANIMAL TYPE
@@ -379,7 +370,6 @@ def score_report(data):
     ]:
 
         score += 1
-
 
     # --------------------------------------------------------
     # SCORE
@@ -401,7 +391,6 @@ def score_report(data):
     else:
 
         risk_level = "LOW"
-
 
     # --------------------------------------------------------
     # CONFIDENCE
@@ -431,7 +420,6 @@ def score_report(data):
         50 + signal_count * 8
     )
 
-
     # --------------------------------------------------------
     # RECOMMENDATION
     # --------------------------------------------------------
@@ -459,39 +447,30 @@ def score_report(data):
             "preventive care, and report worsening symptoms."
         )
 
-
     return {
 
-        "risk_level":
-            risk_level,
+        "risk_level": risk_level,
 
-        "risk_score":
-            risk_score,
+        "risk_score": risk_score,
 
-        "confidence":
-            confidence,
+        "confidence": confidence,
 
-        "factors":
-            factors,
+        "factors": factors,
 
-        "recommendation":
-            recommendation,
+        "recommendation": recommendation,
 
-        "animal_type":
-            animal_type,
+        "animal_type": animal_type,
 
-        "affected_count":
-            affected_count,
+        "affected_count": affected_count,
 
-        "days_since_onset":
-            days_since_onset,
+        "days_since_onset": days_since_onset,
 
-        "screening_type":
-            "AI-assisted decision support",
+        "screening_type": "AI-assisted decision support",
 
-        "medical_disclaimer":
+        "medical_disclaimer": (
             "This result is a screening/triage aid "
             "and does not replace veterinary diagnosis."
+        )
     }
 
 
@@ -512,7 +491,6 @@ def gemini_image_screen(
     ).decode("utf-8")
 
     prompt = """
-
 You are assisting a livestock-health triage system.
 
 Analyze the provided livestock image for visible
@@ -568,8 +546,7 @@ If the image is unclear, say so.
                 payload
             ).encode("utf-8"),
             headers={
-                "Content-Type":
-                    "application/json"
+                "Content-Type": "application/json"
             },
             method="POST"
         )
@@ -621,15 +598,20 @@ def login_page():
     return render_template(
         "login.html",
         supabase_url=SUPABASE_URL or "",
-        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY or ""
     )
 
 
+# IMPORTANT:
+# Vet page receives only the publishable key.
+# Backend SUPABASE_KEY is NEVER exposed here.
 @app.route("/vet/cases")
 def vet_cases_page():
 
     return render_template(
-        "vet_cases.html"
+        "vet_cases.html",
+        supabase_url=SUPABASE_URL or "",
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY or ""
     )
 
 
@@ -669,11 +651,9 @@ def triage():
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "result":
-            result
+        "result": result
     })
 
 
@@ -709,8 +689,9 @@ def image_screen():
 
         return jsonify({
             "success": False,
-            "error":
+            "error": (
                 "Image too large. Maximum size is 8 MB."
+            )
         }), 413
 
     mime_type = (
@@ -733,32 +714,29 @@ def image_screen():
 
             "possible_categories": [],
 
-            "risk_level":
-                "MODERATE",
+            "risk_level": "MODERATE",
 
-            "confidence":
-                50,
+            "confidence": 50,
 
-            "recommendation":
+            "recommendation": (
                 "Image received successfully. "
                 "Veterinary review is recommended."
+            )
         }
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "result":
-            ai_result,
+        "result": ai_result,
 
-        "screening_type":
-            "AI image screening",
+        "screening_type": "AI image screening",
 
-        "medical_disclaimer":
+        "medical_disclaimer": (
             "Image screening is an assistive tool "
             "and does not provide a definitive "
             "veterinary diagnosis."
+        )
     })
 
 
@@ -848,11 +826,9 @@ def reports():
 
         return jsonify({
 
-            "success":
-                True,
+            "success": True,
 
-            "reports":
-                get_reports()
+            "reports": get_reports()
         })
 
     data = request.get_json(
@@ -863,86 +839,70 @@ def reports():
 
     report = {
 
-        "village":
+        "village": data.get(
+            "village",
+            "Satara"
+        ),
+
+        "block": data.get("block"),
+
+        "lat": data.get("lat"),
+
+        "lng": data.get("lng"),
+
+        "animal_type": data.get(
+            "animal_type",
+            "unknown"
+        ),
+
+        "symptoms": normalize_symptoms(
             data.get(
-                "village",
-                "Satara"
-            ),
+                "symptoms",
+                []
+            )
+        ),
 
-        "block":
-            data.get("block"),
+        "affected_count": result["affected_count"],
 
-        "lat":
-            data.get("lat"),
+        "days_since_onset": result["days_since_onset"],
 
-        "lng":
-            data.get("lng"),
+        "notes": data.get(
+            "notes",
+            ""
+        ),
 
-        "animal_type":
-            data.get(
-                "animal_type",
-                "unknown"
-            ),
+        "risk_level": result["risk_level"],
 
-        "symptoms":
-            normalize_symptoms(
-                data.get(
-                    "symptoms",
-                    []
-                )
-            ),
+        "risk_score": result["risk_score"],
 
-        "affected_count":
-            result["affected_count"],
+        "reported_by": data.get(
+            "reported_by"
+        ),
 
-        "days_since_onset":
-            result["days_since_onset"],
+        "date": datetime.utcnow().date().isoformat(),
 
-        "notes":
-            data.get(
-                "notes",
-                ""
-            ),
+        "created_at": datetime.utcnow().isoformat(),
 
-        "risk_level":
-            result["risk_level"],
+        "confidence": result["confidence"],
 
-        "risk_score":
-            result["risk_score"],
+        "risk_factors": result["factors"],
 
-        "reported_by":
-            data.get(
-                "reported_by"
-            ),
-
-        "date":
-            datetime.utcnow()
-            .date()
-            .isoformat(),
-
-        "created_at":
-            datetime.utcnow()
-            .isoformat(),
-
-        "confidence":
-            result["confidence"],
-
-        "risk_factors":
-            result["factors"]
+        # Initial case state.
+        "case_status": data.get(
+            "case_status",
+            "UNDER_REVIEW"
+        )
     }
 
     saved = save_report(report)
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "report":
-            saved,
+        "report": saved,
 
-        "risk":
-            result
+        "risk": result
     })
 
 
@@ -1003,25 +963,24 @@ def dashboard_official():
 
             block_data[block] = {
 
-                "block":
-                    block,
+                "block": block,
 
-                "villages":
-                    set(),
+                "villages": set(),
 
-                "open_reports":
-                    0,
+                "open_reports": 0,
 
-                "high_risk":
-                    0
+                "high_risk": 0
             }
 
         block_data[block]["villages"].add(
             village
         )
 
+        # Support both old "status" and new "case_status".
         status = str(
-            report.get("status") or "OPEN"
+            report.get("case_status")
+            or report.get("status")
+            or "OPEN"
         ).upper()
 
         if status not in [
@@ -1043,7 +1002,6 @@ def dashboard_official():
                 "high_risk"
             ] += 1
 
-
     # --------------------------------------------------------
     # BLOCK SUMMARY
     # --------------------------------------------------------
@@ -1054,17 +1012,15 @@ def dashboard_official():
 
         block_summary.append({
 
-            "block":
-                data["block"],
+            "block": data["block"],
 
-            "villages_reporting":
-                len(data["villages"]),
+            "villages_reporting": len(
+                data["villages"]
+            ),
 
-            "open_reports":
-                data["open_reports"],
+            "open_reports": data["open_reports"],
 
-            "high_risk":
-                data["high_risk"]
+            "high_risk": data["high_risk"]
         })
 
     block_summary.sort(
@@ -1072,7 +1028,6 @@ def dashboard_official():
             item["open_reports"],
         reverse=True
     )
-
 
     # --------------------------------------------------------
     # DISTRICT TOTALS
@@ -1096,7 +1051,6 @@ def dashboard_official():
         block_summary
     )
 
-
     # --------------------------------------------------------
     # VACCINATION COVERAGE
     # --------------------------------------------------------
@@ -1109,7 +1063,7 @@ def dashboard_official():
 
             vaccination_response = (
                 supabase
-                .table("vaccinations")
+                .table("vaccination_records")
                 .select("*")
                 .execute()
             )
@@ -1130,7 +1084,6 @@ def dashboard_official():
                 repr(exc)
             )
 
-
     # --------------------------------------------------------
     # TOTALS OBJECT
     # --------------------------------------------------------
@@ -1149,7 +1102,6 @@ def dashboard_official():
         "vaccination_coverage":
             vaccination_coverage
     }
-
 
     # --------------------------------------------------------
     # RENDER
@@ -1188,17 +1140,13 @@ def health():
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "app":
-            "PashuRakshak AI",
+        "app": "PashuRakshak AI",
 
-        "status":
-            "healthy",
+        "status": "healthy",
 
-        "supabase":
-            bool(supabase),
+        "supabase": bool(supabase),
 
         "supabase_init_error":
             SUPABASE_INIT_ERROR,
@@ -1228,8 +1176,7 @@ def health():
         },
 
         "timestamp":
-            datetime.utcnow()
-            .isoformat()
+            datetime.utcnow().isoformat()
     })
 
 
@@ -1242,11 +1189,9 @@ def not_found(error):
 
     return jsonify({
 
-        "success":
-            False,
+        "success": False,
 
-        "error":
-            "Endpoint not found"
+        "error": "Endpoint not found"
     }), 404
 
 
@@ -1255,11 +1200,9 @@ def server_error(error):
 
     return jsonify({
 
-        "success":
-            False,
+        "success": False,
 
-        "error":
-            "Internal server error"
+        "error": "Internal server error"
     }), 500
 
 
