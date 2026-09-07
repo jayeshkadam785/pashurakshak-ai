@@ -81,7 +81,7 @@ if (
             "Supabase initialization failed:",
              repr(exc)
         )
-
+        SUPABASE_INIT_ERROR = str(exc)
         supabase = None
 
 
