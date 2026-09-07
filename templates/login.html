@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -97,7 +98,6 @@ button:disabled{
   background:#183b26;
 }
 
-/* FORGOT PASSWORD */
 .forgot{
   background:transparent;
   border:1px solid #36513f;
@@ -124,7 +124,7 @@ button:disabled{
 
 <body
   data-supabase-url="{{ supabase_url }}"
-  data-supabase-key="{{ supabase_key }}"
+  data-supabase-key="{{ supabase_publishable_key }}"
 >
 
 <div class="card">
@@ -155,7 +155,6 @@ button:disabled{
     autocomplete="current-password"
   >
 
-  <!-- FORGOT PASSWORD BUTTON -->
   <button
     type="button"
     id="forgotPassword"
@@ -244,9 +243,6 @@ function getRoute(role){
 }
 
 
-/*
- * Handle Supabase email-confirmation callback.
- */
 async function handleAuthCallback(){
 
   try{
@@ -324,10 +320,6 @@ async function handleAuthCallback(){
 
 }
 
-
-/* =========================
-   FORGOT PASSWORD
-   ========================= */
 
 forgotBtn.onclick = async function(){
 
@@ -426,10 +418,6 @@ forgotBtn.onclick = async function(){
 
 };
 
-
-/* =========================
-   LOGIN
-   ========================= */
 
 loginBtn.onclick = async function(){
 
@@ -539,10 +527,6 @@ loginBtn.onclick = async function(){
 
 };
 
-
-/* =========================
-   SIGN UP
-   ========================= */
 
 signupBtn.onclick = async function(){
 
@@ -671,10 +655,6 @@ signupBtn.onclick = async function(){
 };
 
 
-/* =========================
-   EMAIL CONFIRMATION
-   ========================= */
-
 document.addEventListener(
   "DOMContentLoaded",
   handleAuthCallback
@@ -684,3 +664,4 @@ document.addEventListener(
 
 </body>
 </html>
+```
