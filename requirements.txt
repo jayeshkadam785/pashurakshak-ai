@@ -1,2 +1,4 @@
+```text
 Flask==3.0.3
-supabase==2.6.0
+supabase>=2.18.0
+```
