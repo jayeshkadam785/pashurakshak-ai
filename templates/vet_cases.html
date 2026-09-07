@@ -5,18 +5,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>PashuRakshak AI — Vet Cases</title>
+<title>PashuRakshak AI — Veterinary Area Dashboard</title>
 
 <style>
+:root{
+  --bg:#07110c;
+  --panel:#0d1b12;
+  --panel2:#0a1710;
+  --border:#294332;
+  --text:#eef8f0;
+  --muted:#9db1a3;
+  --green:#2ca86b;
+  --green2:#6ee7a0;
+  --red:#ff7777;
+  --amber:#ffc65c;
+  --blue:#7dc8ff;
+}
+
+*{
+  box-sizing:border-box;
+}
+
 body{
   margin:0;
-  background:#07110c;
-  color:#eef8f0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
 .wrap{
-  max-width:1100px;
+  max-width:1250px;
   margin:auto;
   padding:28px;
 }
@@ -25,58 +43,152 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:15px;
+  gap:20px;
   flex-wrap:wrap;
+}
+
+h1,h2,h3{
+  margin-top:0;
+}
+
+.muted{
+  color:var(--muted);
+}
+
+.header-info{
+  margin-top:7px;
+  color:#769080;
+  font-size:.85rem;
 }
 
 .card{
   margin-top:20px;
   padding:20px;
-  border:1px solid #294332;
+  border:1px solid var(--border);
   border-radius:18px;
-  background:#0d1b12;
+  background:var(--panel);
 }
 
-.case{
-  padding:16px;
-  margin:12px 0;
-  border:1px solid #294332;
-  border-radius:14px;
-  background:#0a1710;
-}
-
-.grid{
+.kpi-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:12px;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-top:20px;
 }
 
-select,
-textarea{
-  width:100%;
-  box-sizing:border-box;
-  padding:11px;
-  border-radius:9px;
-  background:#09150d;
-  color:#fff;
-  border:1px solid #36513f;
+.kpi{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--panel);
+  padding:20px;
+}
+
+.kpi-icon{
+  font-size:28px;
+}
+
+.kpi-title{
+  color:var(--muted);
   margin-top:8px;
+  font-size:.9rem;
 }
 
-textarea{
-  min-height:90px;
-  resize:vertical;
+.kpi-value{
+  font-size:30px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.red{
+  color:var(--red);
+}
+
+.amber{
+  color:var(--amber);
+}
+
+.green{
+  color:var(--green2);
+}
+
+.blue{
+  color:var(--blue);
+}
+
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.grid-3{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,
+td{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  white-space:nowrap;
+}
+
+th{
+  color:#b9cbbf;
+  font-size:.85rem;
+}
+
+td{
+  color:#eef8f0;
+}
+
+.table-wrap{
+  overflow-x:auto;
+}
+
+.badge{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:900;
+}
+
+.badge-high{
+  background:#3b1717;
+  color:#ff8888;
+}
+
+.badge-moderate{
+  background:#3c2e12;
+  color:#ffd36e;
+}
+
+.badge-low{
+  background:#143523;
+  color:#78edaa;
+}
+
+.badge-status{
+  background:#183b28;
+  color:#8ff0b5;
 }
 
 button{
-  padding:11px 15px;
+  padding:10px 14px;
   border:0;
   border-radius:9px;
-  background:#2ca86b;
-  color:#fff;
+  background:var(--green);
+  color:white;
   font-weight:800;
   cursor:pointer;
-  margin-top:10px;
 }
 
 button:hover{
@@ -92,35 +204,88 @@ button:disabled{
   background:#7b2929;
 }
 
-.muted{
-  color:#9db1a3;
+.refresh{
+  background:#245b83;
 }
 
-.risk-high{
-  color:#ff7777;
-  font-weight:800;
+.alert{
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:10px;
+  border:1px solid var(--border);
+  background:var(--panel2);
 }
 
-.risk-moderate{
-  color:#ffc65c;
-  font-weight:800;
+.alert.high{
+  border-color:#713131;
 }
 
-.risk-low{
-  color:#6ee7a0;
-  font-weight:800;
+.alert.moderate{
+  border-color:#6b531c;
 }
 
+.search-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+input,
+select,
+textarea{
+  padding:11px;
+  border-radius:9px;
+  background:#09150d;
+  color:white;
+  border:1px solid #36513f;
+}
+
+input{
+  flex:1;
+  min-width:220px;
+}
+
+select{
+  min-width:170px;
+}
+
+textarea{
+  width:100%;
+  min-height:80px;
+  margin-top:10px;
+  resize:vertical;
+}
+
+.case{
+  padding:17px;
+  margin:12px 0;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--panel2);
+}
+
+.case-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.case-label{
+  color:var(--muted);
+  font-size:.78rem;
+}
+
+.case-value{
+  margin-top:3px;
+  font-weight:700;
+}
+
+.loading,
 .empty{
   text-align:center;
   padding:30px;
-  color:#9db1a3;
-}
-
-.loading{
-  text-align:center;
-  padding:30px;
-  color:#9db1a3;
+  color:var(--muted);
 }
 
 .error-box{
@@ -131,29 +296,64 @@ button:disabled{
   border-radius:12px;
 }
 
-.status-badge{
-  display:inline-block;
-  padding:5px 9px;
-  border-radius:999px;
-  background:#183b28;
-  color:#8ff0b5;
-  font-size:.8rem;
-  font-weight:800;
+.progress{
+  height:10px;
+  background:#16241b;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:8px;
 }
 
-.header-info{
-  margin-top:8px;
-  font-size:.85rem;
-  color:#769080;
+.progress span{
+  display:block;
+  height:100%;
+  background:var(--green);
+}
+
+@media(max-width:900px){
+
+  .kpi-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .grid-2,
+  .grid-3{
+    grid-template-columns:1fr;
+  }
+
+  .case-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:600px){
+
+  .wrap{
+    padding:15px;
+  }
+
+  .kpi-grid{
+    grid-template-columns:1fr;
+  }
+
+  .case-grid{
+    grid-template-columns:1fr;
+  }
+
+  h1{
+    font-size:25px;
+  }
 }
 </style>
 </head>
 
+
 <!--
   IMPORTANT:
-  Only the Supabase publishable key is exposed to the browser.
-  NEVER put SUPABASE_KEY / sb_secret key here.
+  Only Supabase publishable key is exposed to browser.
+  NEVER put SUPABASE_KEY / sb_secret here.
 -->
+
 <body
   data-protected="true"
   data-supabase-url="{{ supabase_url }}"
@@ -162,54 +362,538 @@ button:disabled{
 
 <div class="wrap">
 
+  <!-- HEADER -->
+
   <div class="top">
 
     <div>
-      <h1>🩺 Vet Case Verification</h1>
+
+      <h1>
+        🩺 Veterinary Area Dashboard
+      </h1>
 
       <div class="muted">
-        Review → Verify → Treat → Close
+        Monitor farmers, animals, cases and livestock health in your assigned area.
       </div>
 
       <div class="header-info">
         PashuRakshak AI · Veterinary Response Center
       </div>
+
     </div>
 
-    <button
-      class="logout"
-      data-logout
-      type="button"
-    >
-      Logout
-    </button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+      <button
+        class="refresh"
+        type="button"
+        onclick="loadDashboard()"
+      >
+        🔄 Refresh
+      </button>
+
+      <button
+        class="logout"
+        data-logout
+        type="button"
+      >
+        Logout
+      </button>
+
+    </div>
 
   </div>
 
-  <div
-    id="cases"
-    class="card"
-  >
-    <div class="loading">
-      🔄 Checking authentication and loading cases...
+
+  <!-- AREA -->
+
+  <div class="card">
+
+    <div class="muted">
+      📍 Assigned Veterinary Area
     </div>
+
+    <h2 id="areaName">
+      Loading area...
+    </h2>
+
+    <div class="muted">
+      Analysis is based on available farmer, animal and health-report data.
+    </div>
+
+  </div>
+
+
+  <!-- KPI CARDS -->
+
+  <div class="kpi-grid">
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        👨‍🌾
+      </div>
+
+      <div class="kpi-title">
+        Farmers
+      </div>
+
+      <div
+        class="kpi-value"
+        id="farmersKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        🐄
+      </div>
+
+      <div class="kpi-title">
+        Animals
+      </div>
+
+      <div
+        class="kpi-value"
+        id="animalsKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        📋
+      </div>
+
+      <div class="kpi-title">
+        Active Cases
+      </div>
+
+      <div
+        class="kpi-value"
+        id="casesKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        🔴
+      </div>
+
+      <div class="kpi-title">
+        High Risk
+      </div>
+
+      <div
+        class="kpi-value red"
+        id="highRiskKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        💀
+      </div>
+
+      <div class="kpi-title">
+        Deaths
+      </div>
+
+      <div
+        class="kpi-value red"
+        id="deathsKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        💉
+      </div>
+
+      <div class="kpi-title">
+        Vaccination Records
+      </div>
+
+      <div
+        class="kpi-value green"
+        id="vaccinationKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        🚨
+      </div>
+
+      <div class="kpi-title">
+        Suspected Outbreaks
+      </div>
+
+      <div
+        class="kpi-value amber"
+        id="outbreakKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpi-icon">
+        🧪
+      </div>
+
+      <div class="kpi-title">
+        Pending Cases
+      </div>
+
+      <div
+        class="kpi-value blue"
+        id="pendingKpi"
+      >
+        0
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ANALYTICS -->
+
+  <div class="grid-2">
+
+    <!-- RISK -->
+
+    <div class="card">
+
+      <h2>
+        📊 Case Risk Distribution
+      </h2>
+
+      <div>
+        High Risk
+        <strong id="highPercent">
+          0%
+        </strong>
+
+        <div class="progress">
+          <span
+            id="highBar"
+            style="width:0%"
+          ></span>
+        </div>
+      </div>
+
+
+      <br>
+
+
+      <div>
+        Moderate Risk
+        <strong id="moderatePercent">
+          0%
+        </strong>
+
+        <div class="progress">
+          <span
+            id="moderateBar"
+            style="width:0%"
+          ></span>
+        </div>
+      </div>
+
+
+      <br>
+
+
+      <div>
+        Low Risk
+        <strong id="lowPercent">
+          0%
+        </strong>
+
+        <div class="progress">
+          <span
+            id="lowBar"
+            style="width:0%"
+          ></span>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ALERTS -->
+
+    <div class="card">
+
+      <h2>
+        🚨 Area Alerts
+      </h2>
+
+      <div id="alerts">
+
+        <div class="loading">
+          Loading alerts...
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- VILLAGE ANALYSIS -->
+
+  <div class="card">
+
+    <h2>
+      🏘️ Village-wise Health Analysis
+    </h2>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Village</th>
+            <th>Farmers</th>
+            <th>Animals</th>
+            <th>Cases</th>
+            <th>High Risk</th>
+            <th>Deaths</th>
+            <th>Vaccination</th>
+            <th>Risk</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="villageTable">
+
+          <tr>
+
+            <td
+              colspan="8"
+              class="loading"
+            >
+              Loading village analysis...
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <!-- FARMER ANALYSIS -->
+
+  <div class="card">
+
+    <h2>
+      👨‍🌾 Farmers in Area
+    </h2>
+
+    <div class="search-row">
+
+      <input
+        id="farmerSearch"
+        type="search"
+        placeholder="Search farmer or village..."
+        oninput="renderFarmers()"
+      >
+
+    </div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Farmer</th>
+            <th>Village</th>
+            <th>Animals</th>
+            <th>Cases</th>
+            <th>High Risk</th>
+            <th>Status</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="farmerTable">
+
+          <tr>
+
+            <td
+              colspan="6"
+              class="loading"
+            >
+              Loading farmers...
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <!-- CASE MANAGEMENT -->
+
+  <div class="card">
+
+    <h2>
+      📋 Veterinary Case Management
+    </h2>
+
+    <div class="search-row">
+
+      <input
+        id="caseSearch"
+        type="search"
+        placeholder="Search case, village or animal..."
+        oninput="renderCases()"
+      >
+
+      <select
+        id="riskFilter"
+        onchange="renderCases()"
+      >
+
+        <option value="ALL">
+          All Risk Levels
+        </option>
+
+        <option value="HIGH">
+          🔴 High Risk
+        </option>
+
+        <option value="MODERATE">
+          🟡 Moderate
+        </option>
+
+        <option value="LOW">
+          🟢 Low
+        </option>
+
+      </select>
+
+
+      <select
+        id="statusFilter"
+        onchange="renderCases()"
+      >
+
+        <option value="ALL">
+          All Status
+        </option>
+
+        <option value="UNDER_REVIEW">
+          Under Review
+        </option>
+
+        <option value="VERIFIED">
+          Verified
+        </option>
+
+        <option value="ISOLATED">
+          Isolated
+        </option>
+
+        <option value="TREATMENT">
+          Treatment
+        </option>
+
+        <option value="CLOSED">
+          Closed
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <div id="caseList">
+
+      <div class="loading">
+        Loading cases...
+      </div>
+
+    </div>
+
   </div>
 
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="/static/auth.js"></script>
+
 <script src="/static/features.js"></script>
+
 
 <script>
 
 let reports = [];
-let pageReady = false;
+let animals = [];
+let vaccinations = [];
+let villageData = [];
+let farmerData = [];
 
 
 /* ============================================================
-   HTML ESCAPE
-   ============================================================ */
+   ESCAPE HTML
+============================================================ */
 
 function escapeHtml(value){
 
@@ -224,112 +908,72 @@ function escapeHtml(value){
 
 
 /* ============================================================
-   RISK CLASS
-   ============================================================ */
+   RISK
+============================================================ */
 
-function riskClass(level){
+function getRisk(value){
 
-  const value =
-    String(level || "")
-      .toLowerCase();
+  return String(value || "LOW").toUpperCase();
 
-  if(value === "high"){
-    return "risk-high";
+}
+
+
+function riskBadge(level){
+
+  const risk = getRisk(level);
+
+  if(risk === "HIGH"){
+
+    return `<span class="badge badge-high">HIGH</span>`;
+
   }
 
-  if(value === "moderate"){
-    return "risk-moderate";
+  if(risk === "MODERATE"){
+
+    return `<span class="badge badge-moderate">MODERATE</span>`;
+
   }
 
-  return "risk-low";
+  return `<span class="badge badge-low">LOW</span>`;
 
 }
 
 
 /* ============================================================
-   SYMPTOMS
-   ============================================================ */
-
-function symptomsText(symptoms){
-
-  if(Array.isArray(symptoms)){
-
-    if(!symptoms.length){
-      return "No symptoms recorded";
-    }
-
-    return symptoms
-      .map(function(x){
-        return escapeHtml(x);
-      })
-      .join(", ");
-
-  }
-
-  return escapeHtml(
-    symptoms || "No symptoms recorded"
-  );
-
-}
-
-
-/* ============================================================
-   AUTH CHECK
-   ============================================================ */
+   AUTH
+============================================================ */
 
 async function ensureAuthenticated(){
 
-  try{
+  if(!window.PashuAuth){
 
-    if(!window.PashuAuth){
-
-      throw new Error(
-        "Authentication system failed to load."
-      );
-
-    }
-
-    const session =
-      await window.PashuAuth.session();
-
-    if(!session){
-
-      window.location.href = "/login";
-      return false;
-
-    }
-
-    return true;
-
-  }catch(error){
-
-    console.error(
-      "Authentication check failed:",
-      error
+    throw new Error(
+      "Authentication system failed to load."
     );
 
-    window.location.href = "/login";
+  }
+
+  const session =
+    await window.PashuAuth.session();
+
+  if(!session){
+
+    window.location.href="/login";
+
     return false;
 
   }
 
+  return true;
+
 }
 
 
 /* ============================================================
-   LOAD CASES
-   ============================================================ */
+   LOAD DASHBOARD
+============================================================ */
 
-async function loadCases(){
-
-  const box =
-    document.getElementById("cases");
-
-  box.innerHTML = `
-    <div class="loading">
-      🔄 Loading veterinary cases...
-    </div>
-  `;
+async function loadDashboard(){
 
   try{
 
@@ -337,8 +981,14 @@ async function loadCases(){
       await ensureAuthenticated();
 
     if(!authenticated){
+
       return;
+
     }
+
+
+    document.getElementById("areaName").textContent =
+      "Assigned Veterinary Area";
 
 
     const response =
@@ -347,24 +997,10 @@ async function loadCases(){
       );
 
 
-    /*
-      If the backend rejects the token, do not silently
-      continue as an unauthenticated page.
-    */
     if(response.status === 401 ||
        response.status === 403){
 
-      box.innerHTML = `
-        <div class="error-box">
-          ❌ Your login session has expired.
-          <br><br>
-          Please login again.
-        </div>
-      `;
-
-      setTimeout(function(){
-        window.location.href = "/login";
-      },1500);
+      window.location.href="/login";
 
       return;
 
@@ -374,7 +1010,7 @@ async function loadCases(){
     if(!response.ok){
 
       throw new Error(
-        "Unable to load veterinary cases. HTTP " +
+        "Unable to load reports. HTTP " +
         response.status
       );
 
@@ -385,48 +1021,54 @@ async function loadCases(){
       await response.json();
 
 
-    if(data.success === false){
-
-      throw new Error(
-        data.error ||
-        "Unable to load cases."
-      );
-
-    }
-
-
     reports =
       Array.isArray(data.reports)
         ? data.reports
         : [];
 
 
-    pageReady = true;
+    await loadAnimals();
+
+    await loadVaccinations();
+
+    buildAnalytics();
 
     renderCases();
+
+    renderFarmers();
+
+    renderVillages();
+
+    renderAlerts();
 
 
   }catch(error){
 
     console.error(
-      "Load cases failed:",
+      "Dashboard loading failed:",
       error
     );
 
-    box.innerHTML = `
+
+    document.getElementById("caseList").innerHTML = `
+
       <div class="error-box">
+
         ❌ ${escapeHtml(
           error.message ||
-          "Failed to load cases."
+          "Failed to load dashboard."
         )}
+
         <br><br>
+
         <button
-          type="button"
-          onclick="loadCases()"
+          onclick="loadDashboard()"
         >
           🔄 Retry
         </button>
+
       </div>
+
     `;
 
   }
@@ -435,28 +1077,966 @@ async function loadCases(){
 
 
 /* ============================================================
-   RENDER CASES
-   ============================================================ */
+   LOAD ANIMALS
+============================================================ */
 
-function renderCases(){
+async function loadAnimals(){
+
+  try{
+
+    const response =
+      await window.PashuAuth.authFetch(
+        "/api/animals"
+      );
+
+
+    if(!response.ok){
+
+      animals=[];
+
+      return;
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    animals =
+      Array.isArray(data.animals)
+        ? data.animals
+        : [];
+
+
+  }catch(error){
+
+    console.error(
+      "Animal loading failed:",
+      error
+    );
+
+    animals=[];
+
+  }
+
+}
+
+
+/* ============================================================
+   LOAD VACCINATIONS
+============================================================ */
+
+async function loadVaccinations(){
+
+  try{
+
+    const result =
+      await window.PashuFeatures.vaccinations();
+
+
+    vaccinations =
+      Array.isArray(result.records)
+        ? result.records
+        : [];
+
+
+  }catch(error){
+
+    console.error(
+      "Vaccination loading failed:",
+      error
+    );
+
+    vaccinations=[];
+
+  }
+
+}
+
+
+/* ============================================================
+   ANALYTICS
+============================================================ */
+
+function buildAnalytics(){
+
+  const totalCases =
+    reports.length;
+
+
+  const high =
+    reports.filter(
+      r => getRisk(r.risk_level)==="HIGH"
+    ).length;
+
+
+  const moderate =
+    reports.filter(
+      r => getRisk(r.risk_level)==="MODERATE"
+    ).length;
+
+
+  const low =
+    Math.max(
+      0,
+      totalCases-high-moderate
+    );
+
+
+  const deaths =
+    reports.reduce(
+      function(total,r){
+
+        const value =
+          Number(
+            r.mortality_count ??
+            r.deaths ??
+            0
+          );
+
+        return total + (
+          Number.isFinite(value)
+            ? value
+            : 0
+        );
+
+      },
+      0
+    );
+
+
+  const pending =
+    reports.filter(
+      r => {
+
+        const status =
+          String(
+            r.case_status ||
+            r.status ||
+            "UNDER_REVIEW"
+          ).toUpperCase();
+
+        return [
+          "UNDER_REVIEW",
+          "VERIFIED",
+          "ISOLATED",
+          "TREATMENT"
+        ].includes(status);
+
+      }
+    ).length;
+
+
+  document.getElementById(
+    "animalsKpi"
+  ).textContent =
+    animals.length;
+
+
+  document.getElementById(
+    "casesKpi"
+  ).textContent =
+    totalCases;
+
+
+  document.getElementById(
+    "highRiskKpi"
+  ).textContent =
+    high;
+
+
+  document.getElementById(
+    "deathsKpi"
+  ).textContent =
+    deaths;
+
+
+  document.getElementById(
+    "vaccinationKpi"
+  ).textContent =
+    vaccinations.length;
+
+
+  document.getElementById(
+    "pendingKpi"
+  ).textContent =
+    pending;
+
+
+  const totalAnimals =
+    animals.length;
+
+
+  const farmers =
+    new Set(
+      animals
+        .map(a =>
+          String(
+            a.owner_name ||
+            ""
+          ).trim()
+        )
+        .filter(Boolean)
+    );
+
+
+  document.getElementById(
+    "farmersKpi"
+  ).textContent =
+    farmers.size;
+
+
+  const outbreakAreas =
+    calculateOutbreakAreas();
+
+
+  document.getElementById(
+    "outbreakKpi"
+  ).textContent =
+    outbreakAreas;
+
+
+  const highPercent =
+    totalCases
+      ? Math.round(
+          high / totalCases * 100
+        )
+      : 0;
+
+
+  const moderatePercent =
+    totalCases
+      ? Math.round(
+          moderate / totalCases * 100
+        )
+      : 0;
+
+
+  const lowPercent =
+    totalCases
+      ? Math.round(
+          low / totalCases * 100
+        )
+      : 0;
+
+
+  document.getElementById(
+    "highPercent"
+  ).textContent =
+    highPercent + "%";
+
+
+  document.getElementById(
+    "moderatePercent"
+  ).textContent =
+    moderatePercent + "%";
+
+
+  document.getElementById(
+    "lowPercent"
+  ).textContent =
+    lowPercent + "%";
+
+
+  document.getElementById(
+    "highBar"
+  ).style.width =
+    highPercent + "%";
+
+
+  document.getElementById(
+    "moderateBar"
+  ).style.width =
+    moderatePercent + "%";
+
+
+  document.getElementById(
+    "lowBar"
+  ).style.width =
+    lowPercent + "%";
+
+}
+
+
+/* ============================================================
+   OUTBREAK ESTIMATE
+============================================================ */
+
+function calculateOutbreakAreas(){
+
+  const groups = {};
+
+
+  reports.forEach(function(report){
+
+    const area =
+      String(
+        report.village ||
+        report.block ||
+        "Unknown"
+      ).trim();
+
+
+    if(!groups[area]){
+
+      groups[area] = {
+        reports:0,
+        high:0
+      };
+
+    }
+
+
+    groups[area].reports++;
+
+
+    if(
+      getRisk(report.risk_level)==="HIGH"
+    ){
+
+      groups[area].high++;
+
+    }
+
+  });
+
+
+  return Object.values(groups)
+    .filter(
+      x =>
+        x.reports >= 3 ||
+        x.high >= 2
+    )
+    .length;
+
+}
+
+
+/* ============================================================
+   VILLAGE ANALYSIS
+============================================================ */
+
+function renderVillages(){
+
+  const groups = {};
+
+
+  animals.forEach(function(animal){
+
+    const village =
+      animal.village ||
+      "Unknown";
+
+
+    if(!groups[village]){
+
+      groups[village] = {
+
+        farmers:new Set(),
+        animals:0,
+        cases:0,
+        high:0,
+        deaths:0,
+        vaccinations:0
+
+      };
+
+    }
+
+
+    groups[village].animals++;
+
+
+    if(animal.owner_name){
+
+      groups[village]
+        .farmers
+        .add(
+          animal.owner_name
+        );
+
+    }
+
+  });
+
+
+  reports.forEach(function(report){
+
+    const village =
+      report.village ||
+      "Unknown";
+
+
+    if(!groups[village]){
+
+      groups[village] = {
+
+        farmers:new Set(),
+        animals:0,
+        cases:0,
+        high:0,
+        deaths:0,
+        vaccinations:0
+
+      };
+
+    }
+
+
+    groups[village].cases++;
+
+
+    if(
+      getRisk(report.risk_level)==="HIGH"
+    ){
+
+      groups[village].high++;
+
+    }
+
+
+    const deaths =
+      Number(
+        report.mortality_count ??
+        report.deaths ??
+        0
+      );
+
+
+    if(Number.isFinite(deaths)){
+
+      groups[village].deaths +=
+        deaths;
+
+    }
+
+  });
+
+
+  vaccinations.forEach(function(v){
+
+    const animal =
+      animals.find(
+        a =>
+          String(a.id) ===
+          String(v.animal_id)
+      );
+
+
+    const village =
+      animal?.village ||
+      "Unknown";
+
+
+    if(!groups[village]){
+
+      groups[village] = {
+
+        farmers:new Set(),
+        animals:0,
+        cases:0,
+        high:0,
+        deaths:0,
+        vaccinations:0
+
+      };
+
+    }
+
+
+    groups[village].vaccinations++;
+
+  });
+
+
+  villageData =
+    Object.entries(groups)
+      .map(function(entry){
+
+        const name =
+          entry[0];
+
+        const value =
+          entry[1];
+
+
+        let risk =
+          "LOW";
+
+
+        if(
+          value.high >= 3 ||
+          value.cases >= 10
+        ){
+
+          risk="HIGH";
+
+        }else if(
+          value.high >= 1 ||
+          value.cases >= 5
+        ){
+
+          risk="MODERATE";
+
+        }
+
+
+        return {
+
+          name:name,
+          farmers:value.farmers.size,
+          animals:value.animals,
+          cases:value.cases,
+          high:value.high,
+          deaths:value.deaths,
+          vaccinations:value.vaccinations,
+          risk:risk
+
+        };
+
+      })
+      .sort(
+        (a,b) =>
+          b.cases-a.cases
+      );
+
+
+  const tbody =
+    document.getElementById(
+      "villageTable"
+    );
+
+
+  if(!villageData.length){
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="8"
+          class="empty"
+        >
+          No village data available.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    villageData.map(function(v){
+
+      return `
+
+        <tr>
+
+          <td>
+            <strong>
+              ${escapeHtml(v.name)}
+            </strong>
+          </td>
+
+          <td>
+            ${v.farmers}
+          </td>
+
+          <td>
+            ${v.animals}
+          </td>
+
+          <td>
+            ${v.cases}
+          </td>
+
+          <td class="red">
+            ${v.high}
+          </td>
+
+          <td>
+            ${v.deaths}
+          </td>
+
+          <td>
+            ${v.vaccinations}
+          </td>
+
+          <td>
+            ${riskBadge(v.risk)}
+          </td>
+
+        </tr>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ============================================================
+   FARMER ANALYSIS
+============================================================ */
+
+function renderFarmers(){
+
+  const groups = {};
+
+
+  animals.forEach(function(animal){
+
+    const farmer =
+      animal.owner_name ||
+      "Unknown Farmer";
+
+
+    if(!groups[farmer]){
+
+      groups[farmer] = {
+
+        village:
+          animal.village ||
+          "Unknown",
+
+        animals:0,
+        cases:0,
+        high:0
+
+      };
+
+    }
+
+
+    groups[farmer].animals++;
+
+  });
+
+
+  reports.forEach(function(report){
+
+    const farmer =
+      report.owner_name ||
+      report.farmer_name ||
+      "Unknown Farmer";
+
+
+    if(!groups[farmer]){
+
+      groups[farmer] = {
+
+        village:
+          report.village ||
+          "Unknown",
+
+        animals:0,
+        cases:0,
+        high:0
+
+      };
+
+    }
+
+
+    groups[farmer].cases++;
+
+
+    if(
+      getRisk(report.risk_level)==="HIGH"
+    ){
+
+      groups[farmer].high++;
+
+    }
+
+  });
+
+
+  farmerData =
+    Object.entries(groups)
+      .map(function(entry){
+
+        return {
+
+          name:entry[0],
+
+          village:
+            entry[1].village,
+
+          animals:
+            entry[1].animals,
+
+          cases:
+            entry[1].cases,
+
+          high:
+            entry[1].high
+
+        };
+
+      });
+
+
+  const search =
+    String(
+      document.getElementById(
+        "farmerSearch"
+      ).value || ""
+    ).toLowerCase();
+
+
+  const filtered =
+    farmerData.filter(function(f){
+
+      return (
+
+        f.name
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(f.village)
+          .toLowerCase()
+          .includes(search)
+
+      );
+
+    });
+
+
+  const tbody =
+    document.getElementById(
+      "farmerTable"
+    );
+
+
+  if(!filtered.length){
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="6"
+          class="empty"
+        >
+          No farmers found.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    filtered.map(function(f){
+
+      let status =
+        "NORMAL";
+
+
+      if(f.high >= 2){
+
+        status =
+          "HIGH RISK";
+
+      }else if(f.cases >= 3){
+
+        status =
+          "WATCH";
+
+      }
+
+
+      return `
+
+        <tr>
+
+          <td>
+            <strong>
+              ${escapeHtml(f.name)}
+            </strong>
+          </td>
+
+          <td>
+            ${escapeHtml(f.village)}
+          </td>
+
+          <td>
+            ${f.animals}
+          </td>
+
+          <td>
+            ${f.cases}
+          </td>
+
+          <td class="red">
+            ${f.high}
+          </td>
+
+          <td>
+            ${
+              status === "HIGH RISK"
+                ? '<span class="badge badge-high">HIGH RISK</span>'
+                : status === "WATCH"
+                ? '<span class="badge badge-moderate">WATCH</span>'
+                : '<span class="badge badge-low">NORMAL</span>'
+            }
+          </td>
+
+        </tr>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ============================================================
+   ALERTS
+============================================================ */
+
+function renderAlerts(){
 
   const box =
-    document.getElementById("cases");
+    document.getElementById(
+      "alerts"
+    );
 
 
-  if(!reports.length){
+  const alerts = [];
+
+
+  const highCases =
+    reports.filter(
+      r =>
+        getRisk(r.risk_level)==="HIGH"
+    );
+
+
+  if(highCases.length){
+
+    alerts.push({
+
+      type:"high",
+
+      text:
+        `${highCases.length} high-risk case(s) require veterinary attention.`
+
+    });
+
+  }
+
+
+  const outbreakCount =
+    calculateOutbreakAreas();
+
+
+  if(outbreakCount){
+
+    alerts.push({
+
+      type:"high",
+
+      text:
+        `${outbreakCount} area(s) show unusual case clustering. Review for possible outbreak.`
+
+    });
+
+  }
+
+
+  const overdue =
+    vaccinations.filter(function(v){
+
+      if(!v.next_due_date){
+
+        return false;
+
+      }
+
+
+      const due =
+        new Date(
+          v.next_due_date
+        );
+
+
+      return due < new Date();
+
+    }).length;
+
+
+  if(overdue){
+
+    alerts.push({
+
+      type:"moderate",
+
+      text:
+        `${overdue} vaccination record(s) appear overdue.`
+
+    });
+
+  }
+
+
+  const pending =
+    reports.filter(function(r){
+
+      const status =
+        String(
+          r.case_status ||
+          r.status ||
+          "UNDER_REVIEW"
+        ).toUpperCase();
+
+
+      return status ===
+        "UNDER_REVIEW";
+
+    }).length;
+
+
+  if(pending){
+
+    alerts.push({
+
+      type:"moderate",
+
+      text:
+        `${pending} case(s) are waiting for verification.`
+
+    });
+
+  }
+
+
+  if(!alerts.length){
 
     box.innerHTML = `
-      <div class="empty">
 
-        <h3>📋 No livestock cases found</h3>
+      <div class="alert">
 
-        <p>
-          New farmer reports will appear here
-          for veterinary verification.
-        </p>
+        🟢 No critical alerts detected.
+
+        <div class="muted">
+          Continue monitoring your assigned area.
+        </div>
 
       </div>
+
     `;
 
     return;
@@ -465,19 +2045,155 @@ function renderCases(){
 
 
   box.innerHTML =
-    reports.map(function(caseData){
+    alerts.map(function(a){
 
-      const rawId =
-        caseData.id || "";
+      return `
+
+        <div class="alert ${a.type}">
+
+          ${
+            a.type === "high"
+              ? "🚨"
+              : "⚠️"
+          }
+
+          ${escapeHtml(a.text)}
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ============================================================
+   CASE RENDER
+============================================================ */
+
+function renderCases(){
+
+  const list =
+    document.getElementById(
+      "caseList"
+    );
+
+
+  const search =
+    String(
+      document.getElementById(
+        "caseSearch"
+      ).value || ""
+    ).toLowerCase();
+
+
+  const risk =
+    document.getElementById(
+      "riskFilter"
+    ).value;
+
+
+  const status =
+    document.getElementById(
+      "statusFilter"
+    ).value;
+
+
+  const filtered =
+    reports.filter(function(r){
+
+      const level =
+        getRisk(r.risk_level);
+
+
+      const currentStatus =
+        String(
+          r.case_status ||
+          r.status ||
+          "UNDER_REVIEW"
+        ).toUpperCase();
+
+
+      const searchable = (
+
+        String(r.id || "")
+          .toLowerCase()
+
+        +
+
+        " " +
+
+        String(r.village || "")
+          .toLowerCase()
+
+        +
+
+        " " +
+
+        String(r.block || "")
+          .toLowerCase()
+
+        +
+
+        " " +
+
+        String(r.animal_type || "")
+          .toLowerCase()
+
+      );
+
+
+      return (
+
+        (!search ||
+          searchable.includes(search))
+
+        &&
+
+        (risk === "ALL" ||
+          level === risk)
+
+        &&
+
+        (status === "ALL" ||
+          currentStatus === status)
+
+      );
+
+    });
+
+
+  if(!filtered.length){
+
+    list.innerHTML = `
+
+      <div class="empty">
+
+        📋 No cases match the selected filters.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  list.innerHTML =
+    filtered.map(function(caseData){
 
       const id =
-        escapeHtml(rawId);
+        String(
+          caseData.id || ""
+        );
 
 
       const level =
-        String(
-          caseData.risk_level || "LOW"
-        ).toUpperCase();
+        getRisk(
+          caseData.risk_level
+        );
 
 
       const currentStatus =
@@ -488,166 +2204,246 @@ function renderCases(){
         ).toUpperCase();
 
 
+      let symptoms =
+        caseData.symptoms;
+
+
+      if(Array.isArray(symptoms)){
+
+        symptoms =
+          symptoms.join(", ");
+
+      }
+
+
       return `
 
-      <div class="case">
+        <div class="case">
 
-        <div class="grid">
+          <div class="case-grid">
 
-          <div>
-            <b>Case ID</b><br>
-            ${id || "—"}
+            <div>
+
+              <div class="case-label">
+                CASE ID
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(id || "—")}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                VILLAGE
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(
+                  caseData.village || "—"
+                )}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                BLOCK
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(
+                  caseData.block || "—"
+                )}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                ANIMAL
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(
+                  caseData.animal_type || "—"
+                )}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                RISK
+              </div>
+
+              <div class="case-value">
+
+                ${riskBadge(level)}
+
+                <span class="muted">
+                  Score:
+                  ${escapeHtml(
+                    caseData.risk_score ?? 0
+                  )}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                AFFECTED
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(
+                  caseData.affected_count ?? 0
+                )}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                STATUS
+              </div>
+
+              <div class="case-value">
+
+                <span class="badge badge-status">
+                  ${escapeHtml(
+                    currentStatus
+                  )}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <div class="case-label">
+                DATE
+              </div>
+
+              <div class="case-value">
+                ${escapeHtml(
+                  String(
+                    caseData.created_at ||
+                    caseData.date ||
+                    "—"
+                  ).slice(0,10)
+                )}
+              </div>
+
+            </div>
+
           </div>
 
 
-          <div>
-            <b>Village</b><br>
+          <p class="muted">
+
+            <strong>
+              Symptoms:
+            </strong>
+
             ${escapeHtml(
-              caseData.village || "—"
-            )}
-          </div>
-
-
-          <div>
-            <b>Block</b><br>
-            ${escapeHtml(
-              caseData.block || "—"
-            )}
-          </div>
-
-
-          <div>
-            <b>Animal</b><br>
-            ${escapeHtml(
-              caseData.animal_type || "—"
-            )}
-          </div>
-
-
-          <div>
-            <b>Risk</b><br>
-
-            <span class="${riskClass(level)}">
-
-              ${level}
-
-              (${escapeHtml(
-                caseData.risk_score ?? 0
-              )})
-
-            </span>
-
-          </div>
-
-
-          <div>
-            <b>Affected</b><br>
-
-            ${escapeHtml(
-              caseData.affected_count ?? 0
+              symptoms ||
+              "No symptoms recorded"
             )}
 
-          </div>
+          </p>
 
 
-          <div>
-            <b>Current Status</b><br>
+          <label>
 
-            <span class="status-badge">
-              ${escapeHtml(currentStatus)}
-            </span>
+            <strong>
+              Update Case
+            </strong>
 
-          </div>
+          </label>
+
+
+          <select
+            id="status-${escapeHtml(id)}"
+            style="margin-top:8px;"
+          >
+
+            <option
+              value="UNDER_REVIEW"
+              ${currentStatus==="UNDER_REVIEW"?"selected":""}
+            >
+              UNDER REVIEW
+            </option>
+
+            <option
+              value="VERIFIED"
+              ${currentStatus==="VERIFIED"?"selected":""}
+            >
+              VERIFIED
+            </option>
+
+            <option
+              value="ISOLATED"
+              ${currentStatus==="ISOLATED"?"selected":""}
+            >
+              ISOLATED
+            </option>
+
+            <option
+              value="TREATMENT"
+              ${currentStatus==="TREATMENT"?"selected":""}
+            >
+              TREATMENT
+            </option>
+
+            <option
+              value="CLOSED"
+              ${currentStatus==="CLOSED"?"selected":""}
+            >
+              CLOSED
+            </option>
+
+            <option
+              value="REJECTED"
+              ${currentStatus==="REJECTED"?"selected":""}
+            >
+              REJECTED
+            </option>
+
+          </select>
+
+
+          <textarea
+            id="note-${escapeHtml(id)}"
+            placeholder="Vet diagnosis, treatment, isolation instructions or follow-up notes..."
+          ></textarea>
+
+
+          <button
+            type="button"
+            onclick="updateCase('${escapeHtml(id)}')"
+          >
+            ✅ Save Case Update
+          </button>
 
         </div>
-
-
-        <p class="muted">
-
-          <b>Symptoms:</b>
-
-          ${symptomsText(
-            caseData.symptoms
-          )}
-
-        </p>
-
-
-        <label>
-
-          <b>Update Status</b>
-
-        </label>
-
-
-        <select
-          id="status-${id}"
-        >
-
-          <option
-            value="UNDER_REVIEW"
-            ${currentStatus === "UNDER_REVIEW" ? "selected" : ""}
-          >
-            UNDER REVIEW
-          </option>
-
-
-          <option
-            value="VERIFIED"
-            ${currentStatus === "VERIFIED" ? "selected" : ""}
-          >
-            VERIFIED
-          </option>
-
-
-          <option
-            value="ISOLATED"
-            ${currentStatus === "ISOLATED" ? "selected" : ""}
-          >
-            ISOLATED
-          </option>
-
-
-          <option
-            value="TREATMENT"
-            ${currentStatus === "TREATMENT" ? "selected" : ""}
-          >
-            TREATMENT
-          </option>
-
-
-          <option
-            value="CLOSED"
-            ${currentStatus === "CLOSED" ? "selected" : ""}
-          >
-            CLOSED
-          </option>
-
-
-          <option
-            value="REJECTED"
-            ${currentStatus === "REJECTED" ? "selected" : ""}
-          >
-            REJECTED
-          </option>
-
-        </select>
-
-
-        <textarea
-          id="note-${id}"
-          placeholder="Enter vet notes, diagnosis, treatment or isolation instructions..."
-        ></textarea>
-
-
-        <button
-          type="button"
-          onclick="updateCase('${id}')"
-        >
-          ✅ Update Case
-        </button>
-
-      </div>
 
       `;
 
@@ -658,7 +2454,7 @@ function renderCases(){
 
 /* ============================================================
    UPDATE CASE
-   ============================================================ */
+============================================================ */
 
 async function updateCase(id){
 
@@ -686,38 +2482,29 @@ async function updateCase(id){
     }
 
 
-    const status =
-      statusElement.value;
-
-
-    const note =
-      noteElement.value.trim();
-
-
-    if(!window.PashuFeatures){
-
-      throw new Error(
-        "Feature API is not available."
-      );
-
-    }
-
-
     await window.PashuFeatures.verifyCase(
+
       id,
+
       {
-        case_status: status,
-        vet_notes: note
+
+        case_status:
+          statusElement.value,
+
+        vet_notes:
+          noteElement.value.trim()
+
       }
+
     );
 
 
     alert(
-      "✅ Case updated successfully"
+      "✅ Case updated successfully."
     );
 
 
-    await loadCases();
+    await loadDashboard();
 
 
   }catch(error){
@@ -726,6 +2513,7 @@ async function updateCase(id){
       "Case update failed:",
       error
     );
+
 
     alert(
       "❌ " +
@@ -742,13 +2530,13 @@ async function updateCase(id){
 
 /* ============================================================
    START
-   ============================================================ */
+============================================================ */
 
 document.addEventListener(
   "DOMContentLoaded",
   function(){
 
-    loadCases();
+    loadDashboard();
 
   }
 );
