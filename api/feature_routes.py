@@ -1,3 +1,4 @@
+```python
 import os
 from datetime import datetime, timezone
 
@@ -56,26 +57,19 @@ def _int(value, default=0):
         return default
 
 
-def _error(message, status=500):
-    return jsonify({
-        "success": False,
-        "error": str(message)
-    }), status
-
-
 # =========================================================
 # FEATURE HEALTH
 # =========================================================
 
 @feature_bp.get("/api/feature-health")
 def feature_health():
-
     return jsonify({
         "success": True,
         "features": [
             "authentication",
             "role_based_access",
             "vet_verification",
+            "smart_alerts",
             "vaccination_tracking",
             "outbreak_prediction",
             "dashboard_kpis"
@@ -101,7 +95,7 @@ def verify_case(case_id):
         )
     ).strip().upper()
 
-    allowed_statuses = {
+    allowed = {
         "UNDER_REVIEW",
         "VERIFIED",
         "TREATMENT",
@@ -110,11 +104,11 @@ def verify_case(case_id):
         "REJECTED"
     }
 
-    if status not in allowed_statuses:
-        return _error(
-            "Invalid case status",
-            400
-        )
+    if status not in allowed:
+        return jsonify({
+            "success": False,
+            "error": "Invalid case status"
+        }), 400
 
     payload = {
         "case_status": status,
@@ -153,7 +147,6 @@ def verify_case(case_id):
     try:
 
         if not supabase:
-
             return jsonify({
                 "success": True,
                 "demo": True,
@@ -191,10 +184,10 @@ def verify_case(case_id):
             repr(exc)
         )
 
-        return _error(
-            str(exc),
-            500
-        )
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 
 
 # =========================================================
@@ -219,61 +212,36 @@ def add_vaccination():
     ]
 
     if missing:
-
-        return _error(
-            "Missing: " + ", ".join(missing),
-            400
-        )
+        return jsonify({
+            "success": False,
+            "error": "Missing: " + ", ".join(missing)
+        }), 400
 
     payload = {
-        "animal_id": data.get(
-            "animal_id"
+        "animal_id": data.get("animal_id"),
+        "species": data.get("species"),
+        "vaccine_name": data.get("vaccine_name"),
+        "vaccination_date": data.get(
+            "vaccination_date"
         ),
-
-        "species": str(
-            data.get(
-                "species"
-            )
-        ).strip(),
-
-        "vaccine_name": str(
-            data.get(
-                "vaccine_name"
-            )
-        ).strip(),
-
-        "vaccination_date":
-            data.get(
-                "vaccination_date"
-            ),
-
-        "next_due_date":
-            data.get(
-                "next_due_date"
-            ),
-
-        "batch_number":
-            data.get(
-                "batch_number"
-            ),
-
-        "administered_by":
-            data.get(
-                "administered_by"
-            ),
-
-        "notes": str(
-            data.get(
-                "notes",
-                ""
-            )
-        )[:4000]
+        "next_due_date": data.get(
+            "next_due_date"
+        ),
+        "batch_number": data.get(
+            "batch_number"
+        ),
+        "administered_by": data.get(
+            "administered_by"
+        ),
+        "notes": data.get(
+            "notes",
+            ""
+        )
     }
 
     try:
 
         if not supabase:
-
             return jsonify({
                 "success": True,
                 "demo": True,
@@ -282,9 +250,7 @@ def add_vaccination():
 
         result = (
             supabase
-            .table(
-                "vaccination_records"
-            )
+            .table("vaccination_records")
             .insert(payload)
             .execute()
         )
@@ -305,10 +271,10 @@ def add_vaccination():
             repr(exc)
         )
 
-        return _error(
-            str(exc),
-            500
-        )
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 
 
 # =========================================================
@@ -321,7 +287,6 @@ def get_vaccinations():
     try:
 
         if not supabase:
-
             return jsonify({
                 "success": True,
                 "records": [],
@@ -344,8 +309,7 @@ def get_vaccinations():
 
         return jsonify({
             "success": True,
-            "records":
-                result.data or []
+            "records": result.data or []
         })
 
     except Exception as exc:
@@ -355,10 +319,10 @@ def get_vaccinations():
             repr(exc)
         )
 
-        return _error(
-            str(exc),
-            500
-        )
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 
 
 # =========================================================
@@ -371,7 +335,6 @@ def outbreak_risk():
     try:
 
         if not supabase:
-
             return jsonify({
                 "success": True,
                 "clusters": [],
@@ -409,61 +372,41 @@ def outbreak_risk():
 
         for row in result.data or []:
 
-            village = (
+            area = (
                 row.get("village")
-                or "Unknown Village"
+                or row.get("block")
+                or "Unknown"
             )
 
-            block = (
-                row.get("block")
-                or ""
-            )
+            if area not in groups:
 
-            district = (
-                row.get("district")
-                or ""
-            )
-
-            area_key = village
-
-            if area_key not in groups:
-
-                groups[area_key] = {
-
-                    "area": area_key,
-
-                    "village": village,
-
-                    "block": block,
-
-                    "district": district,
-
+                groups[area] = {
+                    "area": area,
+                    "village": row.get(
+                        "village"
+                    ),
+                    "block": row.get(
+                        "block"
+                    ),
+                    "district": row.get(
+                        "district"
+                    ),
                     "reports": 0,
-
                     "affected": 0,
-
                     "high": 0,
-
                     "moderate": 0,
-
                     "low": 0,
-
                     "active_cases": 0,
-
                     "deaths": 0,
-
-                    "latitude":
-                        row.get(
-                            "latitude"
-                        ),
-
-                    "longitude":
-                        row.get(
-                            "longitude"
-                        )
+                    "latitude": row.get(
+                        "latitude"
+                    ),
+                    "longitude": row.get(
+                        "longitude"
+                    )
                 }
 
-            group = groups[area_key]
+            group = groups[area]
 
             group["reports"] += 1
 
@@ -479,18 +422,18 @@ def outbreak_risk():
 
             group["affected"] += affected
 
-            risk = str(
+            level = str(
                 row.get(
                     "risk_level",
                     ""
                 )
             ).upper()
 
-            if risk == "HIGH":
+            if level == "HIGH":
 
                 group["high"] += 1
 
-            elif risk in {
+            elif level in {
                 "MODERATE",
                 "MEDIUM"
             }:
@@ -537,13 +480,9 @@ def outbreak_risk():
 
             score = min(
                 100,
-
                 group["high"] * 20
-
                 + group["moderate"] * 8
-
                 + group["active_cases"] * 5
-
                 + min(
                     group["affected"],
                     20
@@ -563,28 +502,20 @@ def outbreak_risk():
                 outbreak_level = "LOW"
 
             clusters.append({
-
                 **group,
-
-                "outbreak_score":
-                    score,
-
-                "outbreak_level":
-                    outbreak_level
+                "outbreak_score": score,
+                "outbreak_level": outbreak_level
             })
 
         clusters.sort(
-            key=lambda item:
-                item["outbreak_score"],
+            key=lambda x:
+                x["outbreak_score"],
             reverse=True
         )
 
         return jsonify({
-
             "success": True,
-
             "clusters": clusters,
-
             "disclaimer":
                 "Early-warning aid only; "
                 "not epidemiological confirmation."
@@ -597,10 +528,10 @@ def outbreak_risk():
             repr(exc)
         )
 
-        return _error(
-            str(exc),
-            500
-        )
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 
 
 # =========================================================
@@ -615,33 +546,19 @@ def dashboard_kpis():
         if not supabase:
 
             return jsonify({
-
                 "success": True,
-
                 "total_cases": 0,
-
                 "active_cases": 0,
-
                 "high_risk_cases": 0,
-
                 "moderate_cases": 0,
-
                 "animals_affected": 0,
-
                 "verified_cases": 0,
-
                 "suspected_outbreaks": 0,
-
                 "deaths": 0,
-
                 "vaccinated_animals": 0
             })
 
-        # -------------------------------------------------
-        # REPORTS
-        # -------------------------------------------------
-
-        reports_result = (
+        result = (
             supabase
             .table("reports")
             .select(
@@ -655,29 +572,20 @@ def dashboard_kpis():
             .execute()
         )
 
-        reports = (
-            reports_result.data or []
-        )
+        rows = result.data or []
 
-        total_cases = len(
-            reports
-        )
+        total = len(rows)
 
-        active_cases = 0
-
-        high_risk = 0
-
+        active = 0
+        high = 0
         moderate = 0
-
-        animals_affected = 0
-
+        affected_total = 0
         verified = 0
-
         deaths = 0
 
         outbreak_groups = {}
 
-        for row in reports:
+        for row in rows:
 
             status = str(
                 row.get(
@@ -703,9 +611,7 @@ def dashboard_kpis():
                 1
             )
 
-            animals_affected += (
-                affected
-            )
+            affected_total += affected
 
             if status not in {
                 "CLOSED",
@@ -713,11 +619,11 @@ def dashboard_kpis():
                 "RESOLVED"
             }:
 
-                active_cases += 1
+                active += 1
 
             if risk == "HIGH":
 
-                high_risk += 1
+                high += 1
 
             elif risk in {
                 "MODERATE",
@@ -772,15 +678,9 @@ def dashboard_kpis():
                 village
             ]["affected"] += affected
 
-        # -------------------------------------------------
-        # SUSPECTED OUTBREAKS
-        # -------------------------------------------------
-
         suspected_outbreaks = 0
 
-        for group in (
-            outbreak_groups.values()
-        ):
+        for group in outbreak_groups.values():
 
             if (
                 group["high"] >= 3
@@ -788,10 +688,6 @@ def dashboard_kpis():
             ):
 
                 suspected_outbreaks += 1
-
-        # -------------------------------------------------
-        # VACCINATION
-        # -------------------------------------------------
 
         vaccinated_animals = 0
 
@@ -802,9 +698,7 @@ def dashboard_kpis():
                 .table(
                     "vaccination_records"
                 )
-                .select(
-                    "animal_id"
-                )
+                .select("animal_id")
                 .limit(5000)
                 .execute()
             )
@@ -838,33 +732,16 @@ def dashboard_kpis():
             )
 
         return jsonify({
-
             "success": True,
-
-            "total_cases":
-                total_cases,
-
-            "active_cases":
-                active_cases,
-
-            "high_risk_cases":
-                high_risk,
-
-            "moderate_cases":
-                moderate,
-
-            "animals_affected":
-                animals_affected,
-
-            "verified_cases":
-                verified,
-
+            "total_cases": total,
+            "active_cases": active,
+            "high_risk_cases": high,
+            "moderate_cases": moderate,
+            "animals_affected": affected_total,
+            "verified_cases": verified,
             "suspected_outbreaks":
                 suspected_outbreaks,
-
-            "deaths":
-                deaths,
-
+            "deaths": deaths,
             "vaccinated_animals":
                 vaccinated_animals
         })
@@ -876,8 +753,8 @@ def dashboard_kpis():
             repr(exc)
         )
 
-        return _error(
-            str(exc),
-            500
-        )
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 ```
