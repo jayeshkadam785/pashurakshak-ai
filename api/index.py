@@ -1,3 +1,4 @@
+````python
 import os
 import json
 import base64
@@ -63,6 +64,7 @@ ROLE_ACCESS_CODE = os.environ.get(
 
 supabase = None
 SUPABASE_INIT_ERROR = None
+
 if (
     SUPABASE_URL
     and SUPABASE_KEY
@@ -79,8 +81,9 @@ if (
 
         print(
             "Supabase initialization failed:",
-             repr(exc)
+            repr(exc)
         )
+
         SUPABASE_INIT_ERROR = str(exc)
         supabase = None
 
@@ -971,6 +974,9 @@ def health():
         "supabase":
             bool(supabase),
 
+        "supabase_init_error":
+            SUPABASE_INIT_ERROR,
+
         "image_ai":
             bool(GEMINI_API_KEY),
 
@@ -1047,3 +1053,4 @@ if __name__ == "__main__":
 
         debug=True
     )
+````
