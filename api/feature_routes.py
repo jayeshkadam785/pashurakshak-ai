@@ -1,11 +1,14 @@
+```python
 import os
 from datetime import datetime, timezone
+
 from flask import Blueprint, jsonify, request
 
 try:
     from supabase import create_client
 except Exception:
     create_client = None
+
 
 feature_bp = Blueprint("feature_bp", __name__)
 
@@ -15,45 +18,91 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase = None
 SUPABASE_INIT_ERROR = None
 
+
+# =========================================================
+# SUPABASE INITIALIZATION
+# =========================================================
+
 if SUPABASE_URL and SUPABASE_KEY and create_client:
     try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        supabase = create_client(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        )
     except Exception as exc:
         SUPABASE_INIT_ERROR = str(exc)
-        print("Feature Supabase initialization failed:", repr(exc))
+        print(
+            "Feature Supabase initialization failed:",
+            repr(exc)
+        )
         supabase = None
 
+
+# =========================================================
+# HELPERS
+# =========================================================
 
 def _json():
     return request.get_json(silent=True) or {}
 
 
+def _now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _error(message, status=500):
+    return jsonify({
+        "success": False,
+        "error": str(message)
+    }), status
+
+
+# =========================================================
+# FEATURE HEALTH
+# =========================================================
+
 @feature_bp.get("/api/feature-health")
 def feature_health():
+
     return jsonify({
         "success": True,
         "features": [
             "authentication",
             "role_based_access",
             "vet_verification",
-            "smart_alerts",
             "vaccination_tracking",
-            "outbreak_prediction"
+            "outbreak_prediction",
+            "dashboard_kpis"
         ],
         "supabase": bool(supabase),
         "supabase_init_error": SUPABASE_INIT_ERROR
     })
 
 
+# =========================================================
+# VET CASE VERIFICATION
+# =========================================================
+
 @feature_bp.post("/api/cases/<case_id>/verify")
 def verify_case(case_id):
+
     data = _json()
 
     status = str(
-        data.get("case_status", "VERIFIED")
-    ).upper()
+        data.get(
+            "case_status",
+            "VERIFIED"
+        )
+    ).strip().upper()
 
-    allowed = {
+    allowed_statuses = {
         "UNDER_REVIEW",
         "VERIFIED",
         "TREATMENT",
@@ -62,36 +111,50 @@ def verify_case(case_id):
         "REJECTED"
     }
 
-    if status not in allowed:
-        return jsonify({
-            "success": False,
-            "error": "Invalid case status"
-        }), 400
+    if status not in allowed_statuses:
+        return _error(
+            "Invalid case status",
+            400
+        )
 
     payload = {
         "case_status": status,
+
         "vet_verified": status in {
             "VERIFIED",
             "TREATMENT",
             "ISOLATED",
             "CLOSED"
         },
+
         "vet_notes": str(
-            data.get("vet_notes", "")
+            data.get(
+                "vet_notes",
+                ""
+            )
         )[:4000],
+
         "diagnosis": str(
-            data.get("diagnosis", "")
-        )[:1000],
+            data.get(
+                "diagnosis",
+                ""
+            )
+        )[:2000],
+
         "treatment": str(
-            data.get("treatment", "")
+            data.get(
+                "treatment",
+                ""
+            )
         )[:4000],
-        "verified_at": datetime.now(
-            timezone.utc
-        ).isoformat()
+
+        "verified_at": _now()
     }
 
     try:
+
         if not supabase:
+
             return jsonify({
                 "success": True,
                 "demo": True,
@@ -123,19 +186,25 @@ def verify_case(case_id):
         })
 
     except Exception as exc:
+
         print(
             "Case verification failed:",
             repr(exc)
         )
 
-        return jsonify({
-            "success": False,
-            "error": str(exc)
-        }), 500
+        return _error(
+            str(exc),
+            500
+        )
 
+
+# =========================================================
+# ADD VACCINATION
+# =========================================================
 
 @feature_bp.post("/api/vaccinations")
 def add_vaccination():
+
     data = _json()
 
     required = [
@@ -151,32 +220,61 @@ def add_vaccination():
     ]
 
     if missing:
-        return jsonify({
-            "success": False,
-            "error": "Missing: " + ", ".join(missing)
-        }), 400
+
+        return _error(
+            "Missing: " + ", ".join(missing),
+            400
+        )
 
     payload = {
-        "animal_id": data.get("animal_id"),
-        "species": data.get("species"),
-        "vaccine_name": data.get("vaccine_name"),
-        "vaccination_date": data.get(
-            "vaccination_date"
+        "animal_id": data.get(
+            "animal_id"
         ),
-        "next_due_date": data.get(
-            "next_due_date"
-        ),
-        "batch_number": data.get(
-            "batch_number"
-        ),
-        "administered_by": data.get(
-            "administered_by"
-        ),
-        "notes": data.get("notes", "")
+
+        "species": str(
+            data.get(
+                "species"
+            )
+        ).strip(),
+
+        "vaccine_name": str(
+            data.get(
+                "vaccine_name"
+            )
+        ).strip(),
+
+        "vaccination_date":
+            data.get(
+                "vaccination_date"
+            ),
+
+        "next_due_date":
+            data.get(
+                "next_due_date"
+            ),
+
+        "batch_number":
+            data.get(
+                "batch_number"
+            ),
+
+        "administered_by":
+            data.get(
+                "administered_by"
+            ),
+
+        "notes": str(
+            data.get(
+                "notes",
+                ""
+            )
+        )[:4000]
     }
 
     try:
+
         if not supabase:
+
             return jsonify({
                 "success": True,
                 "demo": True,
@@ -185,7 +283,9 @@ def add_vaccination():
 
         result = (
             supabase
-            .table("vaccination_records")
+            .table(
+                "vaccination_records"
+            )
             .insert(payload)
             .execute()
         )
@@ -200,59 +300,79 @@ def add_vaccination():
         })
 
     except Exception as exc:
+
         print(
             "Vaccination insert failed:",
             repr(exc)
         )
 
-        return jsonify({
-            "success": False,
-            "error": str(exc)
-        }), 500
+        return _error(
+            str(exc),
+            500
+        )
 
+
+# =========================================================
+# GET VACCINATIONS
+# =========================================================
 
 @feature_bp.get("/api/vaccinations")
 def get_vaccinations():
+
     try:
+
         if not supabase:
+
             return jsonify({
                 "success": True,
-                "records": []
+                "records": [],
+                "demo": True
             })
 
         result = (
             supabase
-            .table("vaccination_records")
+            .table(
+                "vaccination_records"
+            )
             .select("*")
             .order(
                 "vaccination_date",
                 desc=True
             )
-            .limit(500)
+            .limit(1000)
             .execute()
         )
 
         return jsonify({
             "success": True,
-            "records": result.data or []
+            "records":
+                result.data or []
         })
 
     except Exception as exc:
+
         print(
             "Vaccination fetch failed:",
             repr(exc)
         )
 
-        return jsonify({
-            "success": False,
-            "error": str(exc)
-        }), 500
+        return _error(
+            str(exc),
+            500
+        )
 
+
+# =========================================================
+# OUTBREAK RISK / CLUSTER DETECTION
+# =========================================================
 
 @feature_bp.get("/api/outbreak-risk")
 def outbreak_risk():
+
     try:
+
         if not supabase:
+
             return jsonify({
                 "success": True,
                 "clusters": [],
@@ -266,62 +386,151 @@ def outbreak_risk():
             supabase
             .table("reports")
             .select(
-                "village,block,risk_level,"
-                "affected_count,created_at,lat,lng"
+                "id,"
+                "village,"
+                "block,"
+                "district,"
+                "risk_level,"
+                "affected_count,"
+                "created_at,"
+                "latitude,"
+                "longitude,"
+                "case_status,"
+                "symptoms"
             )
             .order(
                 "created_at",
                 desc=True
             )
-            .limit(500)
+            .limit(1000)
             .execute()
         )
 
         groups = {}
 
         for row in result.data or []:
-            area = (
+
+            village = (
                 row.get("village")
-                or row.get("block")
-                or "Unknown"
+                or "Unknown Village"
             )
 
-            if area not in groups:
-                groups[area] = {
-                    "area": area,
+            block = (
+                row.get("block")
+                or ""
+            )
+
+            district = (
+                row.get("district")
+                or ""
+            )
+
+            area_key = village
+
+            if area_key not in groups:
+
+                groups[area_key] = {
+
+                    "area": area_key,
+
+                    "village": village,
+
+                    "block": block,
+
+                    "district": district,
+
                     "reports": 0,
+
                     "affected": 0,
+
                     "high": 0,
+
                     "moderate": 0,
-                    "lat": row.get("lat"),
-                    "lng": row.get("lng")
+
+                    "low": 0,
+
+                    "active_cases": 0,
+
+                    "deaths": 0,
+
+                    "latitude":
+                        row.get(
+                            "latitude"
+                        ),
+
+                    "longitude":
+                        row.get(
+                            "longitude"
+                        )
                 }
 
-            group = groups[area]
+            group = groups[area_key]
 
             group["reports"] += 1
 
-            try:
-                affected = int(
-                    row.get("affected_count") or 1
-                )
-            except Exception:
-                affected = 1
-
-            group["affected"] += max(
-                affected,
+            affected = max(
+                _int(
+                    row.get(
+                        "affected_count"
+                    ),
+                    1
+                ),
                 1
             )
 
-            level = str(
-                row.get("risk_level", "")
+            group["affected"] += affected
+
+            risk = str(
+                row.get(
+                    "risk_level",
+                    ""
+                )
             ).upper()
 
-            if level == "HIGH":
+            if risk == "HIGH":
+
                 group["high"] += 1
 
-            elif level == "MODERATE":
+            elif risk in {
+                "MODERATE",
+                "MEDIUM"
+            }:
+
                 group["moderate"] += 1
+
+            else:
+
+                group["low"] += 1
+
+            status = str(
+                row.get(
+                    "case_status",
+                    "OPEN"
+                )
+            ).upper()
+
+            if status not in {
+                "CLOSED",
+                "REJECTED",
+                "RESOLVED"
+            }:
+
+                group["active_cases"] += 1
+
+            symptoms = str(
+                row.get(
+                    "symptoms",
+                    ""
+                )
+            ).lower()
+
+            if (
+                "death" in symptoms
+                or "deaths" in symptoms
+                or status == "DEATH"
+            ):
+
+                group["deaths"] += affected
 
         clusters = []
 
@@ -329,136 +538,347 @@ def outbreak_risk():
 
             score = min(
                 100,
+
                 group["high"] * 20
+
                 + group["moderate"] * 8
-                + min(group["affected"], 20) * 2
+
+                + group["active_cases"] * 5
+
+                + min(
+                    group["affected"],
+                    20
+                ) * 2
             )
 
             if score >= 60:
-                level = "HIGH"
+
+                outbreak_level = "HIGH"
+
             elif score >= 30:
-                level = "WATCH"
+
+                outbreak_level = "WATCH"
+
             else:
-                level = "LOW"
+
+                outbreak_level = "LOW"
 
             clusters.append({
+
                 **group,
-                "outbreak_score": score,
-                "outbreak_level": level
+
+                "outbreak_score":
+                    score,
+
+                "outbreak_level":
+                    outbreak_level
             })
 
         clusters.sort(
-            key=lambda x: x["outbreak_score"],
+            key=lambda item:
+                item["outbreak_score"],
             reverse=True
         )
 
         return jsonify({
+
             "success": True,
+
             "clusters": clusters,
+
             "disclaimer":
                 "Early-warning aid only; "
                 "not epidemiological confirmation."
         })
 
     except Exception as exc:
+
         print(
             "Outbreak risk failed:",
             repr(exc)
         )
 
-        return jsonify({
-            "success": False,
-            "error": str(exc)
-        }), 500
+        return _error(
+            str(exc),
+            500
+        )
 
+
+# =========================================================
+# DASHBOARD KPIs
+# =========================================================
 
 @feature_bp.get("/api/dashboard-kpis")
 def dashboard_kpis():
+
     try:
+
         if not supabase:
+
             return jsonify({
+
                 "success": True,
+
                 "total_cases": 0,
+
+                "active_cases": 0,
+
                 "high_risk_cases": 0,
+
                 "moderate_cases": 0,
+
                 "animals_affected": 0,
-                "verified_cases": 0
+
+                "verified_cases": 0,
+
+                "suspected_outbreaks": 0,
+
+                "deaths": 0,
+
+                "vaccinated_animals": 0
             })
 
-        result = (
+        # -------------------------------------------------
+        # REPORTS
+        # -------------------------------------------------
+
+        reports_result = (
             supabase
             .table("reports")
             .select(
                 "risk_level,"
                 "affected_count,"
-                "case_status"
+                "case_status,"
+                "symptoms,"
+                "village"
             )
-            .limit(2000)
+            .limit(5000)
             .execute()
         )
 
-        rows = result.data or []
-
-        total = len(rows)
-
-        high = sum(
-            1
-            for row in rows
-            if str(
-                row.get("risk_level", "")
-            ).upper() == "HIGH"
+        reports = (
+            reports_result.data or []
         )
 
-        moderate = sum(
-            1
-            for row in rows
-            if str(
-                row.get("risk_level", "")
-            ).upper() == "MODERATE"
+        total_cases = len(
+            reports
         )
 
-        affected = 0
+        active_cases = 0
 
-        for row in rows:
-            try:
-                count = int(
-                    row.get("affected_count") or 1
+        high_risk = 0
+
+        moderate = 0
+
+        animals_affected = 0
+
+        verified = 0
+
+        deaths = 0
+
+        outbreak_groups = {}
+
+        for row in reports:
+
+            status = str(
+                row.get(
+                    "case_status",
+                    "OPEN"
                 )
-            except Exception:
-                count = 1
+            ).upper()
 
-            affected += max(
-                count,
+            risk = str(
+                row.get(
+                    "risk_level",
+                    ""
+                )
+            ).upper()
+
+            affected = max(
+                _int(
+                    row.get(
+                        "affected_count"
+                    ),
+                    1
+                ),
                 1
             )
 
-        verified = sum(
-            1
-            for row in rows
-            if row.get("case_status")
-            in {
+            animals_affected += (
+                affected
+            )
+
+            if status not in {
+                "CLOSED",
+                "REJECTED",
+                "RESOLVED"
+            }:
+
+                active_cases += 1
+
+            if risk == "HIGH":
+
+                high_risk += 1
+
+            elif risk in {
+                "MODERATE",
+                "MEDIUM"
+            }:
+
+                moderate += 1
+
+            if status in {
                 "VERIFIED",
                 "TREATMENT",
+                "ISOLATED",
                 "CLOSED"
-            }
-        )
+            }:
+
+                verified += 1
+
+            symptoms = str(
+                row.get(
+                    "symptoms",
+                    ""
+                )
+            ).lower()
+
+            if (
+                "death" in symptoms
+                or "deaths" in symptoms
+                or status == "DEATH"
+            ):
+
+                deaths += affected
+
+            village = (
+                row.get("village")
+                or "Unknown"
+            )
+
+            if village not in outbreak_groups:
+
+                outbreak_groups[village] = {
+                    "high": 0,
+                    "affected": 0
+                }
+
+            if risk == "HIGH":
+
+                outbreak_groups[
+                    village
+                ]["high"] += 1
+
+            outbreak_groups[
+                village
+            ]["affected"] += affected
+
+        # -------------------------------------------------
+        # SUSPECTED OUTBREAKS
+        # -------------------------------------------------
+
+        suspected_outbreaks = 0
+
+        for group in (
+            outbreak_groups.values()
+        ):
+
+            if (
+                group["high"] >= 3
+                or group["affected"] >= 10
+            ):
+
+                suspected_outbreaks += 1
+
+        # -------------------------------------------------
+        # VACCINATION
+        # -------------------------------------------------
+
+        vaccinated_animals = 0
+
+        try:
+
+            vaccination_result = (
+                supabase
+                .table(
+                    "vaccination_records"
+                )
+                .select(
+                    "animal_id"
+                )
+                .limit(5000)
+                .execute()
+            )
+
+            unique_animals = set()
+
+            for row in (
+                vaccination_result.data
+                or []
+            ):
+
+                animal_id = row.get(
+                    "animal_id"
+                )
+
+                if animal_id:
+
+                    unique_animals.add(
+                        str(animal_id)
+                    )
+
+            vaccinated_animals = len(
+                unique_animals
+            )
+
+        except Exception as exc:
+
+            print(
+                "Vaccination KPI failed:",
+                repr(exc)
+            )
 
         return jsonify({
+
             "success": True,
-            "total_cases": total,
-            "high_risk_cases": high,
-            "moderate_cases": moderate,
-            "animals_affected": affected,
-            "verified_cases": verified
+
+            "total_cases":
+                total_cases,
+
+            "active_cases":
+                active_cases,
+
+            "high_risk_cases":
+                high_risk,
+
+            "moderate_cases":
+                moderate,
+
+            "animals_affected":
+                animals_affected,
+
+            "verified_cases":
+                verified,
+
+            "suspected_outbreaks":
+                suspected_outbreaks,
+
+            "deaths":
+                deaths,
+
+            "vaccinated_animals":
+                vaccinated_animals
         })
 
     except Exception as exc:
+
         print(
             "Dashboard KPI failed:",
             repr(exc)
         )
 
-        return jsonify({
-            "success": False,
-            "error": str(exc)
-        }), 500
+        return _error(
+            str(exc),
+            500
+        )
+```
