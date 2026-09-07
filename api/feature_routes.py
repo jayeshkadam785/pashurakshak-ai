@@ -1,4 +1,3 @@
-```python
 import os
 from datetime import datetime, timezone
 
@@ -112,35 +111,30 @@ def verify_case(case_id):
 
     payload = {
         "case_status": status,
-
         "vet_verified": status in {
             "VERIFIED",
             "TREATMENT",
             "ISOLATED",
             "CLOSED"
         },
-
         "vet_notes": str(
             data.get(
                 "vet_notes",
                 ""
             )
         )[:4000],
-
         "diagnosis": str(
             data.get(
                 "diagnosis",
                 ""
             )
         )[:2000],
-
         "treatment": str(
             data.get(
                 "treatment",
                 ""
             )
         )[:4000],
-
         "verified_at": _now()
     }
 
@@ -295,9 +289,7 @@ def get_vaccinations():
 
         result = (
             supabase
-            .table(
-                "vaccination_records"
-            )
+            .table("vaccination_records")
             .select("*")
             .order(
                 "vaccination_date",
@@ -382,15 +374,9 @@ def outbreak_risk():
 
                 groups[area] = {
                     "area": area,
-                    "village": row.get(
-                        "village"
-                    ),
-                    "block": row.get(
-                        "block"
-                    ),
-                    "district": row.get(
-                        "district"
-                    ),
+                    "village": row.get("village"),
+                    "block": row.get("block"),
+                    "district": row.get("district"),
                     "reports": 0,
                     "affected": 0,
                     "high": 0,
@@ -398,12 +384,8 @@ def outbreak_risk():
                     "low": 0,
                     "active_cases": 0,
                     "deaths": 0,
-                    "latitude": row.get(
-                        "latitude"
-                    ),
-                    "longitude": row.get(
-                        "longitude"
-                    )
+                    "latitude": row.get("latitude"),
+                    "longitude": row.get("longitude")
                 }
 
             group = groups[area]
@@ -412,9 +394,7 @@ def outbreak_risk():
 
             affected = max(
                 _int(
-                    row.get(
-                        "affected_count"
-                    ),
+                    row.get("affected_count"),
                     1
                 ),
                 1
@@ -430,18 +410,15 @@ def outbreak_risk():
             ).upper()
 
             if level == "HIGH":
-
                 group["high"] += 1
 
             elif level in {
                 "MODERATE",
                 "MEDIUM"
             }:
-
                 group["moderate"] += 1
 
             else:
-
                 group["low"] += 1
 
             status = str(
@@ -456,7 +433,6 @@ def outbreak_risk():
                 "REJECTED",
                 "RESOLVED"
             }:
-
                 group["active_cases"] += 1
 
             symptoms = str(
@@ -471,7 +447,6 @@ def outbreak_risk():
                 or "deaths" in symptoms
                 or status == "DEATH"
             ):
-
                 group["deaths"] += affected
 
         clusters = []
@@ -490,15 +465,12 @@ def outbreak_risk():
             )
 
             if score >= 60:
-
                 outbreak_level = "HIGH"
 
             elif score >= 30:
-
                 outbreak_level = "WATCH"
 
             else:
-
                 outbreak_level = "LOW"
 
             clusters.append({
@@ -618,18 +590,15 @@ def dashboard_kpis():
                 "REJECTED",
                 "RESOLVED"
             }:
-
                 active += 1
 
             if risk == "HIGH":
-
                 high += 1
 
             elif risk in {
                 "MODERATE",
                 "MEDIUM"
             }:
-
                 moderate += 1
 
             if status in {
@@ -638,7 +607,6 @@ def dashboard_kpis():
                 "ISOLATED",
                 "CLOSED"
             }:
-
                 verified += 1
 
             symptoms = str(
@@ -653,7 +621,6 @@ def dashboard_kpis():
                 or "deaths" in symptoms
                 or status == "DEATH"
             ):
-
                 deaths += affected
 
             village = (
@@ -669,14 +636,9 @@ def dashboard_kpis():
                 }
 
             if risk == "HIGH":
+                outbreak_groups[village]["high"] += 1
 
-                outbreak_groups[
-                    village
-                ]["high"] += 1
-
-            outbreak_groups[
-                village
-            ]["affected"] += affected
+            outbreak_groups[village]["affected"] += affected
 
         suspected_outbreaks = 0
 
@@ -686,7 +648,6 @@ def dashboard_kpis():
                 group["high"] >= 3
                 or group["affected"] >= 10
             ):
-
                 suspected_outbreaks += 1
 
         vaccinated_animals = 0
@@ -695,9 +656,7 @@ def dashboard_kpis():
 
             vaccination_result = (
                 supabase
-                .table(
-                    "vaccination_records"
-                )
+                .table("vaccination_records")
                 .select("animal_id")
                 .limit(5000)
                 .execute()
@@ -715,7 +674,6 @@ def dashboard_kpis():
                 )
 
                 if animal_id:
-
                     unique_animals.add(
                         str(animal_id)
                     )
@@ -739,11 +697,9 @@ def dashboard_kpis():
             "moderate_cases": moderate,
             "animals_affected": affected_total,
             "verified_cases": verified,
-            "suspected_outbreaks":
-                suspected_outbreaks,
+            "suspected_outbreaks": suspected_outbreaks,
             "deaths": deaths,
-            "vaccinated_animals":
-                vaccinated_animals
+            "vaccinated_animals": vaccinated_animals
         })
 
     except Exception as exc:
@@ -757,4 +713,3 @@ def dashboard_kpis():
             "success": False,
             "error": str(exc)
         }), 500
-```
