@@ -48,7 +48,17 @@ except Exception as exc:
 # ============================================================
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
+
+# IMPORTANT:
+# This is backend/server-only. NEVER send this to the browser.
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+# This key is safe to send to the frontend.
+SUPABASE_PUBLISHABLE_KEY = os.environ.get(
+    "SUPABASE_PUBLISHABLE_KEY",
+    ""
+)
+
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 ROLE_ACCESS_CODE = os.environ.get(
@@ -611,7 +621,7 @@ def login_page():
     return render_template(
         "login.html",
         supabase_url=SUPABASE_URL or "",
-        supabase_key=SUPABASE_KEY or ""
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
     )
 
 
@@ -1209,6 +1219,9 @@ def health():
 
             "SUPABASE_KEY":
                 bool(SUPABASE_KEY),
+
+            "SUPABASE_PUBLISHABLE_KEY":
+                bool(SUPABASE_PUBLISHABLE_KEY),
 
             "GEMINI_API_KEY":
                 bool(GEMINI_API_KEY)
