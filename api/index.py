@@ -1,4 +1,3 @@
-````python
 import os
 import json
 import base64
@@ -40,7 +39,7 @@ except Exception as exc:
 
     print(
         "Feature blueprint could not be loaded:",
-        exc
+        repr(exc)
     )
 
 
@@ -72,6 +71,7 @@ if (
 ):
 
     try:
+
         supabase = create_client(
             SUPABASE_URL,
             SUPABASE_KEY
@@ -86,8 +86,18 @@ if (
 
         SUPABASE_INIT_ERROR = str(exc)
         supabase = None
-        print("SUPABASE CLIENT:", bool(supabase))
-        print("SUPABASE INIT ERROR:", SUPABASE_INIT_ERROR)
+
+
+print(
+    "SUPABASE CLIENT:",
+    bool(supabase)
+)
+
+print(
+    "SUPABASE INIT ERROR:",
+    SUPABASE_INIT_ERROR
+)
+
 
 # ============================================================
 # MEMORY FALLBACK
@@ -371,12 +381,15 @@ def score_report(data):
     )
 
     if risk_score >= 70:
+
         risk_level = "HIGH"
 
     elif risk_score >= 35:
+
         risk_level = "MODERATE"
 
     else:
+
         risk_level = "LOW"
 
 
@@ -582,7 +595,7 @@ If the image is unclear, say so.
 
         print(
             "Gemini image screening failed:",
-            exc
+            repr(exc)
         )
 
         return None
@@ -645,8 +658,12 @@ def triage():
     result = score_report(data)
 
     return jsonify({
-        "success": True,
-        "result": result
+
+        "success":
+            True,
+
+        "result":
+            result
     })
 
 
@@ -699,12 +716,19 @@ def image_screen():
     if not ai_result:
 
         ai_result = {
+
             "visible_signs": [
                 "Image screening service not configured"
             ],
+
             "possible_categories": [],
-            "risk_level": "MODERATE",
-            "confidence": 50,
+
+            "risk_level":
+                "MODERATE",
+
+            "confidence":
+                50,
+
             "recommendation":
                 "Image received successfully. "
                 "Veterinary review is recommended."
@@ -746,13 +770,14 @@ def save_report(report):
             )
 
             if response.data:
+
                 return response.data[0]
 
         except Exception as exc:
 
             print(
                 "Supabase report insert failed:",
-                exc
+                repr(exc)
             )
 
     report["id"] = (
@@ -782,13 +807,14 @@ def get_reports():
             )
 
             if response.data:
+
                 return response.data
 
         except Exception as exc:
 
             print(
                 "Supabase report fetch failed:",
-                exc
+                repr(exc)
             )
 
     return list(
@@ -811,8 +837,12 @@ def reports():
     if request.method == "GET":
 
         return jsonify({
-            "success": True,
-            "reports": get_reports()
+
+            "success":
+                True,
+
+            "reports":
+                get_reports()
         })
 
     data = request.get_json(
@@ -934,31 +964,195 @@ def dashboard_vet():
     )
 
 
+# ============================================================
+# OFFICIAL / ADMIN DASHBOARD
+# ============================================================
+
 @app.route("/dashboard/official")
 def dashboard_official():
 
     reports = get_reports()
 
-    totals = {
-        "total_open_reports": len(reports),
-        "total_reports": len(reports),
-        "high_risk_reports": sum(
-            1 for r in reports
-            if str(r.get("risk_level", "")).upper() == "HIGH"
-        ),
-        "moderate_risk_reports": sum(
-            1 for r in reports
-            if str(r.get("risk_level", "")).upper() == "MODERATE"
-        ),
-        "low_risk_reports": sum(
-            1 for r in reports
-            if str(r.get("risk_level", "")).upper() == "LOW"
+    # --------------------------------------------------------
+    # BLOCK-WISE DATA
+    # --------------------------------------------------------
+
+    block_data = {}
+
+    for report in reports:
+
+        block = str(
+            report.get("block") or "Unknown"
+        ).strip()
+
+        village = str(
+            report.get("village") or "Unknown"
+        ).strip()
+
+        if block not in block_data:
+
+            block_data[block] = {
+
+                "block":
+                    block,
+
+                "villages":
+                    set(),
+
+                "open_reports":
+                    0,
+
+                "high_risk":
+                    0
+            }
+
+        block_data[block]["villages"].add(
+            village
         )
+
+        status = str(
+            report.get("status") or "OPEN"
+        ).upper()
+
+        if status not in [
+            "CLOSED",
+            "REJECTED"
+        ]:
+
+            block_data[block][
+                "open_reports"
+            ] += 1
+
+        risk_level = str(
+            report.get("risk_level") or ""
+        ).upper()
+
+        if risk_level == "HIGH":
+
+            block_data[block][
+                "high_risk"
+            ] += 1
+
+
+    # --------------------------------------------------------
+    # BLOCK SUMMARY
+    # --------------------------------------------------------
+
+    block_summary = []
+
+    for data in block_data.values():
+
+        block_summary.append({
+
+            "block":
+                data["block"],
+
+            "villages_reporting":
+                len(data["villages"]),
+
+            "open_reports":
+                data["open_reports"],
+
+            "high_risk":
+                data["high_risk"]
+        })
+
+    block_summary.sort(
+        key=lambda item:
+            item["open_reports"],
+        reverse=True
+    )
+
+
+    # --------------------------------------------------------
+    # DISTRICT TOTALS
+    # --------------------------------------------------------
+
+    total_open_reports = sum(
+
+        item["open_reports"]
+
+        for item in block_summary
+    )
+
+    total_high_risk = sum(
+
+        item["high_risk"]
+
+        for item in block_summary
+    )
+
+    blocks_reporting = len(
+        block_summary
+    )
+
+
+    # --------------------------------------------------------
+    # VACCINATION COVERAGE
+    # --------------------------------------------------------
+
+    vaccination_coverage = 0
+
+    if supabase:
+
+        try:
+
+            vaccination_response = (
+                supabase
+                .table("vaccinations")
+                .select("*")
+                .execute()
+            )
+
+            vaccinations = (
+                vaccination_response.data
+                or []
+            )
+
+            if vaccinations:
+
+                vaccination_coverage = 100
+
+        except Exception as exc:
+
+            print(
+                "Vaccination dashboard error:",
+                repr(exc)
+            )
+
+
+    # --------------------------------------------------------
+    # TOTALS OBJECT
+    # --------------------------------------------------------
+
+    totals = {
+
+        "total_open_reports":
+            total_open_reports,
+
+        "total_high_risk":
+            total_high_risk,
+
+        "blocks_reporting":
+            blocks_reporting,
+
+        "vaccination_coverage":
+            vaccination_coverage
     }
 
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
+
     return render_template(
+
         "dashboard_official.html",
+
         totals=totals,
+
+        block_summary=block_summary,
+
         reports=reports
     )
 
@@ -1075,4 +1269,3 @@ if __name__ == "__main__":
 
         debug=True
     )
-````
