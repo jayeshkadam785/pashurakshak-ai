@@ -62,7 +62,7 @@ ROLE_ACCESS_CODE = os.environ.get(
 # ============================================================
 
 supabase = None
-
+SUPABASE_INIT_ERROR = None
 if (
     SUPABASE_URL
     and SUPABASE_KEY
