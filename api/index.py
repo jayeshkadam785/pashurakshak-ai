@@ -1,9 +1,8 @@
-````python
 import os
 import json
 import base64
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request, render_template, redirect
 
@@ -28,37 +27,28 @@ app = Flask(
 # FEATURE BLUEPRINT
 # ============================================================
 
+feature_bp = None
 FEATURE_BLUEPRINT_ERROR = None
 
 try:
     from api.feature_routes import feature_bp
     app.register_blueprint(feature_bp)
-
 except Exception as exc:
-    feature_bp = None
     FEATURE_BLUEPRINT_ERROR = str(exc)
-
-    print(
-        "Feature blueprint could not be loaded:",
-        repr(exc)
-    )
+    print("Feature blueprint could not be loaded:", repr(exc))
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 SUPABASE_PUBLISHABLE_KEY = os.environ.get(
     "SUPABASE_PUBLISHABLE_KEY",
     ""
 )
-
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 ROLE_ACCESS_CODE = os.environ.get(
     "ROLE_ACCESS_CODE",
     "SATARA-VET-2026"
@@ -72,39 +62,19 @@ ROLE_ACCESS_CODE = os.environ.get(
 supabase = None
 SUPABASE_INIT_ERROR = None
 
-if (
-    SUPABASE_URL
-    and SUPABASE_KEY
-    and create_client
-):
-
+if SUPABASE_URL and SUPABASE_KEY and create_client:
     try:
-
         supabase = create_client(
             SUPABASE_URL,
             SUPABASE_KEY
         )
-
     except Exception as exc:
-
+        SUPABASE_INIT_ERROR = str(exc)
         print(
             "Supabase initialization failed:",
             repr(exc)
         )
-
-        SUPABASE_INIT_ERROR = str(exc)
         supabase = None
-
-
-print(
-    "SUPABASE CLIENT:",
-    bool(supabase)
-)
-
-print(
-    "SUPABASE INIT ERROR:",
-    SUPABASE_INIT_ERROR
-)
 
 
 # ============================================================
@@ -116,7 +86,7 @@ _MEMORY_ANIMALS = []
 
 
 # ============================================================
-# RISK DATA
+# RISK ENGINE
 # ============================================================
 
 HIGH_RISK_SYMPTOMS = {
@@ -149,33 +119,26 @@ LOW_RISK_SYMPTOMS = {
 # ============================================================
 
 def safe_int(value, default=0):
-
     try:
         return int(value)
-
     except Exception:
         return default
 
 
 def normalize_symptoms(symptoms):
-
     if symptoms is None:
         return []
 
     if isinstance(symptoms, str):
-
         try:
-
             parsed = json.loads(symptoms)
 
             if isinstance(parsed, list):
-
                 return [
                     str(x).strip().lower()
                     for x in parsed
                     if str(x).strip()
                 ]
-
         except Exception:
             pass
 
@@ -186,7 +149,6 @@ def normalize_symptoms(symptoms):
         ]
 
     if isinstance(symptoms, list):
-
         return [
             str(x).strip().lower()
             for x in symptoms
@@ -201,16 +163,12 @@ def normalize_symptoms(symptoms):
 # ============================================================
 
 def score_report(data):
-
     symptoms = normalize_symptoms(
         data.get("symptoms", [])
     )
 
     animal_type = str(
-        data.get(
-            "animal_type",
-            "unknown"
-        )
+        data.get("animal_type", "unknown")
     ).lower()
 
     affected_count = max(
@@ -240,11 +198,8 @@ def score_report(data):
     factors = []
 
     for symptom in symptoms:
-
         if symptom in HIGH_RISK_SYMPTOMS:
-
             weight = HIGH_RISK_SYMPTOMS[symptom]
-
             score += weight
 
             factors.append({
@@ -254,9 +209,7 @@ def score_report(data):
             })
 
         elif symptom in MODERATE_SYMPTOMS:
-
             weight = MODERATE_SYMPTOMS[symptom]
-
             score += weight
 
             factors.append({
@@ -266,9 +219,7 @@ def score_report(data):
             })
 
         elif symptom in LOW_RISK_SYMPTOMS:
-
             weight = LOW_RISK_SYMPTOMS[symptom]
-
             score += weight
 
             factors.append({
@@ -278,7 +229,6 @@ def score_report(data):
             })
 
     if affected_count >= 10:
-
         score += 6
 
         factors.append({
@@ -288,7 +238,6 @@ def score_report(data):
         })
 
     elif affected_count >= 5:
-
         score += 4
 
         factors.append({
@@ -298,7 +247,6 @@ def score_report(data):
         })
 
     elif affected_count >= 2:
-
         score += 2
 
         factors.append({
@@ -308,7 +256,6 @@ def score_report(data):
         })
 
     if days_since_onset >= 7:
-
         score += 4
 
         factors.append({
@@ -318,7 +265,6 @@ def score_report(data):
         })
 
     elif days_since_onset >= 3:
-
         score += 2
 
         factors.append({
@@ -327,12 +273,11 @@ def score_report(data):
             "points": 2
         })
 
-    if vaccination_status in [
+    if vaccination_status in {
         "unknown",
         "not_vaccinated",
         "overdue"
-    ]:
-
+    }:
         score += 2
 
         factors.append({
@@ -341,13 +286,12 @@ def score_report(data):
             "points": 2
         })
 
-    if animal_type in [
+    if animal_type in {
         "cattle",
         "buffalo",
         "goat",
         "sheep"
-    ]:
-
+    }:
         score += 1
 
     risk_score = min(
@@ -356,20 +300,15 @@ def score_report(data):
     )
 
     if risk_score >= 70:
-
         risk_level = "HIGH"
-
     elif risk_score >= 35:
-
         risk_level = "MODERATE"
-
     else:
-
         risk_level = "LOW"
 
     signal_count = (
         len(symptoms)
-        + (1 if affected_count else 0)
+        + 1
         + (1 if days_since_onset else 0)
         + (
             1
@@ -384,7 +323,6 @@ def score_report(data):
     )
 
     if risk_level == "HIGH":
-
         recommendation = (
             "Isolate affected animals where practical, "
             "avoid unnecessary movement, and contact a "
@@ -392,7 +330,6 @@ def score_report(data):
         )
 
     elif risk_level == "MODERATE":
-
         recommendation = (
             "Monitor affected animals closely, "
             "record progression, review vaccination "
@@ -400,33 +337,21 @@ def score_report(data):
         )
 
     else:
-
         recommendation = (
             "Continue monitoring, maintain hygiene and "
             "preventive care, and report worsening symptoms."
         )
 
     return {
-
         "risk_level": risk_level,
-
         "risk_score": risk_score,
-
         "confidence": confidence,
-
         "factors": factors,
-
         "recommendation": recommendation,
-
         "animal_type": animal_type,
-
         "affected_count": affected_count,
-
         "days_since_onset": days_since_onset,
-
-        "screening_type":
-            "AI-assisted decision support",
-
+        "screening_type": "AI-assisted decision support",
         "medical_disclaimer": (
             "This result is a screening/triage aid "
             "and does not replace veterinary diagnosis."
@@ -442,7 +367,6 @@ def gemini_image_screen(
     image_bytes,
     mime_type="image/jpeg"
 ):
-
     if not GEMINI_API_KEY:
         return None
 
@@ -499,12 +423,9 @@ If the image is unclear, say so.
     )
 
     try:
-
         req = urllib.request.Request(
             url,
-            data=json.dumps(
-                payload
-            ).encode("utf-8"),
+            data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Content-Type": "application/json"
             },
@@ -515,10 +436,8 @@ If the image is unclear, say so.
             req,
             timeout=30
         ) as response:
-
             result = json.loads(
-                response.read()
-                .decode("utf-8")
+                response.read().decode("utf-8")
             )
 
         text = (
@@ -539,72 +458,76 @@ If the image is unclear, say so.
         return json.loads(text)
 
     except Exception as exc:
-
         print(
             "Gemini image screening failed:",
             repr(exc)
         )
-
         return None
 
 
 # ============================================================
-# AUTH / FEATURE PAGES
+# PAGE ROUTES
 # ============================================================
+
+@app.route("/")
+def home():
+    return redirect("/login")
+
 
 @app.route("/login")
 def login_page():
-
     return render_template(
         "login.html",
-        supabase_url=SUPABASE_URL or "",
-        supabase_publishable_key=
-            SUPABASE_PUBLISHABLE_KEY or ""
+        supabase_url=SUPABASE_URL,
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
     )
 
 
 @app.route("/vet/cases")
 def vet_cases_page():
-
     return render_template(
         "vet_cases.html",
-        supabase_url=SUPABASE_URL or "",
-        supabase_publishable_key=
-            SUPABASE_PUBLISHABLE_KEY or ""
+        supabase_url=SUPABASE_URL,
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
     )
 
 
 @app.route("/vaccination")
 def vaccination_page():
-
     return render_template(
-        "vaccination.html"
+        "vaccination.html",
+        supabase_url=SUPABASE_URL,
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
     )
 
-
-# ============================================================
-# ANIMAL REGISTRY PAGE
-# ============================================================
 
 @app.route("/animals")
 def animals_page():
-
     return render_template(
         "animals.html",
-        supabase_url=SUPABASE_URL or "",
-        supabase_publishable_key=
-            SUPABASE_PUBLISHABLE_KEY or ""
+        supabase_url=SUPABASE_URL,
+        supabase_publishable_key=SUPABASE_PUBLISHABLE_KEY
     )
 
 
-# ============================================================
-# HOME → LOGIN
-# ============================================================
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
-@app.route("/")
-def home():
 
-    return redirect("/login")
+@app.route("/dashboard/farmer")
+def dashboard_farmer():
+    return render_template("dashboard_farmer.html")
+
+
+@app.route("/dashboard/vet")
+def dashboard_vet():
+    return render_template("dashboard_vet.html")
+
+
+@app.route("/report")
+def report_page():
+    return render_template("report.html")
 
 
 # ============================================================
@@ -616,7 +539,6 @@ def home():
     methods=["POST"]
 )
 def triage():
-
     data = request.get_json(
         silent=True
     ) or {}
@@ -624,9 +546,7 @@ def triage():
     result = score_report(data)
 
     return jsonify({
-
         "success": True,
-
         "result": result
     })
 
@@ -640,37 +560,28 @@ def triage():
     methods=["POST"]
 )
 def image_screen():
-
     if "image" not in request.files:
-
         return jsonify({
             "success": False,
             "error": "No image uploaded"
         }), 400
 
     image = request.files["image"]
-
     image_bytes = image.read()
 
     if not image_bytes:
-
         return jsonify({
             "success": False,
             "error": "Empty image"
         }), 400
 
     if len(image_bytes) > 8 * 1024 * 1024:
-
         return jsonify({
             "success": False,
-            "error":
-                "Image too large. Maximum size is 8 MB."
+            "error": "Image too large. Maximum size is 8 MB."
         }), 413
 
-    mime_type = (
-        image.mimetype
-        or "image/jpeg"
-    )
+    mime_type = image.mimetype or "image/jpeg"
 
     ai_result = gemini_image_screen(
         image_bytes,
@@ -678,19 +589,13 @@ def image_screen():
     )
 
     if not ai_result:
-
         ai_result = {
-
             "visible_signs": [
                 "Image screening service not configured"
             ],
-
             "possible_categories": [],
-
             "risk_level": "MODERATE",
-
             "confidence": 50,
-
             "recommendation": (
                 "Image received successfully. "
                 "Veterinary review is recommended."
@@ -698,14 +603,9 @@ def image_screen():
         }
 
     return jsonify({
-
         "success": True,
-
         "result": ai_result,
-
-        "screening_type":
-            "AI image screening",
-
+        "screening_type": "AI image screening",
         "medical_disclaimer": (
             "Image screening is an assistive tool "
             "and does not provide a definitive "
@@ -719,11 +619,8 @@ def image_screen():
 # ============================================================
 
 def save_report(report):
-
     if supabase:
-
         try:
-
             response = (
                 supabase
                 .table("reports")
@@ -732,31 +629,25 @@ def save_report(report):
             )
 
             if response.data:
-
                 return response.data[0]
 
         except Exception as exc:
-
             print(
                 "Supabase report insert failed:",
                 repr(exc)
             )
 
-    report["id"] = (
-        len(_MEMORY_REPORTS) + 1
-    )
+    report = dict(report)
 
+    report["id"] = len(_MEMORY_REPORTS) + 1
     _MEMORY_REPORTS.append(report)
 
     return report
 
 
 def get_reports():
-
     if supabase:
-
         try:
-
             response = (
                 supabase
                 .table("reports")
@@ -768,21 +659,17 @@ def get_reports():
                 .execute()
             )
 
-            if response.data:
-
+            if response.data is not None:
                 return response.data
 
         except Exception as exc:
-
             print(
                 "Supabase report fetch failed:",
                 repr(exc)
             )
 
     return list(
-        reversed(
-            _MEMORY_REPORTS
-        )
+        reversed(_MEMORY_REPORTS)
     )
 
 
@@ -795,13 +682,9 @@ def get_reports():
     methods=["GET", "POST"]
 )
 def reports():
-
     if request.method == "GET":
-
         return jsonify({
-
             "success": True,
-
             "reports": get_reports()
         })
 
@@ -811,152 +694,54 @@ def reports():
 
     result = score_report(data)
 
-    report = {
+    now = datetime.now(timezone.utc)
 
+    report = {
         "village": data.get(
             "village",
             "Satara"
         ),
-
         "block": data.get("block"),
-
         "lat": data.get("lat"),
-
         "lng": data.get("lng"),
-
         "animal_type": data.get(
             "animal_type",
             "unknown"
         ),
-
         "symptoms": normalize_symptoms(
-            data.get(
-                "symptoms",
-                []
-            )
+            data.get("symptoms", [])
         ),
-
-        "affected_count":
-            result["affected_count"],
-
-        "days_since_onset":
-            result["days_since_onset"],
-
-        "notes": data.get(
-            "notes",
-            ""
-        ),
-
-        "risk_level":
-            result["risk_level"],
-
-        "risk_score":
-            result["risk_score"],
-
-        "reported_by":
-            data.get("reported_by"),
-
-        "date":
-            datetime.utcnow().date().isoformat(),
-
-        "created_at":
-            datetime.utcnow().isoformat(),
-
-        "confidence":
-            result["confidence"],
-
-        "risk_factors":
-            result["factors"],
-
-        "case_status":
-            data.get(
-                "case_status",
-                "UNDER_REVIEW"
-            )
+        "affected_count": result["affected_count"],
+        "days_since_onset": result["days_since_onset"],
+        "notes": data.get("notes", ""),
+        "risk_level": result["risk_level"],
+        "risk_score": result["risk_score"],
+        "reported_by": data.get("reported_by"),
+        "date": now.date().isoformat(),
+        "created_at": now.isoformat(),
+        "confidence": result["confidence"],
+        "risk_factors": result["factors"],
+        "case_status": data.get(
+            "case_status",
+            "UNDER_REVIEW"
+        )
     }
 
     saved = save_report(report)
 
     return jsonify({
-
         "success": True,
-
         "report": saved,
-
         "risk": result
     })
 
 
 # ============================================================
-# ANIMAL REGISTRY
+# ANIMAL REGISTRY HELPERS
 # ============================================================
 
-def get_animal_columns():
-
-    """
-    Detect actual columns available in public.animals.
-
-    This prevents failures when the table schema differs
-    from the expected schema.
-    """
-
-    if not supabase:
-        return set()
-
-    try:
-
-        result = (
-            supabase
-            .rpc(
-                "get_table_columns",
-                {
-                    "table_name": "animals"
-                }
-            )
-            .execute()
-        )
-
-        if result.data:
-
-            return {
-                str(row.get("column_name"))
-                for row in result.data
-                if row.get("column_name")
-            }
-
-    except Exception:
-        pass
-
-    # Fallback: known expected columns.
-    return {
-        "id",
-        "animal_tag",
-        "species",
-        "breed",
-        "sex",
-        "age",
-        "owner_name",
-        "village",
-        "block",
-        "latitude",
-        "longitude",
-        "vaccination_status",
-        "treatment_history",
-        "created_at",
-        "updated_at"
-    }
-
-
 def build_animal_payload(data):
-
-    """
-    Build a safe payload.
-
-    Only known/allowed Animal Registry fields are accepted.
-    """
-
     allowed = {
-
         "animal_tag",
         "species",
         "breed",
@@ -974,13 +759,10 @@ def build_animal_payload(data):
     payload = {}
 
     for field in allowed:
-
         if field in data:
-
             value = data.get(field)
 
             if isinstance(value, str):
-
                 value = value.strip()
 
             payload[field] = value
@@ -988,9 +770,9 @@ def build_animal_payload(data):
     return payload
 
 
-# ------------------------------------------------------------
-# LIST + CREATE ANIMAL
-# ------------------------------------------------------------
+# ============================================================
+# ANIMAL REGISTRY API
+# ============================================================
 
 @app.route(
     "/api/animals",
@@ -999,57 +781,51 @@ def build_animal_payload(data):
 def animals_api():
 
     # --------------------------------------------------------
-    # GET
+    # GET ANIMALS
     # --------------------------------------------------------
 
     if request.method == "GET":
 
         if not supabase:
-
             return jsonify({
-
                 "success": True,
-
-                "animals":
-                    list(reversed(_MEMORY_ANIMALS)),
-
+                "animals": list(
+                    reversed(_MEMORY_ANIMALS)
+                ),
                 "demo": True
             })
 
         try:
-
             response = (
                 supabase
                 .table("animals")
                 .select("*")
+                .order(
+                    "created_at",
+                    desc=True
+                )
                 .limit(1000)
                 .execute()
             )
 
             return jsonify({
-
                 "success": True,
-
-                "animals":
-                    response.data or []
+                "animals": response.data or []
             })
 
         except Exception as exc:
-
             print(
                 "Animal fetch failed:",
                 repr(exc)
             )
 
             return jsonify({
-
                 "success": False,
-
                 "error": str(exc)
             }), 500
 
     # --------------------------------------------------------
-    # POST
+    # CREATE ANIMAL
     # --------------------------------------------------------
 
     data = request.get_json(
@@ -1061,50 +837,32 @@ def animals_api():
     ).strip()
 
     if not species:
-
         return jsonify({
-
             "success": False,
-
-            "error":
-                "Animal species is required."
+            "error": "Animal species is required."
         }), 400
 
     payload = build_animal_payload(data)
 
-    # Do NOT require animal_tag because the existing
-    # database table may not contain that column.
-
     if not supabase:
 
         animal = {
-
-            "id":
-                len(_MEMORY_ANIMALS) + 1,
-
+            "id": len(_MEMORY_ANIMALS) + 1,
             **payload,
-
-            "created_at":
-                datetime.utcnow().isoformat()
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
         }
 
         _MEMORY_ANIMALS.append(animal)
 
         return jsonify({
-
             "success": True,
-
             "animal": animal,
-
             "demo": True
         }), 201
 
     try:
-
-        # ----------------------------------------------------
-        # First try normal insert.
-        # ----------------------------------------------------
-
         response = (
             supabase
             .table("animals")
@@ -1119,14 +877,11 @@ def animals_api():
         )
 
         return jsonify({
-
             "success": True,
-
             "animal": saved
         }), 201
 
     except Exception as exc:
-
         error_text = str(exc)
 
         print(
@@ -1134,75 +889,15 @@ def animals_api():
             repr(exc)
         )
 
-        # ----------------------------------------------------
-        # If animal_tag/breed/etc. doesn't exist, retry
-        # with only the most essential field: species.
-        # ----------------------------------------------------
-
-        if (
-            "does not exist" in error_text
-            or "PGRST204" in error_text
-        ):
-
-            try:
-
-                minimal_payload = {
-
-                    "species":
-                        species
-                }
-
-                response = (
-                    supabase
-                    .table("animals")
-                    .insert(minimal_payload)
-                    .execute()
-                )
-
-                saved = (
-                    response.data[0]
-                    if response.data
-                    else minimal_payload
-                )
-
-                return jsonify({
-
-                    "success": True,
-
-                    "animal": saved,
-
-                    "warning": (
-                        "Animal saved with available "
-                        "database columns."
-                    )
-                }), 201
-
-            except Exception as retry_exc:
-
-                print(
-                    "Minimal animal insert failed:",
-                    repr(retry_exc)
-                )
-
-                return jsonify({
-
-                    "success": False,
-
-                    "error":
-                        str(retry_exc)
-                }), 500
-
         return jsonify({
-
             "success": False,
-
             "error": error_text
         }), 500
 
 
-# ------------------------------------------------------------
+# ============================================================
 # GET SINGLE ANIMAL
-# ------------------------------------------------------------
+# ============================================================
 
 @app.route(
     "/api/animals/<animal_id>",
@@ -1213,27 +908,19 @@ def get_animal(animal_id):
     if not supabase:
 
         for animal in _MEMORY_ANIMALS:
-
             if str(animal.get("id")) == str(animal_id):
-
                 return jsonify({
-
                     "success": True,
-
                     "animal": animal,
-
                     "demo": True
                 })
 
         return jsonify({
-
             "success": False,
-
             "error": "Animal not found."
         }), 404
 
     try:
-
         response = (
             supabase
             .table("animals")
@@ -1244,39 +931,31 @@ def get_animal(animal_id):
         )
 
         if not response.data:
-
             return jsonify({
-
                 "success": False,
-
                 "error": "Animal not found."
             }), 404
 
         return jsonify({
-
             "success": True,
-
             "animal": response.data[0]
         })
 
     except Exception as exc:
-
         print(
             "Single animal fetch failed:",
             repr(exc)
         )
 
         return jsonify({
-
             "success": False,
-
             "error": str(exc)
         }), 500
 
 
-# ------------------------------------------------------------
+# ============================================================
 # UPDATE ANIMAL
-# ------------------------------------------------------------
+# ============================================================
 
 @app.route(
     "/api/animals/<animal_id>",
@@ -1297,23 +976,17 @@ def update_animal(animal_id):
         ).strip()
 
         if not payload["species"]:
-
             return jsonify({
-
                 "success": False,
-
-                "error":
+                "error": (
                     "Animal species cannot be empty."
+                )
             }), 400
 
     if not payload:
-
         return jsonify({
-
             "success": False,
-
-            "error":
-                "No fields to update."
+            "error": "No fields to update."
         }), 400
 
     if not supabase:
@@ -1325,18 +998,13 @@ def update_animal(animal_id):
                 animal.update(payload)
 
                 return jsonify({
-
                     "success": True,
-
                     "animal": animal,
-
                     "demo": True
                 })
 
         return jsonify({
-
             "success": False,
-
             "error": "Animal not found."
         }), 404
 
@@ -1351,39 +1019,31 @@ def update_animal(animal_id):
         )
 
         if not response.data:
-
             return jsonify({
-
                 "success": False,
-
                 "error": "Animal not found."
             }), 404
 
         return jsonify({
-
             "success": True,
-
             "animal": response.data[0]
         })
 
     except Exception as exc:
-
         print(
             "Animal update failed:",
             repr(exc)
         )
 
         return jsonify({
-
             "success": False,
-
             "error": str(exc)
         }), 500
 
 
-# ------------------------------------------------------------
+# ============================================================
 # DELETE ANIMAL
-# ------------------------------------------------------------
+# ============================================================
 
 @app.route(
     "/api/animals/<animal_id>",
@@ -1405,22 +1065,14 @@ def delete_animal(animal_id):
         ]
 
         if len(_MEMORY_ANIMALS) == original_count:
-
             return jsonify({
-
                 "success": False,
-
-                "error":
-                    "Animal not found."
+                "error": "Animal not found."
             }), 404
 
         return jsonify({
-
             "success": True,
-
-            "message":
-                "Animal deleted successfully.",
-
+            "message": "Animal deleted successfully.",
             "demo": True
         })
 
@@ -1435,58 +1087,24 @@ def delete_animal(animal_id):
         )
 
         return jsonify({
-
             "success": True,
-
-            "message":
-                "Animal deleted successfully."
+            "message": "Animal deleted successfully."
         })
 
     except Exception as exc:
-
         print(
             "Animal delete failed:",
             repr(exc)
         )
 
         return jsonify({
-
             "success": False,
-
             "error": str(exc)
         }), 500
 
 
 # ============================================================
-# DASHBOARD ROUTES
-# ============================================================
-
-@app.route("/dashboard")
-def dashboard():
-
-    return render_template(
-        "dashboard.html"
-    )
-
-
-@app.route("/dashboard/farmer")
-def dashboard_farmer():
-
-    return render_template(
-        "dashboard_farmer.html"
-    )
-
-
-@app.route("/dashboard/vet")
-def dashboard_vet():
-
-    return render_template(
-        "dashboard_vet.html"
-    )
-
-
-# ============================================================
-# OFFICIAL / ADMIN DASHBOARD
+# OFFICIAL DASHBOARD
 # ============================================================
 
 @app.route("/dashboard/official")
@@ -1509,13 +1127,9 @@ def dashboard_official():
         if block not in block_data:
 
             block_data[block] = {
-
                 "block": block,
-
                 "villages": set(),
-
                 "open_reports": 0,
-
                 "high_risk": 0
             }
 
@@ -1529,46 +1143,34 @@ def dashboard_official():
             or "OPEN"
         ).upper()
 
-        if status not in [
+        if status not in {
             "CLOSED",
             "REJECTED"
-        ]:
-
-            block_data[block][
-                "open_reports"
-            ] += 1
+        }:
+            block_data[block]["open_reports"] += 1
 
         risk_level = str(
             report.get("risk_level") or ""
         ).upper()
 
         if risk_level == "HIGH":
-
-            block_data[block][
-                "high_risk"
-            ] += 1
+            block_data[block]["high_risk"] += 1
 
     block_summary = []
 
     for data in block_data.values():
 
         block_summary.append({
-
             "block": data["block"],
-
-            "villages_reporting":
-                len(data["villages"]),
-
-            "open_reports":
-                data["open_reports"],
-
-            "high_risk":
-                data["high_risk"]
+            "villages_reporting": len(
+                data["villages"]
+            ),
+            "open_reports": data["open_reports"],
+            "high_risk": data["high_risk"]
         })
 
     block_summary.sort(
-        key=lambda item:
-            item["open_reports"],
+        key=lambda item: item["open_reports"],
         reverse=True
     )
 
@@ -1600,12 +1202,10 @@ def dashboard_official():
             )
 
             vaccinations = (
-                vaccination_response.data
-                or []
+                vaccination_response.data or []
             )
 
             if vaccinations:
-
                 vaccination_coverage = 100
 
         except Exception as exc:
@@ -1616,7 +1216,6 @@ def dashboard_official():
             )
 
     totals = {
-
         "total_open_reports":
             total_open_reports,
 
@@ -1631,26 +1230,10 @@ def dashboard_official():
     }
 
     return render_template(
-
         "dashboard_official.html",
-
         totals=totals,
-
         block_summary=block_summary,
-
         reports=reports
-    )
-
-
-# ============================================================
-# REPORT PAGE
-# ============================================================
-
-@app.route("/report")
-def report_page():
-
-    return render_template(
-        "report.html"
     )
 
 
@@ -1662,14 +1245,9 @@ def report_page():
 def health():
 
     return jsonify({
-
         "success": True,
-
-        "app":
-            "PashuRakshak AI",
-
-        "status":
-            "healthy",
+        "app": "PashuRakshak AI",
+        "status": "healthy",
 
         "supabase":
             bool(supabase),
@@ -1690,7 +1268,6 @@ def health():
             True,
 
         "environment": {
-
             "SUPABASE_URL":
                 bool(SUPABASE_URL),
 
@@ -1707,7 +1284,9 @@ def health():
         },
 
         "timestamp":
-            datetime.utcnow().isoformat()
+            datetime.now(
+                timezone.utc
+            ).isoformat()
     })
 
 
@@ -1719,11 +1298,8 @@ def health():
 def not_found(error):
 
     return jsonify({
-
         "success": False,
-
-        "error":
-            "Endpoint not found"
+        "error": "Endpoint not found"
     }), 404
 
 
@@ -1731,11 +1307,8 @@ def not_found(error):
 def server_error(error):
 
     return jsonify({
-
         "success": False,
-
-        "error":
-            "Internal server error"
+        "error": "Internal server error"
     }), 500
 
 
@@ -1746,16 +1319,12 @@ def server_error(error):
 if __name__ == "__main__":
 
     app.run(
-
         host="0.0.0.0",
-
         port=int(
             os.environ.get(
                 "PORT",
                 5000
             )
         ),
-
         debug=True
     )
-````
