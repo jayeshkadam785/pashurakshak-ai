@@ -30,7 +30,7 @@ app = Flask(
 FEATURE_BLUEPRINT_ERROR = None
 
 try:
-    from feature_routes import feature_bp
+    from api.feature_routes import feature_bp
     app.register_blueprint(feature_bp)
 
 except Exception as exc:
