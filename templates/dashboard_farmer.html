@@ -1,258 +1,488 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PashuRakshak — My dashboard</title>
+
+<title>PashuRakshak — My Dashboard</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
+
 <div class="app-shell">
 
   {% include "_nav.html" %}
 
   <main class="main">
 
+    <!-- =========================
+         TOP BAR
+    ========================== -->
+
     <div class="topbar">
+
       <div>
-        <h1>My dashboard</h1>
-        <div class="loc">Your animals, reports and reminders</div>
+        <h1>My Dashboard</h1>
+
+        <div class="loc">
+          Your animals, reports and vaccination reminders
+        </div>
       </div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="/animals" class="btn btn-primary">🐄 Animal Registry</a>
-        <a href="/report" class="btn btn-primary">+ Report an issue</a>
+
+        <a href="/animals" class="btn btn-primary">
+          🐄 Animal Registry
+        </a>
+
+        <a href="/report" class="btn btn-primary">
+          + Report an Issue
+        </a>
+
       </div>
+
     </div>
 
 
-    <!-- DASHBOARD SUMMARY -->
+    <!-- =========================
+         DASHBOARD SUMMARY
+    ========================== -->
+
     <div class="grid-3">
 
-      <div class="icon-card">
-        <div class="badge">🐄</div>
-        <div class="title">My animals</div>
-        <div class="value">{{ my_animals|length }}</div>
+      <!-- ANIMALS -->
 
-        <a href="/animals"
-           style="display:inline-block; margin-top:8px; font-size:13px; font-weight:600;">
-          Manage animals →
+      <div class="icon-card">
+
+        <div class="badge">
+          🐄
+        </div>
+
+        <div class="title">
+          My Animals
+        </div>
+
+        <div class="value">
+          {{ my_animals|length }}
+        </div>
+
+        <a
+          href="/animals"
+          style="
+            display:inline-block;
+            margin-top:8px;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          Manage Animals →
         </a>
+
       </div>
 
 
+      <!-- REPORTS -->
+
       <div class="icon-card">
-        <div class="badge">📋</div>
-        <div class="title">Reports filed</div>
-        <div class="value">{{ my_reports|length }}</div>
+
+        <div class="badge">
+          📋
+        </div>
+
+        <div class="title">
+          Reports Filed
+        </div>
+
+        <div class="value">
+          {{ my_reports|length }}
+        </div>
+
+        <a
+          href="/report"
+          style="
+            display:inline-block;
+            margin-top:8px;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          Report Health Issue →
+        </a>
+
       </div>
 
 
+      <!-- VACCINATIONS -->
+
       <div class="icon-card">
-        <div class="badge"
-             style="background:var(--amber-100); color:#8a6413;">
+
+        <div
+          class="badge"
+          style="
+            background:var(--amber-100);
+            color:#8a6413;
+          "
+        >
           💉
         </div>
 
-        <div class="title">Vaccinations due</div>
+        <div class="title">
+          Vaccinations Due
+        </div>
 
-        <div class="value"
-             style="color:#8a6413;">
+        <div
+          class="value"
+          style="color:#8a6413;"
+        >
           {{ vaccination_due|length }}
         </div>
+
+        <a
+          href="/animals"
+          style="
+            display:inline-block;
+            margin-top:8px;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          View Records →
+        </a>
+
       </div>
 
     </div>
 
 
-    <!-- ANIMAL REGISTRY QUICK ACTION -->
-    <div class="card"
-         style="
-           margin-bottom:24px;
-           padding:22px;
-           display:flex;
-           align-items:center;
-           justify-content:space-between;
-           gap:20px;
-           flex-wrap:wrap;
-         ">
+    <!-- =========================
+         ANIMAL REGISTRY QUICK ACTION
+    ========================== -->
+
+    <div
+      class="card"
+      style="
+        margin-bottom:24px;
+        padding:22px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:20px;
+        flex-wrap:wrap;
+      "
+    >
 
       <div>
+
         <h2 style="margin:0 0 6px 0;">
           🐄 Animal Registry
         </h2>
 
         <div class="loc">
-          Register and manage your livestock records, vaccination status
-          and treatment history.
+          Register and manage livestock records, vaccination status,
+          location and treatment history.
         </div>
+
       </div>
 
-      <a href="/animals"
-         class="btn btn-primary">
+      <a
+        href="/animals"
+        class="btn btn-primary"
+      >
         + Register Animal
       </a>
 
     </div>
 
 
-    <!-- MY ANIMALS -->
-    <h2>My animals</h2>
+    <!-- =========================
+         MY ANIMALS
+    ========================== -->
 
-    <div class="card"
-         style="padding:0; overflow:hidden; margin-bottom:24px;">
+    <h2>
+      My Animals
+    </h2>
 
-      <table>
+    <div
+      class="card"
+      style="
+        padding:0;
+        overflow:hidden;
+        margin-bottom:24px;
+      "
+    >
 
-        <thead>
-          <tr>
-            <th>Tag ID</th>
-            <th>Species</th>
-            <th>Breed</th>
-            <th>Age</th>
-            <th>Last checkup</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+      <div style="overflow-x:auto;">
 
-        <tbody>
+        <table>
 
-          {% for a in my_animals %}
+          <thead>
 
-          <tr>
+            <tr>
 
-            <td>{{ a.tag_id }}</td>
+              <th>Tag ID</th>
+              <th>Species</th>
+              <th>Breed</th>
+              <th>Age</th>
+              <th>Last Checkup</th>
+              <th>Status</th>
 
-            <td>{{ a.species }}</td>
+            </tr>
 
-            <td>{{ a.breed }}</td>
+          </thead>
 
-            <td>{{ a.age }}</td>
 
-            <td>{{ a.last_checkup }}</td>
+          <tbody>
 
-            <td>
+            {% for a in my_animals %}
 
-              {% if a.status == 'healthy' %}
+            <tr>
 
-                <span class="tag low">
-                  Healthy
-                </span>
+              <td>
+                <strong>
+                  {{ a.tag_id }}
+                </strong>
+              </td>
 
-              {% else %}
+              <td>
+                {{ a.species }}
+              </td>
 
-                <span class="tag moderate">
-                  {{ a.status|capitalize }}
-                </span>
+              <td>
+                {{ a.breed }}
+              </td>
 
-              {% endif %}
+              <td>
+                {{ a.age }}
+              </td>
 
-            </td>
+              <td>
+                {{ a.last_checkup }}
+              </td>
 
-          </tr>
+              <td>
 
-          {% else %}
+                {% if a.status == 'healthy' %}
 
-          <tr>
-            <td colspan="6"
-                style="text-align:center; padding:28px;">
+                  <span class="tag low">
+                    Healthy
+                  </span>
 
-              <div style="font-size:30px; margin-bottom:8px;">
-                🐄
-              </div>
+                {% elif a.status == 'registered' %}
 
-              <strong>No animals registered yet</strong>
+                  <span class="tag moderate">
+                    Registered
+                  </span>
 
-              <div style="margin-top:6px; opacity:.7;">
-                Start by registering your first animal.
-              </div>
+                {% else %}
 
-              <a href="/animals"
-                 class="btn btn-primary"
-                 style="margin-top:14px;">
-                + Register Animal
-              </a>
+                  <span class="tag moderate">
+                    {{ a.status|capitalize }}
+                  </span>
 
-            </td>
-          </tr>
+                {% endif %}
 
-          {% endfor %}
+              </td>
 
-        </tbody>
+            </tr>
 
-      </table>
+            {% else %}
+
+            <tr>
+
+              <td
+                colspan="6"
+                style="
+                  text-align:center;
+                  padding:35px;
+                "
+              >
+
+                <div
+                  style="
+                    font-size:40px;
+                    margin-bottom:10px;
+                  "
+                >
+                  🐄
+                </div>
+
+                <strong>
+                  No Animals Registered Yet
+                </strong>
+
+                <div
+                  style="
+                    margin-top:6px;
+                    opacity:.7;
+                  "
+                >
+                  Start by registering your first livestock animal.
+                </div>
+
+                <a
+                  href="/animals"
+                  class="btn btn-primary"
+                  style="margin-top:14px;"
+                >
+                  + Register Animal
+                </a>
+
+              </td>
+
+            </tr>
+
+            {% endfor %}
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
 
 
-    <!-- REPORTS + VACCINATION -->
+    <!-- =========================
+         REPORTS + VACCINATION
+    ========================== -->
+
     <div class="grid-2">
+
+
+      <!-- RECENT REPORTS -->
 
       <div>
 
-        <h2>My recent reports</h2>
+        <h2>
+          My Recent Reports
+        </h2>
 
-        <div class="card"
-             style="padding:0; overflow:hidden;">
+        <div
+          class="card"
+          style="
+            padding:0;
+            overflow:hidden;
+          "
+        >
 
-          <table>
+          <div style="overflow-x:auto;">
 
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Animal</th>
-                <th>Symptoms</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <table>
 
-            <tbody>
+              <thead>
 
-              {% for r in my_reports %}
+                <tr>
 
-              <tr>
+                  <th>Date</th>
+                  <th>Animal</th>
+                  <th>Symptoms</th>
+                  <th>Status</th>
 
-                <td>{{ r.date }}</td>
+                </tr>
 
-                <td>{{ r.animal }}</td>
+              </thead>
 
-                <td>{{ r.symptoms }}</td>
 
-                <td>
-                  <span class="tag {{ r.risk }}">
-                    {{ r.status }}
-                  </span>
-                </td>
+              <tbody>
 
-              </tr>
+                {% for r in my_reports %}
 
-              {% else %}
+                <tr>
 
-              <tr>
-                <td colspan="4"
-                    style="text-align:center; padding:25px;">
-                  No reports filed yet.
-                </td>
-              </tr>
+                  <td>
+                    {{ r.date }}
+                  </td>
 
-              {% endfor %}
+                  <td>
+                    {{ r.animal }}
+                  </td>
 
-            </tbody>
+                  <td>
+                    {{ r.symptoms }}
+                  </td>
 
-          </table>
+                  <td>
+
+                    <span class="tag {{ r.risk }}">
+                      {{ r.status }}
+                    </span>
+
+                  </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                  <td
+                    colspan="4"
+                    style="
+                      text-align:center;
+                      padding:28px;
+                    "
+                  >
+
+                    <div
+                      style="
+                        font-size:28px;
+                        margin-bottom:8px;
+                      "
+                    >
+                      📋
+                    </div>
+
+                    <strong>
+                      No Reports Filed Yet
+                    </strong>
+
+                    <div
+                      style="
+                        margin-top:6px;
+                        opacity:.7;
+                      "
+                    >
+                      Report symptoms or unusual animal behaviour.
+                    </div>
+
+                    <a
+                      href="/report"
+                      class="btn btn-primary"
+                      style="margin-top:14px;"
+                    >
+                      + Report an Issue
+                    </a>
+
+                  </td>
+
+                </tr>
+
+                {% endfor %}
+
+              </tbody>
+
+            </table>
+
+          </div>
 
         </div>
 
       </div>
 
 
+      <!-- VACCINATION REMINDERS -->
+
       <div>
 
-        <h2>Vaccination reminders</h2>
+        <h2>
+          Vaccination Reminders
+        </h2>
+
 
         {% for v in vaccination_due %}
 
@@ -267,7 +497,33 @@
             </strong>
 
             <div class="meta">
-              Due {{ v.due }}
+
+              {% if v.days_until_due is defined %}
+
+                {% if v.days_until_due < 0 %}
+
+                  Overdue by
+                  {{ v.days_until_due|abs }}
+                  day(s)
+
+                {% elif v.days_until_due == 0 %}
+
+                  Due Today
+
+                {% else %}
+
+                  Due in
+                  {{ v.days_until_due }}
+                  day(s)
+
+                {% endif %}
+
+              {% else %}
+
+                Due {{ v.due }}
+
+              {% endif %}
+
             </div>
 
           </div>
@@ -276,14 +532,45 @@
 
         {% else %}
 
-        <div class="card"
-             style="padding:20px;">
-          <div style="font-size:25px;">💉</div>
-          <strong>No vaccination reminders</strong>
-          <div class="meta">
-            You're up to date.
+
+        <div
+          class="card"
+          style="
+            padding:24px;
+            text-align:center;
+          "
+        >
+
+          <div
+            style="
+              font-size:32px;
+              margin-bottom:8px;
+            "
+          >
+            💉
           </div>
+
+          <strong>
+            No Vaccination Reminders
+          </strong>
+
+          <div
+            class="meta"
+            style="margin-top:6px;"
+          >
+            Your vaccination schedule is currently up to date.
+          </div>
+
+          <a
+            href="/animals"
+            class="btn btn-primary"
+            style="margin-top:14px;"
+          >
+            View Animal Records
+          </a>
+
         </div>
+
 
         {% endfor %}
 
@@ -291,9 +578,96 @@
 
     </div>
 
+
+    <!-- =========================
+         QUICK ACTIONS
+    ========================== -->
+
+    <h2 style="margin-top:30px;">
+      Quick Actions
+    </h2>
+
+    <div class="grid-3">
+
+      <a
+        href="/animals"
+        class="card"
+        style="
+          text-decoration:none;
+          color:inherit;
+          padding:20px;
+        "
+      >
+
+        <div style="font-size:28px;">
+          🐄
+        </div>
+
+        <strong>
+          Register Animal
+        </strong>
+
+        <div class="meta">
+          Add a new livestock record
+        </div>
+
+      </a>
+
+
+      <a
+        href="/report"
+        class="card"
+        style="
+          text-decoration:none;
+          color:inherit;
+          padding:20px;
+        "
+      >
+
+        <div style="font-size:28px;">
+          📸
+        </div>
+
+        <strong>
+          Report Symptoms
+        </strong>
+
+        <div class="meta">
+          Photo, voice and symptom reporting
+        </div>
+
+      </a>
+
+
+      <a
+        href="/animals"
+        class="card"
+        style="
+          text-decoration:none;
+          color:inherit;
+          padding:20px;
+        "
+      >
+
+        <div style="font-size:28px;">
+          💉
+        </div>
+
+        <strong>
+          Vaccination Records
+        </strong>
+
+        <div class="meta">
+          Check vaccination history and reminders
+        </div>
+
+      </a>
+
+    </div>
+
   </main>
 
 </div>
+
 </body>
 </html>
-```
