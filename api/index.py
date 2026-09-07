@@ -86,7 +86,8 @@ if (
 
         SUPABASE_INIT_ERROR = str(exc)
         supabase = None
-
+        print("SUPABASE CLIENT:", bool(supabase))
+        print("SUPABASE INIT ERROR:", SUPABASE_INIT_ERROR)
 
 # ============================================================
 # MEMORY FALLBACK
