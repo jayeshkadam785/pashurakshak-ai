@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,84 +9,291 @@
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 <div class="app-shell">
+
   {% include "_nav.html" %}
 
   <main class="main">
+
     <div class="topbar">
       <div>
         <h1>My dashboard</h1>
         <div class="loc">Your animals, reports and reminders</div>
       </div>
-      <a href="/report" class="btn btn-primary">+ Report an issue</a>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/animals" class="btn btn-primary">🐄 Animal Registry</a>
+        <a href="/report" class="btn btn-primary">+ Report an issue</a>
+      </div>
     </div>
 
+
+    <!-- DASHBOARD SUMMARY -->
     <div class="grid-3">
+
       <div class="icon-card">
         <div class="badge">🐄</div>
         <div class="title">My animals</div>
         <div class="value">{{ my_animals|length }}</div>
+
+        <a href="/animals"
+           style="display:inline-block; margin-top:8px; font-size:13px; font-weight:600;">
+          Manage animals →
+        </a>
       </div>
+
+
       <div class="icon-card">
         <div class="badge">📋</div>
         <div class="title">Reports filed</div>
         <div class="value">{{ my_reports|length }}</div>
       </div>
+
+
       <div class="icon-card">
-        <div class="badge" style="background:var(--amber-100); color:#8a6413;">💉</div>
+        <div class="badge"
+             style="background:var(--amber-100); color:#8a6413;">
+          💉
+        </div>
+
         <div class="title">Vaccinations due</div>
-        <div class="value" style="color:#8a6413;">{{ vaccination_due|length }}</div>
-      </div>
-    </div>
 
-    <h2>My animals</h2>
-    <div class="card" style="padding:0; overflow:hidden; margin-bottom:24px;">
-      <table>
-        <thead><tr><th>Tag ID</th><th>Species</th><th>Breed</th><th>Age</th><th>Last checkup</th><th>Status</th></tr></thead>
-        <tbody>
-          {% for a in my_animals %}
-          <tr>
-            <td>{{ a.tag_id }}</td><td>{{ a.species }}</td><td>{{ a.breed }}</td>
-            <td>{{ a.age }}</td><td>{{ a.last_checkup }}</td>
-            <td>{% if a.status == 'healthy' %}<span class="tag low">Healthy</span>{% else %}<span class="tag moderate">{{ a.status|capitalize }}</span>{% endif %}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="grid-2">
-      <div>
-        <h2>My recent reports</h2>
-        <div class="card" style="padding:0; overflow:hidden;">
-          <table>
-            <thead><tr><th>Date</th><th>Animal</th><th>Symptoms</th><th>Status</th></tr></thead>
-            <tbody>
-              {% for r in my_reports %}
-              <tr>
-                <td>{{ r.date }}</td><td>{{ r.animal }}</td><td>{{ r.symptoms }}</td>
-                <td><span class="tag {{ r.risk }}">{{ r.status }}</span></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="value"
+             style="color:#8a6413;">
+          {{ vaccination_due|length }}
         </div>
       </div>
+
+    </div>
+
+
+    <!-- ANIMAL REGISTRY QUICK ACTION -->
+    <div class="card"
+         style="
+           margin-bottom:24px;
+           padding:22px;
+           display:flex;
+           align-items:center;
+           justify-content:space-between;
+           gap:20px;
+           flex-wrap:wrap;
+         ">
+
       <div>
+        <h2 style="margin:0 0 6px 0;">
+          🐄 Animal Registry
+        </h2>
+
+        <div class="loc">
+          Register and manage your livestock records, vaccination status
+          and treatment history.
+        </div>
+      </div>
+
+      <a href="/animals"
+         class="btn btn-primary">
+        + Register Animal
+      </a>
+
+    </div>
+
+
+    <!-- MY ANIMALS -->
+    <h2>My animals</h2>
+
+    <div class="card"
+         style="padding:0; overflow:hidden; margin-bottom:24px;">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Tag ID</th>
+            <th>Species</th>
+            <th>Breed</th>
+            <th>Age</th>
+            <th>Last checkup</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for a in my_animals %}
+
+          <tr>
+
+            <td>{{ a.tag_id }}</td>
+
+            <td>{{ a.species }}</td>
+
+            <td>{{ a.breed }}</td>
+
+            <td>{{ a.age }}</td>
+
+            <td>{{ a.last_checkup }}</td>
+
+            <td>
+
+              {% if a.status == 'healthy' %}
+
+                <span class="tag low">
+                  Healthy
+                </span>
+
+              {% else %}
+
+                <span class="tag moderate">
+                  {{ a.status|capitalize }}
+                </span>
+
+              {% endif %}
+
+            </td>
+
+          </tr>
+
+          {% else %}
+
+          <tr>
+            <td colspan="6"
+                style="text-align:center; padding:28px;">
+
+              <div style="font-size:30px; margin-bottom:8px;">
+                🐄
+              </div>
+
+              <strong>No animals registered yet</strong>
+
+              <div style="margin-top:6px; opacity:.7;">
+                Start by registering your first animal.
+              </div>
+
+              <a href="/animals"
+                 class="btn btn-primary"
+                 style="margin-top:14px;">
+                + Register Animal
+              </a>
+
+            </td>
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- REPORTS + VACCINATION -->
+    <div class="grid-2">
+
+      <div>
+
+        <h2>My recent reports</h2>
+
+        <div class="card"
+             style="padding:0; overflow:hidden;">
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Animal</th>
+                <th>Symptoms</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {% for r in my_reports %}
+
+              <tr>
+
+                <td>{{ r.date }}</td>
+
+                <td>{{ r.animal }}</td>
+
+                <td>{{ r.symptoms }}</td>
+
+                <td>
+                  <span class="tag {{ r.risk }}">
+                    {{ r.status }}
+                  </span>
+                </td>
+
+              </tr>
+
+              {% else %}
+
+              <tr>
+                <td colspan="4"
+                    style="text-align:center; padding:25px;">
+                  No reports filed yet.
+                </td>
+              </tr>
+
+              {% endfor %}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+
+      <div>
+
         <h2>Vaccination reminders</h2>
+
         {% for v in vaccination_due %}
+
         <div class="advisory">
+
           <div class="sev moderate"></div>
+
           <div>
-            <strong>{{ v.animal }} — {{ v.vaccine }}</strong>
-            <div class="meta">Due {{ v.due }}</div>
+
+            <strong>
+              {{ v.animal }} — {{ v.vaccine }}
+            </strong>
+
+            <div class="meta">
+              Due {{ v.due }}
+            </div>
+
+          </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="card"
+             style="padding:20px;">
+          <div style="font-size:25px;">💉</div>
+          <strong>No vaccination reminders</strong>
+          <div class="meta">
+            You're up to date.
           </div>
         </div>
+
         {% endfor %}
+
       </div>
+
     </div>
+
   </main>
+
 </div>
 </body>
 </html>
+```
