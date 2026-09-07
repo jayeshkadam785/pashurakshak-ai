@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>District Officer Dashboard | PashuRakshak AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background: #071411;
+            color: #eefcf5;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+            padding: 0 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0b1d17;
+            border-bottom: 1px solid #1d3b30;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #1b7f5a;
+            display: grid;
+            place-items: center;
+            font-size: 22px;
+        }
+
+        .brand h2 {
+            font-size: 18px;
+        }
+
+        .brand span {
+            display: block;
+            color: #91aaa0;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .officer {
+            color: #b8cec6;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: auto;
+            padding: 28px;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            font-size: 30px;
+            margin-bottom: 7px;
+        }
+
+        .hero p {
+            color: #94aaa2;
+        }
+
+        .district-badge {
+            padding: 12px 18px;
+            background: #102a20;
+            border: 1px solid #265240;
+            border-radius: 12px;
+            color: #8ce0bc;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .card {
+            background: #0b1d17;
+            border: 1px solid #1c3a2f;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        }
+
+        .kpi {
+            min-height: 130px;
+        }
+
+        .kpi-title {
+            color: #8da69d;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .kpi-value {
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .kpi-sub {
+            color: #71b99c;
+            font-size: 12px;
+            margin-top: 7px;
+        }
+
+        .section {
+            margin-top: 22px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 13px;
+        }
+
+        .section-title h2 {
+            font-size: 18px;
+        }
+
+        .section-title span {
+            color: #7f9b91;
+            font-size: 12px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            background: #081812;
+            color: #eefcf5;
+            border: 1px solid #29483b;
+            border-radius: 10px;
+            padding: 11px 13px;
+            outline: none;
+        }
+
+        input {
+            min-width: 250px;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #42b985;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            color: #7e9990;
+            font-size: 12px;
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #244236;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #18352a;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #0d241c;
+        }
+
+        .risk {
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .high {
+            background: #4d1717;
+            color: #ff9c9c;
+        }
+
+        .moderate {
+            background: #493b13;
+            color: #f5d87d;
+        }
+
+        .low {
+            background: #123b2b;
+            color: #83e0b4;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.3fr .7fr;
+            gap: 18px;
+        }
+
+        .block-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .block-row {
+            padding: 14px;
+            background: #081812;
+            border: 1px solid #1d392e;
+            border-radius: 12px;
+        }
+
+        .block-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 9px;
+        }
+
+        .bar {
+            height: 7px;
+            background: #172b24;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .bar-inner {
+            height: 100%;
+            background: #32a874;
+            border-radius: inherit;
+        }
+
+        .alert {
+            padding: 14px;
+            border-radius: 12px;
+            background: #251817;
+            border: 1px solid #55312e;
+            margin-bottom: 10px;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .alert small {
+            color: #a99a96;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .action {
+            text-decoration: none;
+            color: #dff9ed;
+            padding: 16px;
+            background: #0d241c;
+            border: 1px solid #24483a;
+            border-radius: 12px;
+            transition: .2s;
+        }
+
+        .action:hover {
+            transform: translateY(-2px);
+            border-color: #3cae7e;
+        }
+
+        .action strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .action span {
+            color: #79968c;
+            font-size: 12px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #718c83;
+        }
+
+        @media (max-width: 1100px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .container {
+                padding: 16px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .officer {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <div class="logo">🐄</div>
+        <div>
+            <h2>PashuRakshak AI</h2>
+            <span>Livestock Health Intelligence</span>
+        </div>
+    </div>
+
+    <div class="officer">
+        District Officer • Command Dashboard
+    </div>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <div>
+            <h1>District Health Dashboard</h1>
+            <p>District-wide livestock disease surveillance and response monitoring.</p>
+        </div>
+
+        <div class="district-badge">
+            📍 {{ district_name }}
+        </div>
+    </section>
+
+
+    <!-- KPI CARDS -->
+
+    <section class="grid">
+
+        <div class="card kpi">
+            <div class="kpi-title">TOTAL VILLAGES</div>
+            <div class="kpi-value">{{ totals.total_villages }}</div>
+            <div class="kpi-sub">Reporting villages</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">TOTAL ANIMALS</div>
+            <div class="kpi-value">{{ totals.total_animals }}</div>
+            <div class="kpi-sub">Registered livestock</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">ACTIVE CASES</div>
+            <div class="kpi-value">{{ totals.active_cases }}</div>
+            <div class="kpi-sub">Currently monitored</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">HIGH-RISK CASES</div>
+            <div class="kpi-value">{{ totals.high_risk }}</div>
+            <div class="kpi-sub">Immediate attention</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">SUSPECTED OUTBREAKS</div>
+            <div class="kpi-value">{{ totals.suspected_outbreaks }}</div>
+            <div class="kpi-sub">AI early-warning signals</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">DEATHS</div>
+            <div class="kpi-value">{{ totals.deaths }}</div>
+            <div class="kpi-sub">Reported mortality</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">VACCINATION RECORDS</div>
+            <div class="kpi-value">{{ totals.vaccinations }}</div>
+            <div class="kpi-sub">Recorded vaccinations</div>
+        </div>
+
+        <div class="card kpi">
+            <div class="kpi-title">BLOCKS REPORTING</div>
+            <div class="kpi-value">{{ totals.blocks }}</div>
+            <div class="kpi-sub">Active blocks</div>
+        </div>
+
+    </section>
+
+
+    <!-- BLOCK ANALYSIS + ALERTS -->
+
+    <section class="section two-col">
+
+        <div class="card">
+
+            <div class="section-title">
+                <h2>📊 Block-wise Health Analysis</h2>
+                <span>{{ blocks|length }} blocks</span>
+            </div>
+
+            <div class="block-list">
+
+                {% if blocks %}
+
+                    {% for block in blocks %}
+
+                    <div class="block-row">
+
+                        <div class="block-top">
+                            <strong>{{ block.block }}</strong>
+
+                            <span>
+                                {{ block.cases }} cases
+                            </span>
+                        </div>
+
+                        <div class="bar">
+                            <div
+                                class="bar-inner"
+                                style="width: {{ block.risk_percent }}%"
+                            ></div>
+                        </div>
+
+                        <small style="color:#78958b">
+                            Villages: {{ block.villages }}
+                            • High Risk: {{ block.high_risk }}
+                            • Deaths: {{ block.deaths }}
+                        </small>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty">
+                        No block data available.
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+
+        <div class="card">
+
+            <div class="section-title">
+                <h2>🚨 District Alerts</h2>
+            </div>
+
+            {% if alerts %}
+
+                {% for alert in alerts %}
+
+                <div class="alert">
+                    <strong>{{ alert.title }}</strong>
+                    <small>{{ alert.message }}</small>
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="empty">
+                    No critical alerts detected.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <!-- VILLAGE ANALYSIS -->
+
+    <section class="section card">
+
+        <div class="section-title">
+            <h2>🏘️ Village-wise Health Analysis</h2>
+            <span>District surveillance</span>
+        </div>
+
+        <div class="toolbar">
+            <input
+                id="villageSearch"
+                type="text"
+                placeholder="Search village..."
+                oninput="filterVillages()"
+            >
+
+            <select
+                id="riskFilter"
+                onchange="filterVillages()"
+            >
+                <option value="ALL">All Risk Levels</option>
+                <option value="HIGH">High Risk</option>
+                <option value="MODERATE">Moderate Risk</option>
+                <option value="LOW">Low Risk</option>
+            </select>
+        </div>
+
+        <div class="table-wrap">
+
+            <table id="villageTable">
+
+                <thead>
+                    <tr>
+                        <th>Village</th>
+                        <th>Block</th>
+                        <th>Animals</th>
+                        <th>Cases</th>
+                        <th>High Risk</th>
+                        <th>Deaths</th>
+                        <th>Vaccination</th>
+                        <th>Risk</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for village in villages %}
+
+                    <tr
+                        data-village="{{ village.village|lower }}"
+                        data-risk="{{ village.risk }}"
+                    >
+                        <td><strong>{{ village.village }}</strong></td>
+                        <td>{{ village.block }}</td>
+                        <td>{{ village.animals }}</td>
+                        <td>{{ village.cases }}</td>
+                        <td>{{ village.high_risk }}</td>
+                        <td>{{ village.deaths }}</td>
+                        <td>{{ village.vaccination }}%</td>
+
+                        <td>
+                            <span class="risk {{ village.risk|lower }}">
+                                {{ village.risk }}
+                            </span>
+                        </td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="8" class="empty">
+                            No village data available.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- RECENT CASES -->
+
+    <section class="section card">
+
+        <div class="section-title">
+            <h2>📋 Recent District Cases</h2>
+            <span>Latest reports</span>
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Village</th>
+                        <th>Block</th>
+                        <th>Animal</th>
+                        <th>Affected</th>
+                        <th>Risk</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for report in recent_cases %}
+
+                    <tr>
+                        <td>{{ report.date }}</td>
+                        <td>{{ report.village }}</td>
+                        <td>{{ report.block }}</td>
+                        <td>{{ report.animal }}</td>
+                        <td>{{ report.affected }}</td>
+
+                        <td>
+                            <span class="risk {{ report.risk|lower }}">
+                                {{ report.risk }}
+                            </span>
+                        </td>
+
+                        <td>{{ report.status }}</td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="7" class="empty">
+                            No recent cases.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- QUICK ACTIONS -->
+
+    <section class="section">
+
+        <div class="section-title">
+            <h2>⚡ Officer Actions</h2>
+        </div>
+
+        <div class="actions">
+
+            <a class="action" href="/dashboard/vet">
+                <strong>👨‍⚕️ Veterinary Teams</strong>
+                <span>Monitor veterinary case activity</span>
+            </a>
+
+            <a class="action" href="/vet/cases">
+                <strong>📋 Case Verification</strong>
+                <span>Review and verify reported cases</span>
+            </a>
+
+            <a class="action" href="/vaccination">
+                <strong>💉 Vaccination Monitoring</strong>
+                <span>Review vaccination records</span>
+            </a>
+
+            <a class="action" href="/animals">
+                <strong>🐄 Animal Registry</strong>
+                <span>View registered livestock</span>
+            </a>
+
+            <a class="action" href="/report">
+                <strong>📝 Disease Reports</strong>
+                <span>Open livestock health reporting</span>
+            </a>
+
+            <a class="action" href="/dashboard/official">
+                <strong>🏛️ Government Dashboard</strong>
+                <span>Open official command dashboard</span>
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+function filterVillages() {
+
+    const search =
+        document
+        .getElementById("villageSearch")
+        .value
+        .toLowerCase();
+
+    const risk =
+        document
+        .getElementById("riskFilter")
+        .value;
+
+    const rows =
+        document.querySelectorAll(
+            "#villageTable tbody tr"
+        );
+
+    rows.forEach(row => {
+
+        const village =
+            row.dataset.village || "";
+
+        const rowRisk =
+            row.dataset.risk || "";
+
+        const searchMatch =
+            village.includes(search);
+
+        const riskMatch =
+            risk === "ALL" ||
+            rowRisk === risk;
+
+        row.style.display =
+            searchMatch && riskMatch
+                ? ""
+                : "none";
+    });
+}
+
+</script>
+
+</body>
+</html>
