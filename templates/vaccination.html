@@ -3,473 +3,389 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>PashuRakshak AI — Vaccination Tracking</title>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-body{
-  margin:0;
-  background:#07110c;
-  color:#eef8f0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-
-.wrap{
-  max-width:1050px;
-  margin:auto;
-  padding:28px;
-}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:15px;
-  flex-wrap:wrap;
-}
-
-.card{
-  margin-top:20px;
-  padding:22px;
-  border:1px solid #294332;
-  border-radius:18px;
-  background:#0d1b12;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(210px,1fr));
-  gap:14px;
-}
-
-label{
-  display:block;
-  color:#b8cabc;
-  font-size:13px;
-}
-
-input,
-textarea{
-  width:100%;
-  padding:11px;
-  margin-top:6px;
-  border-radius:9px;
-  border:1px solid #36513f;
-  background:#09150d;
-  color:#fff;
-  outline:none;
-}
-
-input:focus,
-textarea:focus{
-  border-color:#2ca86b;
-}
-
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-button{
-  padding:12px 16px;
-  margin-top:15px;
-  border:0;
-  border-radius:9px;
-  background:#2ca86b;
-  color:#fff;
-  font-weight:800;
-  cursor:pointer;
-}
-
-button:hover{
-  opacity:.9;
-}
-
-.logout{
-  background:#7b2929;
-}
-
-.row{
-  padding:14px 0;
-  border-bottom:1px solid #26392b;
-}
-
-.row:last-child{
-  border-bottom:0;
-}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:20px;
-  background:#183b26;
-  color:#9ee7b7;
-  font-size:12px;
-  font-weight:700;
-}
-
-.muted{
-  color:#9db1a3;
-}
-
-#message{
-  display:none;
-  margin-top:15px;
-  padding:12px;
-  border-radius:10px;
-  background:#14281a;
-}
+*{box-sizing:border-box}
+body{margin:0;background:#07110c;color:#eef8f0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:28px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.card{margin-top:20px;padding:22px;border:1px solid #294332;border-radius:18px;background:#0d1b12}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+label{display:block;color:#b8cabc;font-size:13px;font-weight:700}
+input,select,textarea{width:100%;padding:11px;margin-top:6px;border-radius:9px;border:1px solid #36513f;background:#09150d;color:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#2ca86b}
+textarea{min-height:90px;resize:vertical}
+button{padding:12px 16px;margin-top:15px;border:0;border-radius:9px;background:#2ca86b;color:#fff;font-weight:800;cursor:pointer}
+button:hover{opacity:.9}
+button:disabled{opacity:.6;cursor:not-allowed}
+.logout{background:#7b2929}
+.secondary{background:#294332}
+.row{padding:14px 0;border-bottom:1px solid #26392b}
+.row:last-child{border-bottom:0}
+.badge{display:inline-block;padding:4px 8px;border-radius:20px;background:#183b26;color:#9ee7b7;font-size:12px;font-weight:700}
+.muted{color:#9db1a3}
+#message{display:none;margin-top:15px;padding:12px;border-radius:10px}
+.success{background:#103a24;border:1px solid #267c4e;color:#8ff0b5}
+.error{background:#321514;border:1px solid #7b2929;color:#ffaaa2}
+.animal-info{margin-top:12px;padding:12px;border-radius:10px;background:#0a1710;border:1px solid #294332}
+.loading{text-align:center;padding:25px;color:#9db1a3}
 </style>
 </head>
 
-
-<body data-protected="true">
+<body
+  data-protected="true"
+  data-supabase-url="{{ supabase_url }}"
+  data-supabase-key="{{ supabase_publishable_key }}"
+>
 
 <div class="wrap">
 
   <div class="header">
-
     <div>
       <h1>💉 Vaccination Tracking</h1>
-
-      <div class="muted">
-        Track livestock vaccination and upcoming doses
-      </div>
+      <div class="muted">Track livestock vaccination and upcoming doses</div>
     </div>
-
-    <button
-      class="logout"
-      data-logout
-    >
-      Logout
-    </button>
-
+    <button class="logout" data-logout type="button">Logout</button>
   </div>
 
-
-  <!-- ADD VACCINATION -->
-
   <div class="card">
-
-    <h2>Add Vaccination Record</h2>
+    <h2>➕ Add Vaccination Record</h2>
 
     <form id="vaccinationForm">
 
-      <div class="grid">
+      <label>
+        Select Animal *
+        <select id="animal_id" name="animal_id" required>
+          <option value="">Loading animals...</option>
+        </select>
+      </label>
+
+      <div id="animalInfo" class="animal-info muted">
+        Select an animal to view its details.
+      </div>
+
+      <div class="grid" style="margin-top:15px">
 
         <label>
           Species
-          <input
-            name="species"
-            placeholder="Cattle"
-            required
-          >
+          <input id="species" name="species" placeholder="Automatically filled" readonly>
         </label>
-
 
         <label>
-          Animal ID / Tag
-          <input
-            name="animal_id"
-            placeholder="TAG-001"
-          >
+          Vaccine Name *
+          <input name="vaccine_name" placeholder="FMD" required>
         </label>
-
 
         <label>
-          Vaccine Name
-          <input
-            name="vaccine_name"
-            placeholder="FMD"
-            required
-          >
+          Vaccination Date *
+          <input name="vaccination_date" type="date" required>
         </label>
-
-
-        <label>
-          Vaccination Date
-          <input
-            name="vaccination_date"
-            type="date"
-            required
-          >
-        </label>
-
 
         <label>
           Next Due Date
-          <input
-            name="next_due_date"
-            type="date"
-          >
+          <input name="next_due_date" type="date">
         </label>
-
 
         <label>
           Batch Number
-          <input
-            name="batch_number"
-            placeholder="Batch number"
-          >
+          <input name="batch_number" placeholder="Batch number">
         </label>
-
 
         <label>
           Administered By
-          <input
-            name="administered_by"
-            placeholder="Veterinarian name"
-          >
+          <input name="administered_by" placeholder="Veterinarian name">
         </label>
 
       </div>
 
-
       <label style="margin-top:14px">
         Notes
-
-        <textarea
-          name="notes"
-          placeholder="Additional vaccination notes..."
-        ></textarea>
-
+        <textarea name="notes" placeholder="Additional vaccination notes..."></textarea>
       </label>
 
-
-      <button type="submit">
-        💾 Save Vaccination
-      </button>
-
+      <button type="submit" id="saveBtn">💾 Save Vaccination</button>
     </form>
 
-
     <div id="message"></div>
-
   </div>
 
-
-  <!-- RECORDS -->
-
   <div class="card">
-
     <h2>📋 Recent Vaccination Records</h2>
-
-    <div id="list">
-      Loading records...
-    </div>
-
+    <div id="list">Loading records...</div>
   </div>
 
 </div>
 
-
 <script src="/static/auth.js"></script>
 <script src="/static/features.js"></script>
 
-
 <script>
+let animals = [];
 
-const form =
-  document.getElementById(
-    "vaccinationForm"
-  );
-
-const list =
-  document.getElementById("list");
-
-const message =
-  document.getElementById("message");
-
-
-function showMessage(text){
-
-  message.textContent = text;
-
-  message.style.display = "block";
-
-}
-
+const form = document.getElementById("vaccinationForm");
+const animalSelect = document.getElementById("animal_id");
+const animalInfo = document.getElementById("animalInfo");
+const speciesInput = document.getElementById("species");
+const list = document.getElementById("list");
+const message = document.getElementById("message");
+const saveBtn = document.getElementById("saveBtn");
 
 function escapeHtml(value){
-
   return String(value ?? "")
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#039;");
-
 }
 
+function showMessage(text,type){
+  message.textContent = text;
+  message.className = type || "";
+  message.style.display = "block";
+}
+
+async function requireAuth(){
+  if(!window.PashuAuth){
+    throw new Error("Authentication system failed to load.");
+  }
+
+  const session = await PashuAuth.session();
+
+  if(!session){
+    window.location.href="/login";
+    return false;
+  }
+
+  return true;
+}
+
+async function loadAnimals(){
+  const authenticated = await requireAuth();
+  if(!authenticated) return;
+
+  animalSelect.innerHTML = '<option value="">Loading animals...</option>';
+
+  const response = await PashuAuth.authFetch("/api/animals");
+  const data = await response.json().catch(() => ({}));
+
+  if(!response.ok || data.success === false){
+    throw new Error(data.error || "Unable to load animals.");
+  }
+
+  animals = Array.isArray(data.animals)
+    ? data.animals
+    : Array.isArray(data.records)
+      ? data.records
+      : [];
+
+  animalSelect.innerHTML =
+    '<option value="">Select registered animal</option>';
+
+  animals.forEach(function(animal){
+    if(!animal.id) return;
+
+    const option = document.createElement("option");
+    option.value = animal.id;
+
+    const tag = animal.animal_tag || "No Tag";
+    const species = animal.species || "Unknown";
+    const owner = animal.owner_name || "Owner not set";
+
+    option.textContent =
+      tag + " — " + species + " — " + owner;
+
+    animalSelect.appendChild(option);
+  });
+
+  if(!animals.length){
+    animalSelect.innerHTML =
+      '<option value="">No registered animals</option>';
+
+    animalInfo.textContent =
+      "Please register an animal in Animal Registry first.";
+  }
+}
+
+animalSelect.addEventListener("change", function(){
+  const selected = animals.find(function(animal){
+    return String(animal.id) === String(animalSelect.value);
+  });
+
+  if(!selected){
+    speciesInput.value = "";
+    animalInfo.textContent =
+      "Select an animal to view its details.";
+    return;
+  }
+
+  speciesInput.value = selected.species || "";
+
+  animalInfo.innerHTML =
+    "<b>🐄 " + escapeHtml(selected.animal_tag || "No Tag") + "</b>" +
+    " · " + escapeHtml(selected.species || "Unknown") +
+    " · Owner: " + escapeHtml(selected.owner_name || "Not set") +
+    " · Village: " + escapeHtml(selected.village || "Not set");
+});
 
 async function loadVaccinations(){
-
-  list.innerHTML =
-    "Loading records...";
-
+  list.innerHTML = "Loading records...";
 
   try{
-
-    const data =
-      await PashuFeatures.vaccinations();
-
-
-    const records =
-      data.records || [];
-
+    const data = await PashuFeatures.vaccinations();
+    const records = data.records || [];
 
     if(!records.length){
-
-      list.innerHTML = `
-        <div class="muted">
-          No vaccination records yet.
-        </div>
-      `;
-
+      list.innerHTML =
+        '<div class="muted">No vaccination records yet.</div>';
       return;
-
     }
 
+    list.innerHTML = records.map(function(record){
 
-    list.innerHTML =
-      records.map(record => `
+      const animal = animals.find(function(item){
+        return String(item.id) === String(record.animal_id);
+      });
 
+      const animalTag =
+        animal
+          ? animal.animal_tag
+          : (record.animal_id || "—");
+
+      return `
         <div class="row">
 
           <div>
-
             <span class="badge">
-              ${escapeHtml(
-                record.vaccine_name ||
-                "Vaccine"
-              )}
+              ${escapeHtml(record.vaccine_name || "Vaccine")}
             </span>
-
           </div>
 
-
           <p>
-
+            <b>Animal:</b>
+            ${escapeHtml(animalTag)}
+            &nbsp; | &nbsp;
             <b>Species:</b>
             ${escapeHtml(
-              record.species || "—"
+              record.species ||
+              (animal && animal.species) ||
+              "—"
             )}
-
-            &nbsp; | &nbsp;
-
-            <b>Animal:</b>
-            ${escapeHtml(
-              record.animal_id || "—"
-            )}
-
           </p>
-
 
           <p class="muted">
-
             Vaccinated:
-            ${escapeHtml(
-              record.vaccination_date || "—"
-            )}
-
+            ${escapeHtml(record.vaccination_date || "—")}
             &nbsp; → &nbsp;
-
             Next Due:
-            ${escapeHtml(
-              record.next_due_date || "Not set"
-            )}
-
+            ${escapeHtml(record.next_due_date || "Not set")}
           </p>
-
 
           ${
             record.administered_by
             ? `<p class="muted">
-                 By:
-                 ${escapeHtml(
-                   record.administered_by
-                 )}
-               </p>`
+                By: ${escapeHtml(record.administered_by)}
+              </p>`
+            : ""
+          }
+
+          ${
+            record.batch_number
+            ? `<p class="muted">
+                Batch: ${escapeHtml(record.batch_number)}
+              </p>`
+            : ""
+          }
+
+          ${
+            record.notes
+            ? `<p class="muted">
+                Notes: ${escapeHtml(record.notes)}
+              </p>`
             : ""
           }
 
         </div>
-
-      `).join("");
-
+      `;
+    }).join("");
 
   }catch(error){
-
-    list.innerHTML = `
-      <div class="muted">
-        ❌ ${escapeHtml(
-          error.message ||
-          "Unable to load records."
-        )}
-      </div>
-    `;
-
+    list.innerHTML =
+      '<div class="error">❌ ' +
+      escapeHtml(error.message || "Unable to load records.") +
+      '</div>';
   }
-
 }
 
+form.addEventListener("submit", async function(event){
+  event.preventDefault();
 
-form.addEventListener(
-  "submit",
-  async function(event){
+  message.style.display = "none";
+  saveBtn.disabled = true;
+  saveBtn.textContent = "⏳ Saving...";
 
-    event.preventDefault();
+  try{
+    const authenticated = await requireAuth();
+    if(!authenticated) return;
 
-    message.style.display =
-      "none";
+    const payload = Object.fromEntries(
+      new FormData(form).entries()
+    );
 
-
-    try{
-
-      const payload =
-        Object.fromEntries(
-          new FormData(form).entries()
-        );
-
-
-      await PashuFeatures
-        .addVaccination(payload);
-
-
-      showMessage(
-        "✅ Vaccination record saved successfully."
-      );
-
-
-      form.reset();
-
-
-      await loadVaccinations();
-
-
-    }catch(error){
-
-      showMessage(
-        "❌ " +
-        (
-          error.message ||
-          "Failed to save vaccination."
-        )
-      );
-
+    if(!payload.animal_id){
+      throw new Error("Please select an animal.");
     }
 
+    if(!payload.species){
+      throw new Error("Animal species could not be determined.");
+    }
+
+    await PashuFeatures.addVaccination(payload);
+
+    showMessage(
+      "✅ Vaccination record saved successfully.",
+      "success"
+    );
+
+    form.reset();
+    speciesInput.value = "";
+    animalInfo.textContent =
+      "Select an animal to view its details.";
+
+    await loadVaccinations();
+
+  }catch(error){
+    console.error("Vaccination save failed:", error);
+
+    showMessage(
+      "❌ " + (error.message || "Failed to save vaccination."),
+      "error"
+    );
+
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = "💾 Save Vaccination";
   }
-);
+});
 
+document.addEventListener("DOMContentLoaded", async function(){
+  try{
+    await loadAnimals();
+    await loadVaccinations();
+  }catch(error){
+    console.error(error);
 
-loadVaccinations();
+    showMessage(
+      "❌ " + (error.message || "Unable to initialize vaccination page."),
+      "error"
+    );
 
+    list.innerHTML =
+      '<div class="error">❌ ' +
+      escapeHtml(error.message) +
+      '</div>';
+  }
+});
 </script>
 
 </body>
