@@ -36,20 +36,22 @@
       <div>
 
         <h1>
-          Namaskar,
+          {{ t('namaskar') }},
           {{ farmer_name or "Farmer" }}
         </h1>
 
         <div class="loc">
+
           📍
           {{ village or "Satara" }},
           {{ block or "Maharashtra" }}
 
           ·
 
-          Herd:
+          {{ t('herd') }}:
           {{ herd_size or 0 }}
-          animals
+          {{ t('animals') }}
+
         </div>
 
       </div>
@@ -59,7 +61,7 @@
         href="/report"
         class="btn btn-accent"
       >
-        + Report symptom
+        + {{ t('report_symptom') }}
       </a>
 
     </div>
@@ -79,11 +81,11 @@
       >
 
         <div class="label">
-          Village outbreak risk
+          {{ t('village_outbreak_risk') }}
         </div>
 
         <div class="value">
-          {{ risk_label or "Low" }}
+          {{ risk_label or t('low') }}
         </div>
 
         <div class="label">
@@ -91,7 +93,7 @@
           {{
             risk_note
             or
-            "No unusual case clusters nearby"
+            t('no_unusual_clusters')
           }}
 
         </div>
@@ -106,7 +108,7 @@
         <div class="stat-row">
 
           <span class="l">
-            Reports this week
+            {{ t('reports_this_week') }}
           </span>
 
           <span class="n">
@@ -119,7 +121,7 @@
         <div class="stat-row">
 
           <span class="l">
-            Vaccination due
+            {{ t('vaccination_due') }}
           </span>
 
           <span class="n">
@@ -132,7 +134,7 @@
         <div class="stat-row">
 
           <span class="l">
-            Active advisories
+            {{ t('active_advisories') }}
           </span>
 
           <span class="n">
@@ -149,7 +151,7 @@
       <div class="card-outline">
 
         <h3>
-          Nearest facility
+          {{ t('nearest_facility') }}
         </h3>
 
         <p style="margin-bottom:4px">
@@ -173,7 +175,7 @@
           {{
             facility_distance
             or
-            "Distance unavailable"
+            t('distance_unavailable')
           }}
 
         </p>
@@ -183,7 +185,7 @@
           href="/dashboard#map"
           style="font-size:0.88rem"
         >
-          View on map →
+          {{ t('view_on_map') }} →
         </a>
 
       </div>
@@ -219,7 +221,7 @@
           </div>
 
           <div class="label">
-            Take a picture
+            {{ t('take_picture') }}
           </div>
 
         </div>
@@ -239,7 +241,7 @@
           </div>
 
           <div class="label">
-            AI risk screening
+            {{ t('ai_risk_screening') }}
           </div>
 
         </div>
@@ -259,7 +261,7 @@
           </div>
 
           <div class="label">
-            Get vet advice
+            {{ t('get_vet_advice') }}
           </div>
 
         </div>
@@ -282,7 +284,7 @@
     ====================================================== -->
 
     <h2>
-      Recent advisories
+      {{ t('recent_advisories') }}
     </h2>
 
 
@@ -327,7 +329,7 @@
             {{
               a.date
               or
-              "Recent"
+              t('recent')
             }}
 
           </div>
@@ -349,7 +351,7 @@
         <div>
 
           <strong>
-            Livestock health reminder
+            {{ t('livestock_health_reminder') }}
           </strong>
 
           <p
@@ -357,12 +359,11 @@
               margin:4px 0 0 0;
             "
           >
-            Keep vaccination records updated
-            and report unusual symptoms early.
+            {{ t('health_reminder_body') }}
           </p>
 
           <div class="meta">
-            PashuRakshak AI · Today
+            PashuRakshak AI · {{ t('today') }}
           </div>
 
         </div>
@@ -380,7 +381,7 @@
     ====================================================== -->
 
     <h2>
-      Quick actions
+      {{ t('quick_actions') }}
     </h2>
 
 
@@ -392,12 +393,11 @@
       <div class="card-outline">
 
         <h3>
-          🐄 Animal Registry
+          🐄 {{ t('animal_registry') }}
         </h3>
 
         <p>
-          Register animals, owners,
-          vaccination and treatment history.
+          {{ t('animal_registry_body') }}
         </p>
 
         <a
@@ -405,7 +405,7 @@
           class="btn btn-primary"
           style="margin-top:10px;"
         >
-          Manage animals →
+          {{ t('manage_animals') }} →
         </a>
 
       </div>
@@ -416,12 +416,11 @@
       <div class="card-outline">
 
         <h3>
-          💉 Vaccination
+          💉 {{ t('vaccination') }}
         </h3>
 
         <p>
-          Record vaccinations and
-          monitor upcoming due dates.
+          {{ t('vaccination_body') }}
         </p>
 
         <a
@@ -429,7 +428,7 @@
           class="btn btn-primary"
           style="margin-top:10px;"
         >
-          Vaccination records →
+          {{ t('vaccination_records') }} →
         </a>
 
       </div>
@@ -440,12 +439,11 @@
       <div class="card-outline">
 
         <h3>
-          🩺 Case Records
+          🩺 {{ t('case_records') }}
         </h3>
 
         <p>
-          View previously reported livestock
-          disease cases and risk assessments.
+          {{ t('case_records_body') }}
         </p>
 
         <a
@@ -453,7 +451,7 @@
           class="btn btn-primary"
           style="margin-top:10px;"
         >
-          View records →
+          {{ t('view_records') }} →
         </a>
 
       </div>
@@ -487,7 +485,7 @@
               margin:0 0 4px 0;
             "
           >
-            🔔 Health alerts
+            🔔 {{ t('health_alerts') }}
           </h3>
 
           <p
@@ -495,8 +493,7 @@
               margin:0;
             "
           >
-            Check important livestock-health
-            alerts for your area.
+            {{ t('health_alerts_body') }}
           </p>
 
         </div>
@@ -506,7 +503,7 @@
           href="/alerts"
           class="btn btn-accent"
         >
-          View alerts →
+          {{ t('view_alerts') }} →
         </a>
 
       </div>
@@ -529,8 +526,7 @@
     >
 
       PashuRakshak AI ·
-      Early livestock health warning
-      and veterinary decision support
+      {{ t('footer_description') }}
 
     </div>
 
@@ -541,7 +537,50 @@
 
 
 <!-- =========================================================
-     OPTIONAL APP SCRIPT
+     LANGUAGE SUPPORT
+========================================================= -->
+
+<script>
+
+(function () {
+
+  const selectedLanguage =
+    "{{ current_lang_label or 'English' }}";
+
+  const languageMap = {
+
+    "English": {
+      htmlLang: "en"
+    },
+
+    "Hindi": {
+      htmlLang: "hi"
+    },
+
+    "Marathi": {
+      htmlLang: "mr"
+    },
+
+    "Kannada": {
+      htmlLang: "kn"
+    }
+
+  };
+
+  const selected =
+    languageMap[selectedLanguage]
+    || languageMap["English"];
+
+  document.documentElement.lang =
+    selected.htmlLang;
+
+})();
+
+</script>
+
+
+<!-- =========================================================
+     APP SCRIPT
 ========================================================= -->
 
 <script src="/static/app.js"></script>
