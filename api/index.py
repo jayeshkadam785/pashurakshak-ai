@@ -773,48 +773,45 @@ def reports():
     now = datetime.now(timezone.utc)
 
     report = {
-        "village": data.get(
-            "village",
-            "Satara"
-        ),
+        "village": data.get("village", "Satara"),
         "block": data.get("block"),
-        "lat": data.get("lat"),
-        "lng": data.get("lng"),
-        "animal_type": data.get(
-            "animal_type",
-            "unknown"
-        ),
+        "district": data.get("district", "Satara"),
+
+        # Support both old frontend fields (lat/lng)
+        # and the normalized database fields.
+        "latitude": data.get("latitude", data.get("lat")),
+        "longitude": data.get("longitude", data.get("lng")),
+
+        "animal_id": data.get("animal_id"),
+        "animal_type": data.get("animal_type", "unknown"),
+
         "symptoms": normalize_symptoms(
             data.get("symptoms", [])
         ),
-        "affected_count": result[
-            "affected_count"
-        ],
-        "days_since_onset": result[
-            "days_since_onset"
-        ],
+
+        "affected_count": result["affected_count"],
+        "days_since_onset": result["days_since_onset"],
         "notes": data.get("notes", ""),
-        "risk_level": result[
-            "risk_level"
-        ],
-        "risk_score": result[
-            "risk_score"
-        ],
-        "reported_by": data.get(
-            "reported_by"
-        ),
+
+        "risk_level": result["risk_level"],
+        "risk_score": result["risk_score"],
+
+        "reported_by": data.get("reported_by"),
         "date": now.date().isoformat(),
         "created_at": now.isoformat(),
-        "confidence": result[
-            "confidence"
-        ],
-        "risk_factors": result[
-            "factors"
-        ],
+
+        "confidence": result["confidence"],
+        "risk_factors": result["factors"],
+
         "case_status": data.get(
             "case_status",
             "UNDER_REVIEW"
-        )
+        ),
+        "vet_verified": False,
+        "vet_notes": None,
+        "diagnosis": None,
+        "treatment": None,
+        "verified_at": None
     }
 
     saved = save_report(report)
