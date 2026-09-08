@@ -1,81 +1,233 @@
 <header class="appbar">
-  <button class="hamburger">☰</button>
+
+  <button class="hamburger" type="button" aria-label="Open menu">
+    ☰
+  </button>
 
   <div class="appbar-brand">
-    <span class="mark">🐄</span> PashuRakshak
+    <span class="mark">🐄</span>
+    <span>PashuRakshak</span>
   </div>
 
   <div class="appbar-icons">
-    <span>🔊</span>
-    <span class="lang-pill">{{ current_lang_label }}</span>
-    <span>📅</span>
-    <span class="notif">🔔<span class="dot"></span></span>
+
+    <span title="Voice">
+      🔊
+    </span>
+
+    <span class="lang-pill">
+      {{ current_lang_label if current_lang_label is defined else 'English' }}
+    </span>
+
+    <span title="Calendar">
+      📅
+    </span>
+
+    <a
+      href="/alerts"
+      class="notif"
+      title="Health alerts"
+      style="text-decoration:none;color:inherit;"
+    >
+      🔔
+      <span class="dot"></span>
+    </a>
+
   </div>
+
 </header>
+
 
 <nav class="sidenav">
 
+  <!-- BRAND -->
   <div class="brand">
-    <span class="mark">🐄</span> PashuRakshak
+
+    <span class="mark">🐄</span>
+
+    <span>
+      PashuRakshak
+    </span>
+
   </div>
 
+
   <!-- HOME -->
-  <a href="/dashboard"
-     class="{{ 'active' if active == 'dashboard' else '' }}">
-    🏠 {{ t('nav_home') if t is defined else 'Home' }}
+  <a
+    href="/home"
+    class="{{ 'active' if active == 'home' else '' }}"
+  >
+
+    🏠
+
+    {{ t('nav_home')
+       if t is defined
+       else 'Home'
+    }}
+
   </a>
+
 
   <!-- REPORT -->
-  <a href="/report"
-     class="{{ 'active' if active == 'report' else '' }}">
-    📋 {{ t('nav_report') if t is defined else 'Report' }}
+  <a
+    href="/report"
+    class="{{ 'active' if active == 'report' else '' }}"
+  >
+
+    📋
+
+    {{ t('nav_report')
+       if t is defined
+       else 'Report'
+    }}
+
   </a>
+
 
   <!-- DASHBOARD -->
-  <a href="/dashboard"
-     class="{{ 'active' if active == 'dashboard' else '' }}">
+  <a
+    href="/dashboard"
+    class="{{ 'active' if active == 'dashboard' else '' }}"
+  >
+
     📊
-    {% if current_role_label == 'Farmer' %}
+
+    {% if current_role_label is defined
+          and current_role_label == 'Farmer' %}
+
       My dashboard
-    {% elif current_role_label == 'District Official' %}
+
+    {% elif current_role_label is defined
+          and current_role_label == 'District Official' %}
+
       District dashboard
+
     {% elif t is defined %}
+
       {{ t('nav_dashboard') }}
+
     {% else %}
+
       Dashboard
+
     {% endif %}
+
   </a>
+
 
   <!-- ALERTS -->
-  <a href="/alerts"
-     class="{{ 'active' if active == 'alerts' else '' }}">
-    🔔 {{ t('nav_alerts') if t is defined else 'Alerts' }}
+  <a
+    href="/alerts"
+    class="{{ 'active' if active == 'alerts' else '' }}"
+  >
+
+    🔔
+
+    {{ t('nav_alerts')
+       if t is defined
+       else 'Alerts'
+    }}
+
   </a>
+
 
   <!-- RECORDS -->
-  <a href="/records"
-     class="{{ 'active' if active == 'records' else '' }}">
-    🩺 {{ t('nav_records') if t is defined else 'Records' }}
+  <a
+    href="/records"
+    class="{{ 'active' if active == 'records' else '' }}"
+  >
+
+    🩺
+
+    {{ t('nav_records')
+       if t is defined
+       else 'Records'
+    }}
+
   </a>
 
-  <!-- LOGIN -->
-  <a href="/login">
-    🔐 Login
+
+  <!-- ANIMAL REGISTRY -->
+  <a
+    href="/animals"
+    class="{{ 'active' if active == 'animals' else '' }}"
+  >
+
+    🐄
+
+    Animal Registry
+
   </a>
+
+
+  <!-- VACCINATION -->
+  <a
+    href="/vaccination"
+    class="{{ 'active' if active == 'vaccination' else '' }}"
+  >
+
+    💉
+
+    Vaccination
+
+  </a>
+
+
+  <!-- LOGIN -->
+  <a
+    href="/login"
+    class="{{ 'active' if active == 'login' else '' }}"
+  >
+
+    🔐
+
+    Login
+
+  </a>
+
 
   <!-- LANGUAGE -->
   <div class="lang-toggle">
-    <a href="/onboarding/language"
-       style="color:inherit;text-decoration:none;">
-      🌐 {{ current_lang_label }} ▾
+
+    <a
+      href="/onboarding/language"
+      style="
+        color:inherit;
+        text-decoration:none;
+        display:block;
+      "
+    >
+
+      🌐
+
+      {{ current_lang_label
+         if current_lang_label is defined
+         else 'English'
+      }}
+
+      ▾
+
     </a>
+
   </div>
 
+
   <!-- CURRENT ROLE -->
-  {% if current_role_label %}
-    <div class="lang-toggle" style="margin-top:2px;">
-      👤 {{ current_role_label }}
+  {% if current_role_label is defined
+        and current_role_label %}
+
+    <div
+      class="lang-toggle"
+      style="margin-top:2px;"
+    >
+
+      👤
+
+      {{ current_role_label }}
+
     </div>
+
   {% endif %}
+
 
 </nav>
