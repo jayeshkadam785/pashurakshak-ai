@@ -19,7 +19,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Leaflet -->
+<!-- =====================================================
+     LEAFLET
+===================================================== -->
+
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -29,8 +32,20 @@
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
 </script>
 
+<!-- =====================================================
+     LEAFLET HEATMAP PLUGIN
+===================================================== -->
+
+<script
+  src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js">
+</script>
+
 
 <style>
+
+/* =====================================================
+   GOVERNMENT DASHBOARD
+===================================================== */
 
 .command-header {
   display:flex;
@@ -67,6 +82,11 @@
   border-radius:50%;
   background:#10b981;
 }
+
+
+/* =====================================================
+   KPI
+===================================================== */
 
 .kpi-grid {
   display:grid;
@@ -126,6 +146,11 @@
   color:#15803d;
 }
 
+
+/* =====================================================
+   SECTIONS
+===================================================== */
+
 .section-title {
   margin:28px 0 12px;
 }
@@ -153,12 +178,67 @@
   color:var(--ink-600);
 }
 
+
+/* =====================================================
+   RISK MAP
+===================================================== */
+
 #risk-map {
   height:420px;
   width:100%;
   border-radius:12px;
   overflow:hidden;
+  background:#eef2f3;
 }
+
+
+/* =====================================================
+   MAP LEGEND
+===================================================== */
+
+.map-legend {
+  background:white;
+  padding:10px 12px;
+  border-radius:10px;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+  font-size:12px;
+  line-height:1.6;
+}
+
+.map-legend-title {
+  font-weight:700;
+  margin-bottom:4px;
+}
+
+.legend-row {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.legend-dot {
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  display:inline-block;
+}
+
+.legend-high {
+  background:#dc2626;
+}
+
+.legend-watch {
+  background:#f59e0b;
+}
+
+.legend-low {
+  background:#16a34a;
+}
+
+
+/* =====================================================
+   ALERTS
+===================================================== */
 
 .alert-list {
   display:flex;
@@ -201,6 +281,11 @@
   margin-top:3px;
 }
 
+
+/* =====================================================
+   RESPONSE STATUS
+===================================================== */
+
 .status-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -225,6 +310,11 @@
   margin-top:3px;
 }
 
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
 .progress-wrap {
   margin-top:14px;
 }
@@ -248,6 +338,11 @@
   border-radius:999px;
   background:#16a34a;
 }
+
+
+/* =====================================================
+   TABLE
+===================================================== */
 
 .table-scroll {
   overflow-x:auto;
@@ -287,6 +382,11 @@
   cursor:pointer;
 }
 
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
 @media(max-width:1100px) {
 
   .kpi-grid {
@@ -311,6 +411,10 @@
 
   .status-grid {
     grid-template-columns:1fr;
+  }
+
+  #risk-map {
+    height:360px;
   }
 
 }
@@ -639,7 +743,9 @@
 <div class="dashboard-grid">
 
 
-<!-- MAP -->
+<!-- =====================================================
+     GOVERNMENT HEAT MAP
+===================================================== -->
 
 <div class="card">
 
@@ -648,12 +754,12 @@
     <div>
 
       <h3>
-        🗺️ Government Risk Map
+        🗺️ Government Disease Risk Heatmap
       </h3>
 
       <div class="small-muted">
 
-        Disease cases, hotspots and outbreak risk
+        GPS-based disease reports and outbreak risk intensity
 
       </div>
 
@@ -673,7 +779,9 @@
 
 
 
-<!-- ALERTS -->
+<!-- =====================================================
+     PRIORITY ALERTS
+===================================================== -->
 
 <div class="card">
 
@@ -910,6 +1018,7 @@
 
       <div class="status-label">
         Results
+
       </div>
 
     </div>
@@ -1259,8 +1368,10 @@
 const DASHBOARD_TOTALS =
   {{ totals | tojson }};
 
+
 const BLOCK_SUMMARY =
   {{ block_summary | tojson }};
+
 
 
 /* =========================================================
@@ -1270,10 +1381,9 @@ const BLOCK_SUMMARY =
 function updateDashboardKPIs() {
 
 
-  /* Total Animals */
-
   const animals =
     document.getElementById("kpi-animals");
+
 
   if (animals) {
 
@@ -1285,10 +1395,9 @@ function updateDashboardKPIs() {
   }
 
 
-  /* Active Cases */
-
   const active =
     document.getElementById("kpi-active");
+
 
   if (active) {
 
@@ -1300,10 +1409,9 @@ function updateDashboardKPIs() {
   }
 
 
-  /* High Risk */
-
   const highRisk =
     document.getElementById("kpi-high-risk");
+
 
   if (highRisk) {
 
@@ -1314,8 +1422,6 @@ function updateDashboardKPIs() {
 
   }
 
-
-  /* Vaccination */
 
   const coverage =
     Number(
@@ -1337,8 +1443,6 @@ function updateDashboardKPIs() {
   }
 
 
-  /* Vaccination Header */
-
   const vaccinationHeader =
     document.getElementById(
       "vaccination-header"
@@ -1352,8 +1456,6 @@ function updateDashboardKPIs() {
 
   }
 
-
-  /* Vaccination Progress */
 
   const vaccinationProgress =
     document.getElementById(
@@ -1375,8 +1477,6 @@ function updateDashboardKPIs() {
   }
 
 
-  /* Blocks */
-
   const blocks =
     document.getElementById(
       "kpi-blocks"
@@ -1393,6 +1493,7 @@ function updateDashboardKPIs() {
   }
 
 }
+
 
 
 /* =========================================================
@@ -1460,76 +1561,77 @@ function initBlockChart() {
 
 
   blockChart =
-    new Chart(canvas, {
+    new Chart(
+      canvas,
+      {
 
-      type:"bar",
+        type:"bar",
+
+        data: {
+
+          labels:labels,
+
+          datasets:[
+
+            {
+
+              label:"Open Reports",
+
+              data:reports
+
+            },
+
+            {
+
+              label:"High Risk",
+
+              data:highRisk
+
+            }
+
+          ]
+
+        },
 
 
-      data: {
+        options: {
 
-        labels:labels,
+          responsive:true,
+
+          maintainAspectRatio:false,
 
 
-        datasets:[
+          interaction: {
 
-          {
+            mode:"index",
 
-            label:"Open Reports",
-
-            data:reports
+            intersect:false
 
           },
 
 
-          {
+          plugins: {
 
-            label:"High Risk",
+            legend: {
 
-            data:highRisk
+              position:"bottom"
 
-          }
+            }
 
-        ]
-
-      },
+          },
 
 
-      options: {
+          scales: {
 
-        responsive:true,
+            y: {
 
-        maintainAspectRatio:false,
+              beginAtZero:true,
 
+              ticks: {
 
-        interaction: {
+                precision:0
 
-          mode:"index",
-
-          intersect:false
-
-        },
-
-
-        plugins: {
-
-          legend: {
-
-            position:"bottom"
-
-          }
-
-        },
-
-
-        scales: {
-
-          y: {
-
-            beginAtZero:true,
-
-            ticks: {
-
-              precision:0
+              }
 
             }
 
@@ -1538,18 +1640,31 @@ function initBlockChart() {
         }
 
       }
-
-    });
+    );
 
 }
 
 
+
 /* =========================================================
-   RISK MAP
+   RISK MAP VARIABLES
 ========================================================= */
 
 let riskMap = null;
 
+let heatLayer = null;
+
+let baseMarker = null;
+
+let reportLayers = [];
+
+let outbreakLayers = [];
+
+
+
+/* =========================================================
+   INITIALIZE GOVERNMENT MAP
+========================================================= */
 
 function initRiskMap() {
 
@@ -1565,22 +1680,40 @@ function initRiskMap() {
     typeof L === "undefined"
   ) {
 
+    console.error(
+      "Leaflet is not available"
+    );
+
     return;
 
   }
 
 
+  if (riskMap) {
+
+    riskMap.remove();
+
+    riskMap = null;
+
+  }
+
+
+  /*
+     Satara District
+  */
+
   riskMap =
     L.map(
       "risk-map"
     ).setView(
-
       [17.6805,74.0183],
-
       9
-
     );
 
+
+  /*
+     OpenStreetMap
+  */
 
   L.tileLayer(
 
@@ -1595,21 +1728,662 @@ function initRiskMap() {
 
     }
 
-  ).addTo(riskMap);
+  ).addTo(
+    riskMap
+  );
 
 
-  L.marker(
-    [17.6805,74.0183]
-  )
-  .addTo(riskMap)
-  .bindPopup(
+  /*
+     District monitoring centre
+  */
 
-    "<strong>Satara District</strong><br>" +
-    "PashuRakshak AI monitoring centre"
+  baseMarker =
+    L.marker(
+      [17.6805,74.0183]
+    )
+    .addTo(
+      riskMap
+    )
+    .bindPopup(`
 
+      <strong>
+        Satara District
+      </strong>
+
+      <br>
+
+      PashuRakshak AI
+      Government Monitoring Centre
+
+    `);
+
+
+  /*
+     Legend
+  */
+
+  const legend =
+    L.control({
+      position:"bottomright"
+    });
+
+
+  legend.onAdd =
+    function() {
+
+      const div =
+        L.DomUtil.create(
+          "div",
+          "map-legend"
+        );
+
+
+      div.innerHTML = `
+
+        <div class="map-legend-title">
+          Disease Risk
+        </div>
+
+        <div class="legend-row">
+          <span class="legend-dot legend-high"></span>
+          High Risk
+        </div>
+
+        <div class="legend-row">
+          <span class="legend-dot legend-watch"></span>
+          Moderate / Watch
+        </div>
+
+        <div class="legend-row">
+          <span class="legend-dot legend-low"></span>
+          Low Risk
+        </div>
+
+      `;
+
+
+      return div;
+
+    };
+
+
+  legend.addTo(
+    riskMap
+  );
+
+
+  /*
+     Load actual GPS reports.
+  */
+
+  loadDiseaseHeatmap();
+
+
+  /*
+     Leaflet rendering fix.
+  */
+
+  setTimeout(
+    function() {
+
+      if (riskMap) {
+
+        riskMap.invalidateSize();
+
+      }
+
+    },
+    400
   );
 
 }
+
+
+
+/* =========================================================
+   LOAD DISEASE REPORTS
+========================================================= */
+
+async function loadDiseaseHeatmap() {
+
+
+  if (!riskMap) {
+
+    return;
+
+  }
+
+
+  try {
+
+
+    const response =
+      await fetch(
+        "/api/reports"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Reports API failed: " +
+        response.status
+      );
+
+    }
+
+
+    const result =
+      await response.json();
+
+
+    console.log(
+      "Government heatmap API response:",
+      result
+    );
+
+
+    let reports = [];
+
+
+    /*
+       Support:
+
+       [
+         report
+       ]
+
+       OR
+
+       {
+         reports:[]
+       }
+
+       OR
+
+       {
+         data:[]
+       }
+    */
+
+    if (
+      Array.isArray(result)
+    ) {
+
+      reports =
+        result;
+
+    }
+
+    else if (
+      result &&
+      Array.isArray(
+        result.reports
+      )
+    ) {
+
+      reports =
+        result.reports;
+
+    }
+
+    else if (
+      result &&
+      Array.isArray(
+        result.data
+      )
+    ) {
+
+      reports =
+        result.data;
+
+    }
+
+
+    console.log(
+      "Disease reports received:",
+      reports.length
+    );
+
+
+    /*
+       Create heatmap points.
+    */
+
+    const heatPoints = [];
+
+
+    reports.forEach(
+      function(report) {
+
+
+        const lat =
+          Number(
+            report.latitude ??
+            report.lat
+          );
+
+
+        const lng =
+          Number(
+            report.longitude ??
+            report.lng
+          );
+
+
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lng)
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+           Risk score.
+        */
+
+        let score =
+          Number(
+            report.risk_score ?? 0
+          );
+
+
+        /*
+           If score unavailable,
+           calculate from risk level.
+        */
+
+        if (
+          !Number.isFinite(score) ||
+          score <= 0
+        ) {
+
+
+          const level =
+            String(
+              report.risk_level || ""
+            ).toUpperCase();
+
+
+          if (
+            level === "HIGH"
+          ) {
+
+            score = 85;
+
+          }
+
+          else if (
+            level === "MODERATE" ||
+            level === "WATCH"
+          ) {
+
+            score = 50;
+
+          }
+
+          else {
+
+            score = 25;
+
+          }
+
+        }
+
+
+        /*
+           Convert 0-100
+           into heat intensity 0.2-1.
+        */
+
+        const intensity =
+          Math.max(
+            0.2,
+            Math.min(
+              1,
+              score / 100
+            )
+          );
+
+
+        heatPoints.push(
+          [
+            lat,
+            lng,
+            intensity
+          ]
+        );
+
+      }
+    );
+
+
+    /*
+       Remove old heat layer.
+    */
+
+    if (heatLayer) {
+
+      riskMap.removeLayer(
+        heatLayer
+      );
+
+      heatLayer = null;
+
+    }
+
+
+    /*
+       Create real heatmap.
+    */
+
+    if (
+      heatPoints.length > 0 &&
+      typeof L.heatLayer === "function"
+    ) {
+
+
+      heatLayer =
+        L.heatLayer(
+          heatPoints,
+          {
+
+            radius:35,
+
+            blur:28,
+
+            maxZoom:13,
+
+            max:1.0,
+
+            minOpacity:0.35
+
+          }
+        )
+        .addTo(
+          riskMap
+        );
+
+
+      console.log(
+        "Government heatmap created with",
+        heatPoints.length,
+        "GPS points."
+      );
+
+    }
+
+    else {
+
+
+      console.log(
+        "No GPS disease reports available for heatmap."
+      );
+
+    }
+
+
+    /*
+       Add individual report markers.
+    */
+
+    addDiseaseReportMarkers(
+      reports
+    );
+
+
+  }
+
+  catch(error) {
+
+
+    console.error(
+      "Government heatmap loading failed:",
+      error
+    );
+
+
+    const alertList =
+      document.getElementById(
+        "alert-list"
+      );
+
+
+    if (
+      alertList &&
+      !alertList.innerHTML.includes(
+        "No significant"
+      )
+    ) {
+
+      /*
+         Do not completely destroy
+         outbreak alerts if they exist.
+      */
+
+      console.warn(
+        "Disease map data unavailable."
+      );
+
+    }
+
+  }
+
+}
+
+
+
+/* =========================================================
+   DISEASE REPORT MARKERS
+========================================================= */
+
+function addDiseaseReportMarkers(
+  reports
+) {
+
+
+  if (!riskMap) {
+
+    return;
+
+  }
+
+
+  /*
+     Remove previous report markers.
+  */
+
+  reportLayers.forEach(
+    function(layer) {
+
+      try {
+
+        riskMap.removeLayer(
+          layer
+        );
+
+      }
+
+      catch(error) {}
+
+    }
+  );
+
+
+  reportLayers = [];
+
+
+  reports.forEach(
+    function(report) {
+
+
+      const lat =
+        Number(
+          report.latitude ??
+          report.lat
+        );
+
+
+      const lng =
+        Number(
+          report.longitude ??
+          report.lng
+        );
+
+
+      if (
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng)
+      ) {
+
+        return;
+
+      }
+
+
+      const risk =
+        String(
+          report.risk_level ||
+          "LOW"
+        ).toUpperCase();
+
+
+      const score =
+        Number(
+          report.risk_score || 0
+        );
+
+
+      const village =
+        report.village ||
+        "Unknown Village";
+
+
+      const animal =
+        report.animal_type ||
+        "Livestock";
+
+
+      const affected =
+        Number(
+          report.affected_count || 0
+        );
+
+
+      let markerColor =
+        "#16a34a";
+
+
+      let icon =
+        "🟢";
+
+
+      if (
+        risk === "HIGH"
+      ) {
+
+        markerColor =
+          "#dc2626";
+
+        icon =
+          "🔴";
+
+      }
+
+      else if (
+        risk === "MODERATE" ||
+        risk === "WATCH"
+      ) {
+
+        markerColor =
+          "#f59e0b";
+
+        icon =
+          "🟡";
+
+      }
+
+
+      const marker =
+        L.circleMarker(
+          [lat,lng],
+          {
+
+            radius:7,
+
+            weight:2,
+
+            color:
+              markerColor,
+
+            fillColor:
+              markerColor,
+
+            fillOpacity:.85
+
+          }
+        )
+        .addTo(
+          riskMap
+        );
+
+
+      marker.bindPopup(`
+
+        <div style="min-width:210px">
+
+          <strong>
+            ${icon} Disease Report
+          </strong>
+
+          <hr>
+
+          <b>Village:</b>
+          ${escapeHTML(village)}
+
+          <br>
+
+          <b>Animal:</b>
+          ${escapeHTML(animal)}
+
+          <br>
+
+          <b>Risk Level:</b>
+          ${escapeHTML(risk)}
+
+          <br>
+
+          <b>Risk Score:</b>
+          ${Number.isFinite(score) ? score : 0}
+
+          <br>
+
+          <b>Animals Affected:</b>
+          ${affected}
+
+          <br>
+
+          <b>GPS:</b>
+          ${lat.toFixed(5)},
+          ${lng.toFixed(5)}
+
+        </div>
+
+      `);
+
+
+      reportLayers.push(
+        marker
+      );
+
+    }
+  );
+
+}
+
 
 
 /* =========================================================
@@ -1659,23 +2433,26 @@ async function loadOutbreakRisk() {
       : [];
 
 
-    /* HIGH outbreak count */
+    /*
+       Count HIGH outbreak clusters.
+    */
 
     const highRiskClusters =
       clusters.filter(
-        cluster => {
+        function(cluster) {
+
 
           const level =
             String(
-
               cluster.outbreak_level ||
               cluster.risk_level ||
               ""
-
             ).toUpperCase();
 
 
-          return level === "HIGH";
+          return (
+            level === "HIGH"
+          );
 
         }
       );
@@ -1756,6 +2533,7 @@ async function loadOutbreakRisk() {
 }
 
 
+
 /* =========================================================
    ALERTS
 ========================================================= */
@@ -1797,24 +2575,26 @@ function updateAlerts(
 
   const important =
     clusters
-      .filter(cluster => {
-
-        const level =
-          String(
-
-            cluster.outbreak_level ||
-            cluster.risk_level ||
-            ""
-
-          ).toUpperCase();
+      .filter(
+        function(cluster) {
 
 
-        return (
-          level === "HIGH" ||
-          level === "WATCH"
-        );
+          const level =
+            String(
+              cluster.outbreak_level ||
+              cluster.risk_level ||
+              ""
+            ).toUpperCase();
 
-      })
+
+          return (
+            level === "HIGH" ||
+            level === "WATCH" ||
+            level === "MODERATE"
+          );
+
+        }
+      )
       .slice(0,6);
 
 
@@ -1837,16 +2617,14 @@ function updateAlerts(
 
   container.innerHTML =
     important.map(
-      cluster => {
+      function(cluster) {
 
 
         const level =
           String(
-
             cluster.outbreak_level ||
             cluster.risk_level ||
             "WATCH"
-
           ).toUpperCase();
 
 
@@ -1863,44 +2641,44 @@ function updateAlerts(
 
         const reports =
           Number(
-
             cluster.reports ||
             cluster.case_count ||
             cluster.cases ||
             0
-
           );
 
 
         const affected =
           Number(
-
             cluster.affected ||
             cluster.animals_affected ||
             0
-
           );
 
 
         const score =
           Number(
-
             cluster.outbreak_score ||
             cluster.risk_score ||
             0
-
           );
 
 
         return `
 
           <div class="alert-item ${
-            isHigh ? "high" : "watch"
+            isHigh
+              ? "high"
+              : "watch"
           }">
 
             <div class="alert-icon">
 
-              ${isHigh ? "🚨" : "⚠️"}
+              ${
+                isHigh
+                  ? "🚨"
+                  : "⚠️"
+              }
 
             </div>
 
@@ -1939,8 +2717,9 @@ function updateAlerts(
 }
 
 
+
 /* =========================================================
-   MAP CLUSTERS
+   OUTBREAK MAP CLUSTERS
 ========================================================= */
 
 function addMapClusters(
@@ -1955,33 +2734,51 @@ function addMapClusters(
   }
 
 
+  /*
+     Remove old outbreak layers.
+  */
+
+  outbreakLayers.forEach(
+    function(layer) {
+
+      try {
+
+        riskMap.removeLayer(
+          layer
+        );
+
+      }
+
+      catch(error) {}
+
+    }
+  );
+
+
+  outbreakLayers = [];
+
+
   clusters.forEach(
-    cluster => {
+    function(cluster) {
 
 
       const lat =
         Number(
-
           cluster.lat ??
           cluster.latitude
-
         );
 
 
       const lng =
         Number(
-
           cluster.lng ??
           cluster.longitude
-
         );
 
 
       if (
-
         !Number.isFinite(lat) ||
         !Number.isFinite(lng)
-
       ) {
 
         return;
@@ -1991,27 +2788,31 @@ function addMapClusters(
 
       const score =
         Number(
-
-          cluster.outbreak_score ||
-          cluster.risk_score ||
+          cluster.outbreak_score ??
+          cluster.risk_score ??
           0
-
         );
 
 
       let riskColor =
-        "green";
+        "#16a34a";
 
 
-      if (score >= 60) {
+      if (
+        score >= 60
+      ) {
 
-        riskColor = "red";
+        riskColor =
+          "#dc2626";
 
       }
 
-      else if (score >= 30) {
+      else if (
+        score >= 30
+      ) {
 
-        riskColor = "orange";
+        riskColor =
+          "#f59e0b";
 
       }
 
@@ -2023,44 +2824,42 @@ function addMapClusters(
         "Unknown Area";
 
 
-      L.circle(
+      const radius =
+        Math.max(
+          500,
+          Math.min(
+            score * 30,
+            5000
+          )
+        );
 
-        [lat,lng],
 
-        {
+      const circle =
+        L.circle(
+          [lat,lng],
+          {
 
-          radius:Math.max(
+            radius:radius,
 
-            500,
+            color:riskColor,
 
-            Math.min(
+            fillColor:riskColor,
 
-              score * 30,
+            fillOpacity:.22,
 
-              5000
+            weight:2
 
-            )
+          }
+        )
+        .addTo(
+          riskMap
+        );
 
-          ),
 
-          color:riskColor,
-
-          fillColor:riskColor,
-
-          fillOpacity:.35
-
-        }
-
-      )
-
-      .addTo(riskMap)
-
-      .bindPopup(`
+      circle.bindPopup(`
 
         <strong>
-
           ${escapeHTML(area)}
-
         </strong>
 
         <br>
@@ -2070,11 +2869,9 @@ function addMapClusters(
         <strong>
 
           ${escapeHTML(
-
             cluster.outbreak_level ||
             cluster.risk_level ||
             "LOW"
-
           )}
 
         </strong>
@@ -2084,11 +2881,9 @@ function addMapClusters(
         Reports:
 
         ${Number(
-
           cluster.reports ||
           cluster.case_count ||
           0
-
         )}
 
         <br>
@@ -2096,19 +2891,23 @@ function addMapClusters(
         Animals affected:
 
         ${Number(
-
           cluster.affected ||
           cluster.animals_affected ||
           0
-
         )}
 
       `);
+
+
+      outbreakLayers.push(
+        circle
+      );
 
     }
   );
 
 }
+
 
 
 /* =========================================================
@@ -2118,6 +2917,7 @@ function addMapClusters(
 function escapeHTML(
   value
 ) {
+
 
   return String(
     value ?? ""
@@ -2151,6 +2951,7 @@ function escapeHTML(
 }
 
 
+
 /* =========================================================
    REFRESH
 ========================================================= */
@@ -2169,30 +2970,23 @@ async function refreshDashboard() {
     button.textContent =
       "⏳ Refreshing...";
 
-    button.disabled = true;
+    button.disabled =
+      true;
 
   }
 
 
-  /*
-     Reload the complete page.
-
-     Flask will query Supabase again
-     and calculate fresh totals.
-  */
-
   setTimeout(
-    () => {
+    function() {
 
       window.location.reload();
 
     },
-
     300
-
   );
 
 }
+
 
 
 /* =========================================================
@@ -2204,22 +2998,30 @@ document.addEventListener(
   function() {
 
 
-    /* KPI */
+    /*
+       KPIs
+    */
 
     updateDashboardKPIs();
 
 
-    /* Chart */
+    /*
+       Chart
+    */
 
     initBlockChart();
 
 
-    /* Map */
+    /*
+       Government heatmap
+    */
 
     initRiskMap();
 
 
-    /* Outbreak */
+    /*
+       Outbreak clusters
+    */
 
     loadOutbreakRisk();
 
