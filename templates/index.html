@@ -3,80 +3,548 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>PashuRakshak — Home</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css">
+<link
+  href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+>
+
+<link
+  rel="stylesheet"
+  href="/static/style.css"
+>
+
 </head>
+
 <body>
+
 <div class="app-shell">
 
   {% include "_nav.html" %}
 
   <main class="main">
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
     <div class="topbar">
+
       <div>
-        <h1>Namaskar, {{ farmer_name or "Farmer" }}</h1>
-        <div class="loc">📍 {{ village or "Satara" }}, {{ block or "Maharashtra" }} · Herd: {{ herd_size or 6 }} animals</div>
+
+        <h1>
+          Namaskar,
+          {{ farmer_name or "Farmer" }}
+        </h1>
+
+        <div class="loc">
+          📍
+          {{ village or "Satara" }},
+          {{ block or "Maharashtra" }}
+
+          ·
+
+          Herd:
+          {{ herd_size or 0 }}
+          animals
+        </div>
+
       </div>
-      <a href="/report" class="btn btn-accent">+ Report symptom</a>
+
+
+      <a
+        href="/report"
+        class="btn btn-accent"
+      >
+        + Report symptom
+      </a>
+
     </div>
+
+
+    <!-- =====================================================
+         QUICK OVERVIEW
+    ====================================================== -->
 
     <div class="grid-3">
-      <div class="risk-block {{ risk_level or 'low' }}">
-        <div class="label">Village outbreak risk</div>
-        <div class="value">{{ risk_label or "Low" }}</div>
-        <div class="label">{{ risk_note or "No unusual case clusters nearby" }}</div>
+
+
+      <!-- VILLAGE RISK -->
+
+      <div
+        class="risk-block {{ (risk_level or 'low')|lower }}"
+      >
+
+        <div class="label">
+          Village outbreak risk
+        </div>
+
+        <div class="value">
+          {{ risk_label or "Low" }}
+        </div>
+
+        <div class="label">
+
+          {{
+            risk_note
+            or
+            "No unusual case clusters nearby"
+          }}
+
+        </div>
+
       </div>
+
+
+      <!-- FARMER STATS -->
+
       <div class="card">
-        <div class="stat-row"><span class="l">Reports this week</span><span class="n">{{ reports_week or 2 }}</span></div>
-        <div class="stat-row"><span class="l">Vaccination due</span><span class="n">{{ vaccination_due or 1 }}</span></div>
-        <div class="stat-row"><span class="l">Active advisories</span><span class="n">{{ active_advisories or 1 }}</span></div>
+
+        <div class="stat-row">
+
+          <span class="l">
+            Reports this week
+          </span>
+
+          <span class="n">
+            {{ reports_week or 0 }}
+          </span>
+
+        </div>
+
+
+        <div class="stat-row">
+
+          <span class="l">
+            Vaccination due
+          </span>
+
+          <span class="n">
+            {{ vaccination_due or 0 }}
+          </span>
+
+        </div>
+
+
+        <div class="stat-row">
+
+          <span class="l">
+            Active advisories
+          </span>
+
+          <span class="n">
+            {{ active_advisories or 0 }}
+          </span>
+
+        </div>
+
       </div>
+
+
+      <!-- NEAREST FACILITY -->
+
       <div class="card-outline">
-        <h3>Nearest facility</h3>
-        <p style="margin-bottom:4px">{{ nearest_facility or "Satara Veterinary Dispensary" }}</p>
-        <p style="margin-bottom:0; color:var(--ink-300); font-size:0.85rem">{{ facility_distance or "3.2 km away" }}</p>
-        <a href="/dashboard#map" style="font-size:0.88rem">View on map →</a>
+
+        <h3>
+          Nearest facility
+        </h3>
+
+        <p style="margin-bottom:4px">
+
+          {{
+            nearest_facility
+            or
+            "Satara Veterinary Dispensary"
+          }}
+
+        </p>
+
+        <p
+          style="
+            margin-bottom:0;
+            color:var(--ink-300);
+            font-size:0.85rem;
+          "
+        >
+
+          {{
+            facility_distance
+            or
+            "Distance unavailable"
+          }}
+
+        </p>
+
+
+        <a
+          href="/dashboard#map"
+          style="font-size:0.88rem"
+        >
+          View on map →
+        </a>
+
       </div>
+
     </div>
 
-    <h2>{{ t('report_heading') }}</h2>
+
+    <!-- =====================================================
+         REPORT SECTION
+    ====================================================== -->
+
+    <h2>
+      {{ t('report_heading') }}
+    </h2>
+
+
     <div class="section-card">
-      <p>{{ t('report_body') }}</p>
+
+      <p>
+        {{ t('report_body') }}
+      </p>
+
+
       <div class="step-flow">
-        <div class="step"><div class="icon-circle">📷</div><div class="label">Take a picture</div></div>
-        <div class="arrow">›</div>
-        <div class="step"><div class="icon-circle">🔍</div><div class="label">See diagnosis</div></div>
-        <div class="arrow">›</div>
-        <div class="step"><div class="icon-circle">🩺</div><div class="label">Get vet advice</div></div>
+
+
+        <!-- STEP 1 -->
+
+        <div class="step">
+
+          <div class="icon-circle">
+            📷
+          </div>
+
+          <div class="label">
+            Take a picture
+          </div>
+
+        </div>
+
+
+        <div class="arrow">
+          ›
+        </div>
+
+
+        <!-- STEP 2 -->
+
+        <div class="step">
+
+          <div class="icon-circle">
+            🔍
+          </div>
+
+          <div class="label">
+            AI risk screening
+          </div>
+
+        </div>
+
+
+        <div class="arrow">
+          ›
+        </div>
+
+
+        <!-- STEP 3 -->
+
+        <div class="step">
+
+          <div class="icon-circle">
+            🩺
+          </div>
+
+          <div class="label">
+            Get vet advice
+          </div>
+
+        </div>
+
       </div>
-      <a href="/report" class="btn btn-primary btn-block">{{ t('start_report') }}</a>
+
+
+      <a
+        href="/report"
+        class="btn btn-primary btn-block"
+      >
+        {{ t('start_report') }}
+      </a>
+
     </div>
 
-    <h2>Recent advisories</h2>
+
+    <!-- =====================================================
+         RECENT ADVISORIES
+    ====================================================== -->
+
+    <h2>
+      Recent advisories
+    </h2>
+
+
     <div id="advisory-list">
+
+
       {% for a in advisories %}
+
       <div class="advisory">
-        <div class="sev {{ a.severity }}"></div>
+
+        <div
+          class="sev {{ a.severity or 'low' }}"
+        ></div>
+
+
         <div>
-          <strong>{{ a.title }}</strong>
-          <p style="margin:4px 0 0 0">{{ a.body }}</p>
-          <div class="meta">{{ a.issued_by }} · {{ a.date }}</div>
+
+          <strong>
+            {{ a.title }}
+          </strong>
+
+
+          <p
+            style="
+              margin:4px 0 0 0;
+            "
+          >
+            {{ a.body }}
+          </p>
+
+
+          <div class="meta">
+
+            {{
+              a.issued_by
+              or
+              "PashuRakshak AI"
+            }}
+
+            ·
+
+            {{
+              a.date
+              or
+              "Recent"
+            }}
+
+          </div>
+
         </div>
+
       </div>
+
+
       {% else %}
+
+
+      <!-- DEFAULT ADVISORY -->
+
       <div class="advisory">
+
         <div class="sev low"></div>
+
         <div>
-          <strong>Foot-and-mouth disease: routine reminder</strong>
-          <p style="margin:4px 0 0 0">FMD vaccination round is due in your block this month. Contact your nearest dispensary to schedule.</p>
-          <div class="meta">Dept. of Animal Husbandry · this week</div>
+
+          <strong>
+            Livestock health reminder
+          </strong>
+
+          <p
+            style="
+              margin:4px 0 0 0;
+            "
+          >
+            Keep vaccination records updated
+            and report unusual symptoms early.
+          </p>
+
+          <div class="meta">
+            PashuRakshak AI · Today
+          </div>
+
         </div>
+
       </div>
+
+
       {% endfor %}
+
     </div>
+
+
+    <!-- =====================================================
+         QUICK ACTIONS
+    ====================================================== -->
+
+    <h2>
+      Quick actions
+    </h2>
+
+
+    <div class="grid-3">
+
+
+      <!-- ANIMAL REGISTRY -->
+
+      <div class="card-outline">
+
+        <h3>
+          🐄 Animal Registry
+        </h3>
+
+        <p>
+          Register animals, owners,
+          vaccination and treatment history.
+        </p>
+
+        <a
+          href="/animals"
+          class="btn btn-primary"
+          style="margin-top:10px;"
+        >
+          Manage animals →
+        </a>
+
+      </div>
+
+
+      <!-- VACCINATION -->
+
+      <div class="card-outline">
+
+        <h3>
+          💉 Vaccination
+        </h3>
+
+        <p>
+          Record vaccinations and
+          monitor upcoming due dates.
+        </p>
+
+        <a
+          href="/vaccination"
+          class="btn btn-primary"
+          style="margin-top:10px;"
+        >
+          Vaccination records →
+        </a>
+
+      </div>
+
+
+      <!-- CASE RECORDS -->
+
+      <div class="card-outline">
+
+        <h3>
+          🩺 Case Records
+        </h3>
+
+        <p>
+          View previously reported livestock
+          disease cases and risk assessments.
+        </p>
+
+        <a
+          href="/records"
+          class="btn btn-primary"
+          style="margin-top:10px;"
+        >
+          View records →
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ALERTS
+    ====================================================== -->
+
+    <div
+      class="section-card"
+      style="margin-top:24px;"
+    >
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:12px;
+          flex-wrap:wrap;
+        "
+      >
+
+        <div>
+
+          <h3
+            style="
+              margin:0 0 4px 0;
+            "
+          >
+            🔔 Health alerts
+          </h3>
+
+          <p
+            style="
+              margin:0;
+            "
+          >
+            Check important livestock-health
+            alerts for your area.
+          </p>
+
+        </div>
+
+
+        <a
+          href="/alerts"
+          class="btn btn-accent"
+        >
+          View alerts →
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER NOTE
+    ====================================================== -->
+
+    <div
+      style="
+        margin-top:28px;
+        padding:14px 0;
+        color:var(--ink-300);
+        font-size:0.82rem;
+        text-align:center;
+      "
+    >
+
+      PashuRakshak AI ·
+      Early livestock health warning
+      and veterinary decision support
+
+    </div>
+
+
   </main>
+
 </div>
+
+
+<!-- =========================================================
+     OPTIONAL APP SCRIPT
+========================================================= -->
+
+<script src="/static/app.js"></script>
+
 </body>
 </html>
