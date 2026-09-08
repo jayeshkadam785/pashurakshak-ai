@@ -7,9 +7,87 @@
 <title>PashuRakshak — My Dashboard</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+>
 
 <link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+  .dashboard-loading {
+    text-align:center;
+    padding:25px;
+    color:var(--ink-600);
+  }
+
+  .dashboard-error {
+    padding:18px;
+    border-radius:12px;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#9a3412;
+    margin-bottom:20px;
+  }
+
+  .animal-empty {
+    text-align:center;
+    padding:35px;
+  }
+
+  .animal-empty-icon {
+    font-size:40px;
+    margin-bottom:10px;
+  }
+
+  .animal-status {
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:700;
+  }
+
+  .animal-status.healthy {
+    background:#dcfce7;
+    color:#166534;
+  }
+
+  .animal-status.vaccinated {
+    background:#dcfce7;
+    color:#166534;
+  }
+
+  .animal-status.pending {
+    background:#fef3c7;
+    color:#92400e;
+  }
+
+  .animal-status.registered {
+    background:#e0f2fe;
+    color:#075985;
+  }
+
+  .animal-status.warning {
+    background:#fee2e2;
+    color:#b91c1c;
+  }
+
+  .vaccination-empty {
+    padding:24px;
+    text-align:center;
+  }
+
+  .refresh-status {
+    font-size:.8rem;
+    color:var(--ink-600);
+    margin-top:6px;
+  }
+
+</style>
+
 </head>
 
 <body>
@@ -27,22 +105,46 @@
     <div class="topbar">
 
       <div>
+
         <h1>My Dashboard</h1>
 
         <div class="loc">
           Your animals, reports and vaccination reminders
         </div>
+
+        <div
+          id="dashboard-status"
+          class="refresh-status"
+        >
+          Loading your latest data...
+        </div>
+
       </div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
 
-        <a href="/animals" class="btn btn-primary">
+        <a
+          href="/animals"
+          class="btn btn-primary"
+        >
           🐄 Animal Registry
         </a>
 
-        <a href="/report" class="btn btn-primary">
+        <a
+          href="/report"
+          class="btn btn-primary"
+        >
           + Report an Issue
         </a>
+
+        <button
+          id="dashboard-refresh"
+          type="button"
+          class="btn btn-ghost"
+          onclick="loadFarmerDashboard()"
+        >
+          🔄 Refresh
+        </button>
 
       </div>
 
@@ -50,10 +152,22 @@
 
 
     <!-- =========================
+         ERROR MESSAGE
+    ========================== -->
+
+    <div
+      id="dashboard-error"
+      class="dashboard-error"
+      style="display:none;"
+    ></div>
+
+
+    <!-- =========================
          DASHBOARD SUMMARY
     ========================== -->
 
     <div class="grid-3">
+
 
       <!-- ANIMALS -->
 
@@ -67,8 +181,11 @@
           My Animals
         </div>
 
-        <div class="value">
-          {{ my_animals|length }}
+        <div
+          class="value"
+          id="animals-count"
+        >
+          0
         </div>
 
         <a
@@ -98,8 +215,11 @@
           Reports Filed
         </div>
 
-        <div class="value">
-          {{ my_reports|length }}
+        <div
+          class="value"
+          id="reports-count"
+        >
+          0
         </div>
 
         <a
@@ -137,9 +257,10 @@
 
         <div
           class="value"
+          id="vaccination-count"
           style="color:#8a6413;"
         >
-          {{ vaccination_due|length }}
+          0
         </div>
 
         <a
@@ -235,108 +356,18 @@
 
           </thead>
 
-
-          <tbody>
-
-            {% for a in my_animals %}
-
-            <tr>
-
-              <td>
-                <strong>
-                  {{ a.tag_id }}
-                </strong>
-              </td>
-
-              <td>
-                {{ a.species }}
-              </td>
-
-              <td>
-                {{ a.breed }}
-              </td>
-
-              <td>
-                {{ a.age }}
-              </td>
-
-              <td>
-                {{ a.last_checkup }}
-              </td>
-
-              <td>
-
-                {% if a.status == 'healthy' %}
-
-                  <span class="tag low">
-                    Healthy
-                  </span>
-
-                {% elif a.status == 'registered' %}
-
-                  <span class="tag moderate">
-                    Registered
-                  </span>
-
-                {% else %}
-
-                  <span class="tag moderate">
-                    {{ a.status|capitalize }}
-                  </span>
-
-                {% endif %}
-
-              </td>
-
-            </tr>
-
-            {% else %}
+          <tbody id="animals-table-body">
 
             <tr>
 
               <td
                 colspan="6"
-                style="
-                  text-align:center;
-                  padding:35px;
-                "
+                class="dashboard-loading"
               >
-
-                <div
-                  style="
-                    font-size:40px;
-                    margin-bottom:10px;
-                  "
-                >
-                  🐄
-                </div>
-
-                <strong>
-                  No Animals Registered Yet
-                </strong>
-
-                <div
-                  style="
-                    margin-top:6px;
-                    opacity:.7;
-                  "
-                >
-                  Start by registering your first livestock animal.
-                </div>
-
-                <a
-                  href="/animals"
-                  class="btn btn-primary"
-                  style="margin-top:14px;"
-                >
-                  + Register Animal
-                </a>
-
+                Loading registered animals...
               </td>
 
             </tr>
-
-            {% endfor %}
 
           </tbody>
 
@@ -387,82 +418,18 @@
 
               </thead>
 
-
-              <tbody>
-
-                {% for r in my_reports %}
-
-                <tr>
-
-                  <td>
-                    {{ r.date }}
-                  </td>
-
-                  <td>
-                    {{ r.animal }}
-                  </td>
-
-                  <td>
-                    {{ r.symptoms }}
-                  </td>
-
-                  <td>
-
-                    <span class="tag {{ r.risk }}">
-                      {{ r.status }}
-                    </span>
-
-                  </td>
-
-                </tr>
-
-                {% else %}
+              <tbody id="reports-table-body">
 
                 <tr>
 
                   <td
                     colspan="4"
-                    style="
-                      text-align:center;
-                      padding:28px;
-                    "
+                    class="dashboard-loading"
                   >
-
-                    <div
-                      style="
-                        font-size:28px;
-                        margin-bottom:8px;
-                      "
-                    >
-                      📋
-                    </div>
-
-                    <strong>
-                      No Reports Filed Yet
-                    </strong>
-
-                    <div
-                      style="
-                        margin-top:6px;
-                        opacity:.7;
-                      "
-                    >
-                      Report symptoms or unusual animal behaviour.
-                    </div>
-
-                    <a
-                      href="/report"
-                      class="btn btn-primary"
-                      style="margin-top:14px;"
-                    >
-                      + Report an Issue
-                    </a>
-
+                    Loading reports...
                   </td>
 
                 </tr>
-
-                {% endfor %}
 
               </tbody>
 
@@ -483,96 +450,24 @@
           Vaccination Reminders
         </h2>
 
+        <div id="vaccination-list">
 
-        {% for v in vaccination_due %}
+          <div class="card vaccination-empty">
 
-        <div class="advisory">
-
-          <div class="sev moderate"></div>
-
-          <div>
-
-            <strong>
-              {{ v.animal }} — {{ v.vaccine }}
-            </strong>
-
-            <div class="meta">
-
-              {% if v.days_until_due is defined %}
-
-                {% if v.days_until_due < 0 %}
-
-                  Overdue by
-                  {{ v.days_until_due|abs }}
-                  day(s)
-
-                {% elif v.days_until_due == 0 %}
-
-                  Due Today
-
-                {% else %}
-
-                  Due in
-                  {{ v.days_until_due }}
-                  day(s)
-
-                {% endif %}
-
-              {% else %}
-
-                Due {{ v.due }}
-
-              {% endif %}
-
+            <div
+              style="
+                font-size:32px;
+                margin-bottom:8px;
+              "
+            >
+              💉
             </div>
 
+            Loading vaccination records...
+
           </div>
 
         </div>
-
-        {% else %}
-
-
-        <div
-          class="card"
-          style="
-            padding:24px;
-            text-align:center;
-          "
-        >
-
-          <div
-            style="
-              font-size:32px;
-              margin-bottom:8px;
-            "
-          >
-            💉
-          </div>
-
-          <strong>
-            No Vaccination Reminders
-          </strong>
-
-          <div
-            class="meta"
-            style="margin-top:6px;"
-          >
-            Your vaccination schedule is currently up to date.
-          </div>
-
-          <a
-            href="/animals"
-            class="btn btn-primary"
-            style="margin-top:14px;"
-          >
-            View Animal Records
-          </a>
-
-        </div>
-
-
-        {% endfor %}
 
       </div>
 
@@ -588,6 +483,7 @@
     </h2>
 
     <div class="grid-3">
+
 
       <a
         href="/animals"
@@ -668,6 +564,1320 @@
   </main>
 
 </div>
+
+
+<!-- =========================
+     AUTH SCRIPT
+========================== -->
+
+<script src="/static/auth.js"></script>
+
+
+<!-- =========================
+     DASHBOARD SCRIPT
+========================== -->
+
+<script>
+
+(function () {
+
+  "use strict";
+
+
+  /* =========================================
+     HELPERS
+  ========================================= */
+
+  function escapeHTML(value) {
+
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  }
+
+
+  function getArray(payload, keys) {
+
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    for (const key of keys) {
+
+      if (Array.isArray(payload?.[key])) {
+        return payload[key];
+      }
+
+    }
+
+    return [];
+
+  }
+
+
+  async function apiFetch(url, options = {}) {
+
+    try {
+
+      if (
+        window.PashuAuth &&
+        typeof window.PashuAuth.authFetch === "function"
+      ) {
+
+        return await window.PashuAuth.authFetch(
+          url,
+          options
+        );
+
+      }
+
+    } catch (authError) {
+
+      console.warn(
+        "PashuAuth request failed, using normal fetch:",
+        authError
+      );
+
+    }
+
+
+    return fetch(
+      url,
+      {
+        credentials: "include",
+        ...options
+      }
+    );
+
+  }
+
+
+  function showDashboardError(message) {
+
+    const box =
+      document.getElementById(
+        "dashboard-error"
+      );
+
+    if (!box) return;
+
+    box.textContent = message;
+
+    box.style.display = "block";
+
+  }
+
+
+  function clearDashboardError() {
+
+    const box =
+      document.getElementById(
+        "dashboard-error"
+      );
+
+    if (!box) return;
+
+    box.textContent = "";
+
+    box.style.display = "none";
+
+  }
+
+
+  function setStatus(message) {
+
+    const element =
+      document.getElementById(
+        "dashboard-status"
+      );
+
+    if (element) {
+      element.textContent = message;
+    }
+
+  }
+
+
+  /* =========================================
+     NORMALIZE ANIMAL
+  ========================================= */
+
+  function normalizeAnimal(animal) {
+
+    return {
+
+      id:
+        animal.id ||
+        animal.animal_id ||
+        "",
+
+      tag_id:
+        animal.animal_tag ||
+        animal.tag_id ||
+        animal.tag ||
+        animal.name ||
+        animal.id ||
+        "Unknown",
+
+      species:
+        animal.species ||
+        "Unknown",
+
+      breed:
+        animal.breed ||
+        "Not specified",
+
+      age:
+        animal.age ??
+        "—",
+
+      sex:
+        animal.sex ||
+        "—",
+
+      owner:
+        animal.owner_name ||
+        animal.owner ||
+        "—",
+
+      village:
+        animal.village ||
+        "—",
+
+      block:
+        animal.block ||
+        "—",
+
+      vaccination_status:
+        animal.vaccination_status ||
+        "pending",
+
+      last_checkup:
+        animal.last_checkup ||
+        animal.last_checkup_date ||
+        animal.updated_at ||
+        "—",
+
+      treatment_history:
+        animal.treatment_history ||
+        ""
+
+    };
+
+  }
+
+
+  /* =========================================
+     ANIMAL STATUS
+  ========================================= */
+
+  function getAnimalStatus(animal) {
+
+    const status =
+      String(
+        animal.vaccination_status || ""
+      ).toLowerCase();
+
+
+    if (
+      status.includes("vaccinat") ||
+      status === "completed" ||
+      status === "up_to_date"
+    ) {
+
+      return {
+        label: "Vaccinated",
+        className: "vaccinated"
+      };
+
+    }
+
+
+    if (
+      status.includes("healthy")
+    ) {
+
+      return {
+        label: "Healthy",
+        className: "healthy"
+      };
+
+    }
+
+
+    if (
+      status.includes("pending") ||
+      status.includes("due")
+    ) {
+
+      return {
+        label: "Pending",
+        className: "pending"
+      };
+
+    }
+
+
+    return {
+      label: "Registered",
+      className: "registered"
+    };
+
+  }
+
+
+  /* =========================================
+     RENDER ANIMALS
+  ========================================= */
+
+  function renderAnimals(animals) {
+
+    const tbody =
+      document.getElementById(
+        "animals-table-body"
+      );
+
+    const count =
+      document.getElementById(
+        "animals-count"
+      );
+
+
+    if (count) {
+
+      count.textContent =
+        animals.length;
+
+    }
+
+
+    if (!tbody) return;
+
+
+    if (!animals.length) {
+
+      tbody.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="6"
+            style="
+              text-align:center;
+              padding:35px;
+            "
+          >
+
+            <div
+              class="animal-empty-icon"
+            >
+              🐄
+            </div>
+
+            <strong>
+              No Animals Registered Yet
+            </strong>
+
+            <div
+              style="
+                margin-top:6px;
+                opacity:.7;
+              "
+            >
+              Start by registering your first livestock animal.
+            </div>
+
+            <a
+              href="/animals"
+              class="btn btn-primary"
+              style="margin-top:14px;"
+            >
+              + Register Animal
+            </a>
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
+
+
+    tbody.innerHTML =
+      animals.map(animal => {
+
+        const status =
+          getAnimalStatus(animal);
+
+
+        return `
+
+          <tr>
+
+            <td>
+              <strong>
+                ${escapeHTML(animal.tag_id)}
+              </strong>
+            </td>
+
+            <td>
+              ${escapeHTML(animal.species)}
+            </td>
+
+            <td>
+              ${escapeHTML(animal.breed)}
+            </td>
+
+            <td>
+              ${escapeHTML(animal.age)}
+            </td>
+
+            <td>
+              ${escapeHTML(
+                formatDate(animal.last_checkup)
+              )}
+            </td>
+
+            <td>
+
+              <span
+                class="animal-status ${status.className}"
+              >
+                ${escapeHTML(status.label)}
+              </span>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }).join("");
+
+  }
+
+
+  /* =========================================
+     NORMALIZE REPORT
+  ========================================= */
+
+  function normalizeReport(report) {
+
+    const risk =
+      String(
+        report.risk_level ||
+        report.risk ||
+        "low"
+      ).toLowerCase();
+
+
+    let riskClass = "low";
+
+
+    if (
+      risk.includes("high")
+    ) {
+
+      riskClass = "high";
+
+    } else if (
+      risk.includes("moderate") ||
+      risk.includes("medium") ||
+      risk.includes("watch")
+    ) {
+
+      riskClass = "moderate";
+
+    }
+
+
+    const symptoms =
+      Array.isArray(report.symptoms)
+        ? report.symptoms.join(", ")
+        : (
+            report.symptoms ||
+            report.notes ||
+            "—"
+          );
+
+
+    return {
+
+      date:
+        report.date ||
+        report.created_at ||
+        "—",
+
+      animal:
+        report.animal_tag ||
+        report.animal_name ||
+        report.animal_id ||
+        report.animal_type ||
+        "Unknown",
+
+      symptoms:
+        symptoms,
+
+      status:
+        report.case_status ||
+        report.status ||
+        risk.toUpperCase(),
+
+      risk:
+        riskClass
+
+    };
+
+  }
+
+
+  /* =========================================
+     RENDER REPORTS
+  ========================================= */
+
+  function renderReports(reports) {
+
+    const tbody =
+      document.getElementById(
+        "reports-table-body"
+      );
+
+    const count =
+      document.getElementById(
+        "reports-count"
+      );
+
+
+    if (count) {
+
+      count.textContent =
+        reports.length;
+
+    }
+
+
+    if (!tbody) return;
+
+
+    if (!reports.length) {
+
+      tbody.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="4"
+            style="
+              text-align:center;
+              padding:28px;
+            "
+          >
+
+            <div
+              style="
+                font-size:28px;
+                margin-bottom:8px;
+              "
+            >
+              📋
+            </div>
+
+            <strong>
+              No Reports Filed Yet
+            </strong>
+
+            <div
+              style="
+                margin-top:6px;
+                opacity:.7;
+              "
+            >
+              Report symptoms or unusual animal behaviour.
+            </div>
+
+            <a
+              href="/report"
+              class="btn btn-primary"
+              style="margin-top:14px;"
+            >
+              + Report an Issue
+            </a>
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
+
+
+    tbody.innerHTML =
+      reports
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.date) -
+            new Date(a.date)
+        )
+        .slice(0, 10)
+        .map(rawReport => {
+
+          const report =
+            normalizeReport(rawReport);
+
+
+          return `
+
+            <tr>
+
+              <td>
+                ${escapeHTML(
+                  formatDate(report.date)
+                )}
+              </td>
+
+              <td>
+                ${escapeHTML(
+                  report.animal
+                )}
+              </td>
+
+              <td>
+                ${escapeHTML(
+                  report.symptoms
+                )}
+              </td>
+
+              <td>
+
+                <span
+                  class="tag ${escapeHTML(report.risk)}"
+                >
+                  ${escapeHTML(report.status)}
+                </span>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        })
+        .join("");
+
+  }
+
+
+  /* =========================================
+     NORMALIZE VACCINATION
+  ========================================= */
+
+  function normalizeVaccination(record) {
+
+    return {
+
+      animal_id:
+        record.animal_id ||
+        "",
+
+      animal:
+        record.animal_tag ||
+        record.animal_name ||
+        record.animal_id ||
+        "Animal",
+
+      vaccine:
+        record.vaccine_name ||
+        record.vaccine ||
+        "Vaccination",
+
+      due:
+        record.next_due_date ||
+        record.due_date ||
+        record.due ||
+        null,
+
+      vaccination_date:
+        record.vaccination_date ||
+        null
+
+    };
+
+  }
+
+
+  /* =========================================
+     CALCULATE DAYS
+  ========================================= */
+
+  function daysUntil(dateValue) {
+
+    if (!dateValue) {
+      return null;
+    }
+
+
+    const due =
+      new Date(
+        `${String(dateValue).slice(0,10)}T00:00:00`
+      );
+
+
+    if (
+      Number.isNaN(
+        due.getTime()
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    return Math.round(
+      (
+        due.getTime() -
+        today.getTime()
+      ) /
+      86400000
+    );
+
+  }
+
+
+  /* =========================================
+     RENDER VACCINATIONS
+  ========================================= */
+
+  function renderVaccinations(
+    records,
+    animals
+  ) {
+
+    const container =
+      document.getElementById(
+        "vaccination-list"
+      );
+
+    const count =
+      document.getElementById(
+        "vaccination-count"
+      );
+
+
+    if (!container) return;
+
+
+    const animalMap =
+      new Map();
+
+
+    animals.forEach(
+      animal => {
+
+        animalMap.set(
+          String(animal.id),
+          animal.tag_id
+        );
+
+        animalMap.set(
+          String(animal.tag_id),
+          animal.tag_id
+        );
+
+      }
+    );
+
+
+    const reminders =
+      records
+        .map(normalizeVaccination)
+        .map(record => {
+
+          const days =
+            daysUntil(record.due);
+
+
+          if (
+            record.animal_id &&
+            animalMap.has(
+              String(record.animal_id)
+            )
+          ) {
+
+            record.animal =
+              animalMap.get(
+                String(record.animal_id)
+              );
+
+          }
+
+
+          return {
+            ...record,
+            days_until_due: days
+          };
+
+        })
+        .filter(
+          record =>
+            record.days_until_due !== null
+        )
+        .filter(
+          record =>
+            record.days_until_due <= 30
+        )
+        .sort(
+          (a, b) =>
+            a.days_until_due -
+            b.days_until_due
+        );
+
+
+    if (count) {
+
+      count.textContent =
+        reminders.length;
+
+    }
+
+
+    if (!reminders.length) {
+
+      container.innerHTML = `
+
+        <div
+          class="card vaccination-empty"
+        >
+
+          <div
+            style="
+              font-size:32px;
+              margin-bottom:8px;
+            "
+          >
+            💉
+          </div>
+
+          <strong>
+            No Vaccination Reminders
+          </strong>
+
+          <div
+            class="meta"
+            style="margin-top:6px;"
+          >
+            Your vaccination schedule is currently up to date.
+          </div>
+
+          <a
+            href="/animals"
+            class="btn btn-primary"
+            style="margin-top:14px;"
+          >
+            View Animal Records
+          </a>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    container.innerHTML =
+      reminders
+        .slice(0, 8)
+        .map(v => {
+
+          let message;
+
+
+          if (
+            v.days_until_due < 0
+          ) {
+
+            message =
+              `Overdue by ${Math.abs(v.days_until_due)} day(s)`;
+
+          } else if (
+            v.days_until_due === 0
+          ) {
+
+            message =
+              "Due Today";
+
+          } else {
+
+            message =
+              `Due in ${v.days_until_due} day(s)`;
+
+          }
+
+
+          return `
+
+            <div class="advisory">
+
+              <div class="sev moderate"></div>
+
+              <div>
+
+                <strong>
+                  ${escapeHTML(v.animal)}
+                  —
+                  ${escapeHTML(v.vaccine)}
+                </strong>
+
+                <div class="meta">
+                  ${escapeHTML(message)}
+                </div>
+
+                ${
+                  v.due
+                    ? `
+                      <div class="meta">
+                        Due:
+                        ${escapeHTML(
+                          formatDate(v.due)
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+              </div>
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
+  }
+
+
+  /* =========================================
+     DATE FORMAT
+  ========================================= */
+
+  function formatDate(value) {
+
+    if (!value) {
+      return "—";
+    }
+
+
+    const date =
+      new Date(value);
+
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+
+      return String(value);
+
+    }
+
+
+    return date.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      }
+    );
+
+  }
+
+
+  /* =========================================
+     LOAD ANIMALS
+  ========================================= */
+
+  async function loadAnimals() {
+
+    const response =
+      await apiFetch(
+        "/api/animals"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Animal API failed (${response.status})`
+      );
+
+    }
+
+
+    const payload =
+      await response.json();
+
+
+    const animals =
+      getArray(
+        payload,
+        [
+          "animals",
+          "data",
+          "records"
+        ]
+      );
+
+
+    return animals.map(
+      normalizeAnimal
+    );
+
+  }
+
+
+  /* =========================================
+     LOAD REPORTS
+  ========================================= */
+
+  async function loadReports() {
+
+    const response =
+      await apiFetch(
+        "/api/reports"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Reports API failed (${response.status})`
+      );
+
+    }
+
+
+    const payload =
+      await response.json();
+
+
+    return getArray(
+      payload,
+      [
+        "reports",
+        "data",
+        "records"
+      ]
+    );
+
+  }
+
+
+  /* =========================================
+     LOAD VACCINATIONS
+  ========================================= */
+
+  async function loadVaccinations() {
+
+    const response =
+      await apiFetch(
+        "/api/vaccinations"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Vaccination API failed (${response.status})`
+      );
+
+    }
+
+
+    const payload =
+      await response.json();
+
+
+    return getArray(
+      payload,
+      [
+        "records",
+        "vaccinations",
+        "data"
+      ]
+    );
+
+  }
+
+
+  /* =========================================
+     MAIN DASHBOARD LOADER
+  ========================================= */
+
+  async function loadFarmerDashboard() {
+
+    const button =
+      document.getElementById(
+        "dashboard-refresh"
+      );
+
+
+    if (button) {
+
+      button.disabled = true;
+
+      button.textContent =
+        "⏳ Loading...";
+
+    }
+
+
+    clearDashboardError();
+
+    setStatus(
+      "Loading latest data..."
+    );
+
+
+    try {
+
+      /*
+       * Load all farmer dashboard
+       * data directly from APIs.
+       */
+
+      const results =
+        await Promise.allSettled([
+
+          loadAnimals(),
+
+          loadReports(),
+
+          loadVaccinations()
+
+        ]);
+
+
+      const animalResult =
+        results[0];
+
+      const reportResult =
+        results[1];
+
+      const vaccinationResult =
+        results[2];
+
+
+      /*
+       * ANIMALS
+       */
+
+      let animals = [];
+
+
+      if (
+        animalResult.status === "fulfilled"
+      ) {
+
+        animals =
+          animalResult.value;
+
+        renderAnimals(
+          animals
+        );
+
+      } else {
+
+        console.error(
+          "Animal loading error:",
+          animalResult.reason
+        );
+
+        renderAnimals([]);
+
+      }
+
+
+      /*
+       * REPORTS
+       */
+
+      let reports = [];
+
+
+      if (
+        reportResult.status === "fulfilled"
+      ) {
+
+        reports =
+          reportResult.value;
+
+        renderReports(
+          reports
+        );
+
+      } else {
+
+        console.error(
+          "Report loading error:",
+          reportResult.reason
+        );
+
+        renderReports([]);
+
+      }
+
+
+      /*
+       * VACCINATIONS
+       */
+
+      let vaccinations = [];
+
+
+      if (
+        vaccinationResult.status === "fulfilled"
+      ) {
+
+        vaccinations =
+          vaccinationResult.value;
+
+        renderVaccinations(
+          vaccinations,
+          animals
+        );
+
+      } else {
+
+        console.error(
+          "Vaccination loading error:",
+          vaccinationResult.reason
+        );
+
+        renderVaccinations(
+          [],
+          animals
+        );
+
+      }
+
+
+      /*
+       * Show useful status.
+       */
+
+      const failed =
+        results.filter(
+          result =>
+            result.status === "rejected"
+        ).length;
+
+
+      if (failed === 0) {
+
+        setStatus(
+          `Live data updated · ${animals.length} animals · ${reports.length} reports`
+        );
+
+      } else {
+
+        setStatus(
+          `Dashboard loaded with ${failed} unavailable data source(s).`
+        );
+
+        showDashboardError(
+          "Some dashboard data could not be loaded. Please refresh once."
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "Farmer dashboard error:",
+        error
+      );
+
+
+      showDashboardError(
+        "Unable to load dashboard data. Please refresh the page."
+      );
+
+
+      setStatus(
+        "Dashboard data unavailable."
+      );
+
+    } finally {
+
+      if (button) {
+
+        button.disabled = false;
+
+        button.textContent =
+          "🔄 Refresh";
+
+      }
+
+    }
+
+  }
+
+
+  /* =========================================
+     START
+  ========================================= */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+      loadFarmerDashboard();
+
+    }
+  );
+
+
+  /*
+   * Make refresh function globally available
+   * for other UI elements if required.
+   */
+
+  window.loadFarmerDashboard =
+    loadFarmerDashboard;
+
+
+})();
+
+</script>
+
 
 </body>
 </html>
