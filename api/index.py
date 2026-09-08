@@ -587,151 +587,40 @@ def login_page():
         )
     )
 
-
+# ============================================================
 # FARMER APPLICATION HOME
+# ============================================================
+
 @app.route("/home")
 def application_home():
-            current_role_label="Farmer"
+
+    # Get selected language from URL.
+    # Example: /home?lang=Marathi
+    selected_language = (
+        request.args.get(
+            "lang",
+            "English"
+        ).strip()
+        or "English"
     )
-# ============================================================
-# LANGUAGE SELECTION
-# ============================================================
 
-@app.route("/onboarding/language")
-def language_page():
-    return render_template_string("""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Language - PashuRakshak AI</title>
+    # Supported languages
+    supported_languages = {
+        "English": "English",
+        "Hindi": "हिंदी",
+        "Marathi": "मराठी",
+        "Kannada": "ಕನ್ನಡ"
+    }
 
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            background: #f4f8f5;
-        }
-
-        .card {
-            width: 90%;
-            max-width: 500px;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        p {
-            text-align: center;
-            color: #666;
-            margin-bottom: 25px;
-        }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: left;
-        }
-
-        button:hover {
-            background: #f0f8f2;
-        }
-
-        .back {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back button {
-            background: #eee;
-            text-align: center;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="card">
-
-    <h1>🌐 Select Language</h1>
-
-    <p>Choose your preferred language</p>
-
-    <button onclick="selectLanguage('English')">
-        🇬🇧 English
-    </button>
-
-    <button onclick="selectLanguage('Hindi')">
-        🇮🇳 हिंदी
-    </button>
-
-    <button onclick="selectLanguage('Marathi')">
-        🇮🇳 मराठी
-    </button>
-
-    <button onclick="selectLanguage('Kannada')">
-        🇮🇳 ಕನ್ನಡ
-    </button>
-
-    <div class="back">
-        <button onclick="goBack()">
-            ← Back to Home
-        </button>
-    </div>
-
-</div>
-
-<script>
-
-function selectLanguage(language) {
-
-    localStorage.setItem(
-        "pashurakshak_language",
-        language
-    );
-
-    localStorage.setItem(
-        "pashurakshak_language_selected",
-        "true"
-    );
-
-    window.location.href =
-        "/home?lang=" + encodeURIComponent(language);
-}
-
-function goBack() {
-
-    window.location.href = "/home";
-
-}
-
-</script>
-
-</body>
-</html>
-""")
+    current_lang_label = supported_languages.get(
+        selected_language,
+        "English"
+    )
 
     def translate(key):
 
         translations = {
+
             "report_heading": (
                 "Report livestock health issue"
             ),
@@ -742,7 +631,9 @@ function goBack() {
                 "AI risk screening."
             ),
 
-            "start_report": "Start report"
+            "start_report": (
+                "Start report"
+            )
         }
 
         return translations.get(
@@ -754,16 +645,23 @@ function goBack() {
         )
 
     return render_template(
+
         "index.html",
 
-        # Supabase
+        # ====================================================
+        # SUPABASE
+        # ====================================================
+
         supabase_url=SUPABASE_URL,
 
         supabase_publishable_key=(
             SUPABASE_PUBLISHABLE_KEY
         ),
 
-        # Home page defaults
+        # ====================================================
+        # HOME PAGE DEFAULTS
+        # ====================================================
+
         farmer_name="Farmer",
 
         village="Satara",
@@ -796,26 +694,296 @@ function goBack() {
 
         advisories=[],
 
-        # Translation function
+        # ====================================================
+        # TRANSLATION
+        # ====================================================
+
         t=translate,
 
-        current_lang_label="English",
+        current_lang_label=(
+            current_lang_label
+        ),
 
         current_role_label="Farmer"
     )
 
 
+# ============================================================
+# LANGUAGE SELECTION
+# ============================================================
+
+@app.route("/onboarding/language")
+def language_page():
+
+    return render_template_string("""
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Select Language - PashuRakshak AI
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                #f4f8f5;
+
+            padding: 20px;
+        }
+
+        .card {
+
+            width: 100%;
+
+            max-width: 500px;
+
+            background: white;
+
+            padding: 30px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 10px 30px
+                rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+
+            text-align: center;
+
+            margin: 0 0 10px 0;
+        }
+
+        p {
+
+            text-align: center;
+
+            color: #666;
+
+            margin:
+                0 0 25px 0;
+        }
+
+        .language-btn {
+
+            width: 100%;
+
+            padding: 16px;
+
+            margin: 8px 0;
+
+            border:
+                1px solid #ddd;
+
+            border-radius: 12px;
+
+            background: white;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            text-align: left;
+
+            transition:
+                0.2s ease;
+        }
+
+        .language-btn:hover {
+
+            background:
+                #f0f8f2;
+
+            border-color:
+                #7bb98c;
+
+            transform:
+                translateY(-1px);
+        }
+
+        .back {
+
+            margin-top: 20px;
+        }
+
+        .back button {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background:
+                #eeeeee;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+            font-weight: bold;
+        }
+
+        .back button:hover {
+
+            background:
+                #dddddd;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="card">
+
+        <h1>
+            🌐 Select Language
+        </h1>
+
+        <p>
+            Choose your preferred language
+        </p>
+
+
+        <button
+            class="language-btn"
+            onclick="selectLanguage('English')"
+        >
+            🇬🇧 English
+        </button>
+
+
+        <button
+            class="language-btn"
+            onclick="selectLanguage('Hindi')"
+        >
+            🇮🇳 हिंदी
+        </button>
+
+
+        <button
+            class="language-btn"
+            onclick="selectLanguage('Marathi')"
+        >
+            🇮🇳 मराठी
+        </button>
+
+
+        <button
+            class="language-btn"
+            onclick="selectLanguage('Kannada')"
+        >
+            🇮🇳 ಕನ್ನಡ
+        </button>
+
+
+        <div class="back">
+
+            <button
+                onclick="goBack()"
+            >
+                ← Back to Home
+            </button>
+
+        </div>
+
+    </div>
+
+
+<script>
+
+function selectLanguage(language) {
+
+    // Save selected language
+    localStorage.setItem(
+        "pashurakshak_language",
+        language
+    );
+
+    localStorage.setItem(
+        "pashurakshak_language_selected",
+        "true"
+    );
+
+    // Return to application home
+    window.location.href =
+        "/home?lang=" +
+        encodeURIComponent(language);
+}
+
+
+function goBack() {
+
+    window.location.href =
+        "/home";
+
+}
+
+</script>
+
+</body>
+
+</html>
+""")
+
+
+# ============================================================
 # VETERINARIAN CASES
+# ============================================================
+
 @app.route("/vet/cases")
 def vet_cases_page():
 
     return render_template(
+
         "vet_cases.html",
+
         supabase_url=SUPABASE_URL,
+
         supabase_publishable_key=(
             SUPABASE_PUBLISHABLE_KEY
         )
     )
+
 
 
 # VACCINATION
