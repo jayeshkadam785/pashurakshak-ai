@@ -565,12 +565,54 @@ If the image is unclear, say so.
 @app.route("/")
 def home():
 
+    def translate(key):
+        translations = {
+            "report_heading": "Report livestock health issue",
+            "report_body": (
+                "Report symptoms with a photo, voice, "
+                "location and animal details for early AI risk screening."
+            ),
+            "start_report": "Start report"
+        }
+
+        return translations.get(
+            key,
+            key.replace("_", " ").title()
+        )
+
     return render_template(
         "index.html",
+
+        # Supabase
         supabase_url=SUPABASE_URL,
         supabase_publishable_key=(
             SUPABASE_PUBLISHABLE_KEY
-        )
+        ),
+
+        # Home page defaults
+        farmer_name="Farmer",
+        village="Satara",
+        block="Maharashtra",
+        herd_size=0,
+
+        risk_level="LOW",
+        risk_label="Low",
+        risk_note="No unusual case clusters nearby",
+
+        reports_week=0,
+        vaccination_due=0,
+        active_advisories=0,
+
+        nearest_facility="Satara Veterinary Dispensary",
+        facility_distance="Distance unavailable",
+
+        advisories=[],
+
+        # Translation function required by index.html
+        t=translate,
+
+        current_lang_label="English",
+        current_role_label="Farmer"
     )
 
 
