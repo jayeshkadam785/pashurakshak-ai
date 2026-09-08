@@ -2,6 +2,7 @@ import os
 import json
 import base64
 import urllib.request
+import math
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request, render_template, redirect
@@ -35,20 +36,35 @@ try:
     app.register_blueprint(feature_bp)
 except Exception as exc:
     FEATURE_BLUEPRINT_ERROR = str(exc)
-    print("Feature blueprint could not be loaded:", repr(exc))
+    print(
+        "Feature blueprint could not be loaded:",
+        repr(exc)
+    )
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_URL = os.environ.get(
+    "SUPABASE_URL",
+    ""
+)
+
+SUPABASE_KEY = os.environ.get(
+    "SUPABASE_KEY",
+    ""
+)
+
 SUPABASE_PUBLISHABLE_KEY = os.environ.get(
     "SUPABASE_PUBLISHABLE_KEY",
     ""
 )
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+GEMINI_API_KEY = os.environ.get(
+    "GEMINI_API_KEY",
+    ""
+)
 
 ROLE_ACCESS_CODE = os.environ.get(
     "ROLE_ACCESS_CODE",
@@ -63,7 +79,11 @@ ROLE_ACCESS_CODE = os.environ.get(
 supabase = None
 SUPABASE_INIT_ERROR = None
 
-if SUPABASE_URL and SUPABASE_KEY and create_client:
+if (
+    SUPABASE_URL
+    and SUPABASE_KEY
+    and create_client
+):
     try:
         supabase = create_client(
             SUPABASE_URL,
@@ -71,10 +91,12 @@ if SUPABASE_URL and SUPABASE_KEY and create_client:
         )
     except Exception as exc:
         SUPABASE_INIT_ERROR = str(exc)
+
         print(
             "Supabase initialization failed:",
             repr(exc)
         )
+
         supabase = None
 
 
@@ -84,6 +106,7 @@ if SUPABASE_URL and SUPABASE_KEY and create_client:
 
 _MEMORY_REPORTS = []
 _MEMORY_ANIMALS = []
+_MEMORY_VACCINATIONS = []
 
 
 # ============================================================
@@ -120,10 +143,29 @@ LOW_RISK_SYMPTOMS = {
 # ============================================================
 
 def safe_int(value, default=0):
+
     try:
         return int(value)
+
     except Exception:
         return default
+
+
+def safe_float(value, default=None):
+
+    try:
+        return float(value)
+
+    except Exception:
+        return default
+
+
+def clean(value):
+
+    if value is None:
+        return ""
+
+    return str(value).strip()
 
 
 def normalize_symptoms(symptoms):
@@ -137,6 +179,7 @@ def normalize_symptoms(symptoms):
             parsed = json.loads(symptoms)
 
             if isinstance(parsed, list):
+
                 return [
                     str(x).strip().lower()
                     for x in parsed
@@ -153,6 +196,7 @@ def normalize_symptoms(symptoms):
         ]
 
     if isinstance(symptoms, list):
+
         return [
             str(x).strip().lower()
             for x in symptoms
@@ -173,12 +217,17 @@ def score_report(data):
     )
 
     animal_type = str(
-        data.get("animal_type", "unknown")
+        data.get(
+            "animal_type",
+            "unknown"
+        )
     ).lower()
 
     affected_count = max(
         safe_int(
-            data.get("affected_count"),
+            data.get(
+                "affected_count"
+            ),
             1
         ),
         1
@@ -186,7 +235,9 @@ def score_report(data):
 
     days_since_onset = max(
         safe_int(
-            data.get("days_since_onset"),
+            data.get(
+                "days_since_onset"
+            ),
             0
         ),
         0
@@ -206,7 +257,10 @@ def score_report(data):
 
         if symptom in HIGH_RISK_SYMPTOMS:
 
-            weight = HIGH_RISK_SYMPTOMS[symptom]
+            weight = HIGH_RISK_SYMPTOMS[
+                symptom
+            ]
+
             score += weight
 
             factors.append({
@@ -217,7 +271,10 @@ def score_report(data):
 
         elif symptom in MODERATE_SYMPTOMS:
 
-            weight = MODERATE_SYMPTOMS[symptom]
+            weight = MODERATE_SYMPTOMS[
+                symptom
+            ]
+
             score += weight
 
             factors.append({
@@ -228,7 +285,10 @@ def score_report(data):
 
         elif symptom in LOW_RISK_SYMPTOMS:
 
-            weight = LOW_RISK_SYMPTOMS[symptom]
+            weight = LOW_RISK_SYMPTOMS[
+                symptom
+            ]
+
             score += weight
 
             factors.append({
@@ -296,7 +356,10 @@ def score_report(data):
         score += 2
 
         factors.append({
-            "factor": "vaccination protection uncertain/overdue",
+            "factor": (
+                "vaccination protection "
+                "uncertain/overdue"
+            ),
             "impact": "moderate",
             "points": 2
         })
@@ -307,26 +370,36 @@ def score_report(data):
         "goat",
         "sheep"
     }:
+
         score += 1
 
     risk_score = min(
         100,
-        round((score / 30) * 100)
+        round(
+            (score / 30) * 100
+        )
     )
 
     if risk_score >= 70:
+
         risk_level = "HIGH"
 
     elif risk_score >= 35:
+
         risk_level = "MODERATE"
 
     else:
+
         risk_level = "LOW"
 
     signal_count = (
         len(symptoms)
         + 1
-        + (1 if days_since_onset else 0)
+        + (
+            1
+            if days_since_onset
+            else 0
+        )
         + (
             1
             if vaccination_status != "unknown"
@@ -342,24 +415,26 @@ def score_report(data):
     if risk_level == "HIGH":
 
         recommendation = (
-            "Isolate affected animals where practical, "
-            "avoid unnecessary movement, and contact "
-            "a veterinarian promptly."
+            "Isolate affected animals where "
+            "practical, avoid unnecessary movement, "
+            "and contact a veterinarian promptly."
         )
 
     elif risk_level == "MODERATE":
 
         recommendation = (
-            "Monitor affected animals closely, record "
-            "progression, review vaccination status, "
-            "and consult a veterinary professional."
+            "Monitor affected animals closely, "
+            "record progression, review vaccination "
+            "status, and consult a veterinary "
+            "professional."
         )
 
     else:
 
         recommendation = (
-            "Continue monitoring, maintain hygiene and "
-            "preventive care, and report worsening symptoms."
+            "Continue monitoring, maintain hygiene "
+            "and preventive care, and report "
+            "worsening symptoms."
         )
 
     return {
@@ -371,7 +446,9 @@ def score_report(data):
         "animal_type": animal_type,
         "affected_count": affected_count,
         "days_since_onset": days_since_onset,
-        "screening_type": "AI-assisted decision support",
+        "screening_type": (
+            "AI-assisted decision support"
+        ),
         "medical_disclaimer": (
             "This result is a screening/triage aid "
             "and does not replace veterinary diagnosis."
@@ -389,6 +466,7 @@ def gemini_image_screen(
 ):
 
     if not GEMINI_API_KEY:
+
         return None
 
     encoded_image = base64.b64encode(
@@ -451,7 +529,8 @@ If the image is unclear, say so.
                 payload
             ).encode("utf-8"),
             headers={
-                "Content-Type": "application/json"
+                "Content-Type":
+                    "application/json"
             },
             method="POST"
         )
@@ -462,7 +541,9 @@ If the image is unclear, say so.
         ) as response:
 
             result = json.loads(
-                response.read().decode("utf-8")
+                response.read().decode(
+                    "utf-8"
+                )
             )
 
         text = (
@@ -496,9 +577,18 @@ If the image is unclear, say so.
 # PAGE ROUTES
 # ============================================================
 
+# FIX 1:
+# Home should NOT redirect to login.
 @app.route("/")
 def home():
-    return redirect("/login")
+
+    return render_template(
+        "index.html",
+        supabase_url=SUPABASE_URL,
+        supabase_publishable_key=(
+            SUPABASE_PUBLISHABLE_KEY
+        )
+    )
 
 
 @app.route("/login")
@@ -573,11 +663,125 @@ def dashboard_vet():
     )
 
 
+@app.route("/dashboard/district")
+def dashboard_district_page():
+
+    return redirect(
+        "/dashboard/district"
+    )
+
+
 @app.route("/report")
 def report_page():
 
     return render_template(
         "report.html"
+    )
+
+
+# ============================================================
+# ALERTS PAGE
+# ============================================================
+
+@app.route("/alerts")
+def alerts_page():
+
+    reports = get_reports()
+
+    alerts = []
+
+    for report in reports:
+
+        risk = clean(
+            report.get("risk_level")
+        ).upper()
+
+        affected = max(
+            safe_int(
+                report.get(
+                    "affected_count"
+                ),
+                1
+            ),
+            1
+        )
+
+        if risk == "HIGH":
+
+            alerts.append({
+                "type": "HIGH RISK",
+                "severity": "HIGH",
+                "village": report.get(
+                    "village",
+                    "Unknown"
+                ),
+                "block": report.get(
+                    "block",
+                    "Unknown"
+                ),
+                "message": (
+                    f"{affected} animal(s) "
+                    "affected. Veterinary "
+                    "review recommended."
+                ),
+                "created_at": report.get(
+                    "created_at"
+                )
+            })
+
+    return render_template(
+        "alerts.html",
+        alerts=alerts
+    )
+
+
+# ============================================================
+# RECORDS PAGE
+# ============================================================
+
+@app.route("/records")
+def records_page():
+
+    reports = get_reports()
+
+    records = []
+
+    for report in reports:
+
+        records.append({
+            "id": report.get("id"),
+            "village": report.get(
+                "village",
+                "Unknown"
+            ),
+            "block": report.get(
+                "block",
+                "Unknown"
+            ),
+            "animal_type": report.get(
+                "animal_type",
+                "Unknown"
+            ),
+            "risk_level": report.get(
+                "risk_level",
+                "LOW"
+            ),
+            "case_status": report.get(
+                "case_status",
+                "UNDER_REVIEW"
+            ),
+            "affected_count": report.get(
+                "affected_count",
+                0
+            ),
+            "created_at": report.get(
+                "created_at"
+            )
+        })
+
+    return render_template(
+        "records.html",
+        records=records
     )
 
 
@@ -621,6 +825,7 @@ def image_screen():
         }), 400
 
     image = request.files["image"]
+
     image_bytes = image.read()
 
     if not image_bytes:
@@ -654,7 +859,8 @@ def image_screen():
 
         ai_result = {
             "visible_signs": [
-                "Image screening service not configured"
+                "Image screening service "
+                "not configured"
             ],
             "possible_categories": [],
             "risk_level": "MODERATE",
@@ -668,11 +874,13 @@ def image_screen():
     return jsonify({
         "success": True,
         "result": ai_result,
-        "screening_type": "AI image screening",
+        "screening_type": (
+            "AI image screening"
+        ),
         "medical_disclaimer": (
-            "Image screening is an assistive tool "
-            "and does not provide a definitive "
-            "veterinary diagnosis."
+            "Image screening is an assistive "
+            "tool and does not provide a "
+            "definitive veterinary diagnosis."
         )
     })
 
@@ -695,6 +903,7 @@ def save_report(report):
             )
 
             if response.data:
+
                 return response.data[0]
 
         except Exception as exc:
@@ -706,11 +915,13 @@ def save_report(report):
 
     report = dict(report)
 
-    report["id"] = len(
-        _MEMORY_REPORTS
-    ) + 1
+    report["id"] = (
+        len(_MEMORY_REPORTS) + 1
+    )
 
-    _MEMORY_REPORTS.append(report)
+    _MEMORY_REPORTS.append(
+        report
+    )
 
     return report
 
@@ -733,6 +944,7 @@ def get_reports():
             )
 
             if response.data is not None:
+
                 return response.data
 
         except Exception as exc:
@@ -743,7 +955,9 @@ def get_reports():
             )
 
     return list(
-        reversed(_MEMORY_REPORTS)
+        reversed(
+            _MEMORY_REPORTS
+        )
     )
 
 
@@ -770,51 +984,107 @@ def reports():
 
     result = score_report(data)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(
+        timezone.utc
+    )
 
     report = {
-        "village": data.get("village", "Satara"),
-        "block": data.get("block"),
-        "district": data.get("district", "Satara"),
-
-        # Support both old frontend fields (lat/lng)
-        # and the normalized database fields.
-        "latitude": data.get("latitude", data.get("lat")),
-        "longitude": data.get("longitude", data.get("lng")),
-
-        "animal_id": data.get("animal_id"),
-        "animal_type": data.get("animal_type", "unknown"),
-
-        "symptoms": normalize_symptoms(
-            data.get("symptoms", [])
+        "village": data.get(
+            "village",
+            "Satara"
         ),
 
-        "affected_count": result["affected_count"],
-        "days_since_onset": result["days_since_onset"],
-        "notes": data.get("notes", ""),
+        "block": data.get(
+            "block"
+        ),
 
-        "risk_level": result["risk_level"],
-        "risk_score": result["risk_score"],
+        "district": data.get(
+            "district",
+            "Satara"
+        ),
 
-        "reported_by": data.get("reported_by"),
+        "latitude": data.get(
+            "latitude",
+            data.get("lat")
+        ),
+
+        "longitude": data.get(
+            "longitude",
+            data.get("lng")
+        ),
+
+        "animal_id": data.get(
+            "animal_id"
+        ),
+
+        "animal_type": data.get(
+            "animal_type",
+            "unknown"
+        ),
+
+        "symptoms": normalize_symptoms(
+            data.get(
+                "symptoms",
+                []
+            )
+        ),
+
+        "affected_count": (
+            result["affected_count"]
+        ),
+
+        "days_since_onset": (
+            result["days_since_onset"]
+        ),
+
+        "notes": data.get(
+            "notes",
+            ""
+        ),
+
+        "risk_level": (
+            result["risk_level"]
+        ),
+
+        "risk_score": (
+            result["risk_score"]
+        ),
+
+        "reported_by": data.get(
+            "reported_by"
+        ),
+
         "date": now.date().isoformat(),
+
         "created_at": now.isoformat(),
 
-        "confidence": result["confidence"],
-        "risk_factors": result["factors"],
+        "confidence": (
+            result["confidence"]
+        ),
+
+        "risk_factors": (
+            result["factors"]
+        ),
 
         "case_status": data.get(
             "case_status",
             "UNDER_REVIEW"
         ),
+
         "vet_verified": False,
+
         "vet_notes": None,
+
         "diagnosis": None,
+
         "treatment": None,
+
         "verified_at": None
     }
 
-    saved = save_report(report)
+    saved = save_report(
+        report
+    )
 
     return jsonify({
         "success": True,
@@ -850,9 +1120,15 @@ def build_animal_payload(data):
 
         if field in data:
 
-            value = data.get(field)
+            value = data.get(
+                field
+            )
 
-            if isinstance(value, str):
+            if isinstance(
+                value,
+                str
+            ):
+
                 value = value.strip()
 
             payload[field] = value
@@ -894,13 +1170,16 @@ def animals_api():
                     "created_at",
                     desc=True
                 )
-                .limit(1000)
+                .limit(5000)
                 .execute()
             )
 
             return jsonify({
                 "success": True,
-                "animals": response.data or []
+                "animals": (
+                    response.data
+                    or []
+                )
             })
 
         except Exception as exc:
@@ -920,29 +1199,42 @@ def animals_api():
     ) or {}
 
     species = str(
-        data.get("species") or ""
+        data.get("species")
+        or ""
     ).strip()
 
     if not species:
 
         return jsonify({
             "success": False,
-            "error": "Animal species is required."
+            "error": (
+                "Animal species "
+                "is required."
+            )
         }), 400
 
-    payload = build_animal_payload(data)
+    payload = build_animal_payload(
+        data
+    )
 
     if not supabase:
 
         animal = {
-            "id": len(_MEMORY_ANIMALS) + 1,
+            "id": (
+                len(_MEMORY_ANIMALS)
+                + 1
+            ),
             **payload,
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "created_at": (
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
+            )
         }
 
-        _MEMORY_ANIMALS.append(animal)
+        _MEMORY_ANIMALS.append(
+            animal
+        )
 
         return jsonify({
             "success": True,
@@ -1018,7 +1310,10 @@ def get_animal(animal_id):
             supabase
             .table("animals")
             .select("*")
-            .eq("id", animal_id)
+            .eq(
+                "id",
+                animal_id
+            )
             .limit(1)
             .execute()
         )
@@ -1027,7 +1322,9 @@ def get_animal(animal_id):
 
             return jsonify({
                 "success": False,
-                "error": "Animal not found."
+                "error": (
+                    "Animal not found."
+                )
             }), 404
 
         return jsonify({
@@ -1062,7 +1359,9 @@ def update_animal(animal_id):
         silent=True
     ) or {}
 
-    payload = build_animal_payload(data)
+    payload = build_animal_payload(
+        data
+    )
 
     if "species" in payload:
 
@@ -1084,7 +1383,9 @@ def update_animal(animal_id):
 
         return jsonify({
             "success": False,
-            "error": "No fields to update."
+            "error": (
+                "No fields to update."
+            )
         }), 400
 
     if not supabase:
@@ -1095,7 +1396,9 @@ def update_animal(animal_id):
                 animal.get("id")
             ) == str(animal_id):
 
-                animal.update(payload)
+                animal.update(
+                    payload
+                )
 
                 return jsonify({
                     "success": True,
@@ -1105,7 +1408,9 @@ def update_animal(animal_id):
 
         return jsonify({
             "success": False,
-            "error": "Animal not found."
+            "error": (
+                "Animal not found."
+            )
         }), 404
 
     try:
@@ -1114,7 +1419,10 @@ def update_animal(animal_id):
             supabase
             .table("animals")
             .update(payload)
-            .eq("id", animal_id)
+            .eq(
+                "id",
+                animal_id
+            )
             .execute()
         )
 
@@ -1122,7 +1430,9 @@ def update_animal(animal_id):
 
             return jsonify({
                 "success": False,
-                "error": "Animal not found."
+                "error": (
+                    "Animal not found."
+                )
             }), 404
 
         return jsonify({
@@ -1167,16 +1477,23 @@ def delete_animal(animal_id):
             ) != str(animal_id)
         ]
 
-        if len(_MEMORY_ANIMALS) == original_count:
+        if (
+            len(_MEMORY_ANIMALS)
+            == original_count
+        ):
 
             return jsonify({
                 "success": False,
-                "error": "Animal not found."
+                "error": (
+                    "Animal not found."
+                )
             }), 404
 
         return jsonify({
             "success": True,
-            "message": "Animal deleted successfully.",
+            "message": (
+                "Animal deleted successfully."
+            ),
             "demo": True
         })
 
@@ -1186,13 +1503,18 @@ def delete_animal(animal_id):
             supabase
             .table("animals")
             .delete()
-            .eq("id", animal_id)
+            .eq(
+                "id",
+                animal_id
+            )
             .execute()
         )
 
         return jsonify({
             "success": True,
-            "message": "Animal deleted successfully."
+            "message": (
+                "Animal deleted successfully."
+            )
         })
 
     except Exception as exc:
@@ -1209,25 +1531,807 @@ def delete_animal(animal_id):
 
 
 # ============================================================
-# OFFICIAL DASHBOARD
+# VACCINATION API
 # ============================================================
 
-@app.route("/dashboard/official")
+@app.route(
+    "/api/vaccinations",
+    methods=["GET", "POST"]
+)
+def vaccinations_api():
+
+    if request.method == "GET":
+
+        if not supabase:
+
+            return jsonify({
+                "success": True,
+                "records": list(
+                    reversed(
+                        _MEMORY_VACCINATIONS
+                    )
+                ),
+                "demo": True
+            })
+
+        try:
+
+            response = (
+                supabase
+                .table(
+                    "vaccination_records"
+                )
+                .select("*")
+                .order(
+                    "vaccination_date",
+                    desc=True
+                )
+                .limit(5000)
+                .execute()
+            )
+
+            return jsonify({
+                "success": True,
+                "records": (
+                    response.data
+                    or []
+                )
+            })
+
+        except Exception as exc:
+
+            print(
+                "Vaccination fetch failed:",
+                repr(exc)
+            )
+
+            return jsonify({
+                "success": False,
+                "error": str(exc)
+            }), 500
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    payload = {
+        "animal_id": data.get(
+            "animal_id"
+        ),
+        "species": data.get(
+            "species"
+        ),
+        "vaccine_name": data.get(
+            "vaccine_name"
+        ),
+        "vaccination_date": data.get(
+            "vaccination_date"
+        ),
+        "next_due_date": data.get(
+            "next_due_date"
+        ),
+        "batch_number": data.get(
+            "batch_number"
+        ),
+        "administered_by": data.get(
+            "administered_by"
+        ),
+        "notes": data.get(
+            "notes"
+        )
+    }
+
+    payload = {
+        key: value
+        for key, value in payload.items()
+        if value is not None
+        and value != ""
+    }
+
+    if not payload.get(
+        "animal_id"
+    ):
+
+        return jsonify({
+            "success": False,
+            "error": (
+                "animal_id is required."
+            )
+        }), 400
+
+    if not supabase:
+
+        record = {
+            "id": (
+                len(
+                    _MEMORY_VACCINATIONS
+                ) + 1
+            ),
+            **payload,
+            "created_at": (
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
+            )
+        }
+
+        _MEMORY_VACCINATIONS.append(
+            record
+        )
+
+        return jsonify({
+            "success": True,
+            "record": record,
+            "demo": True
+        }), 201
+
+    try:
+
+        response = (
+            supabase
+            .table(
+                "vaccination_records"
+            )
+            .insert(payload)
+            .execute()
+        )
+
+        record = (
+            response.data[0]
+            if response.data
+            else payload
+        )
+
+        return jsonify({
+            "success": True,
+            "record": record
+        }), 201
+
+    except Exception as exc:
+
+        print(
+            "Vaccination insert failed:",
+            repr(exc)
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
+
+
+# ============================================================
+# OUTBREAK RISK ENGINE
+# ============================================================
+
+def build_outbreak_clusters(
+    reports
+):
+
+    clusters = []
+
+    # --------------------------------------------------------
+    # GROUP REPORTS BY LOCATION
+    # --------------------------------------------------------
+
+    groups = {}
+
+    for report in reports:
+
+        lat = safe_float(
+            report.get(
+                "latitude",
+                report.get("lat")
+            )
+        )
+
+        lng = safe_float(
+            report.get(
+                "longitude",
+                report.get("lng")
+            )
+        )
+
+        if lat is None or lng is None:
+            continue
+
+        risk = clean(
+            report.get(
+                "risk_level"
+            )
+        ).upper()
+
+        risk_score = safe_int(
+            report.get(
+                "risk_score"
+            ),
+            0
+        )
+
+        affected = max(
+            safe_int(
+                report.get(
+                    "affected_count"
+                ),
+                1
+            ),
+            1
+        )
+
+        # Approximate geographic bucket.
+        # ~1 km-ish grouping for demo/early warning.
+        key = (
+            round(lat, 2),
+            round(lng, 2)
+        )
+
+        if key not in groups:
+
+            groups[key] = {
+                "latitude": lat,
+                "longitude": lng,
+                "reports": [],
+                "affected": 0,
+                "high_risk": 0,
+                "risk_total": 0,
+                "villages": set(),
+                "blocks": set()
+            }
+
+        groups[key]["reports"].append(
+            report
+        )
+
+        groups[key]["affected"] += (
+            affected
+        )
+
+        groups[key]["risk_total"] += (
+            risk_score
+        )
+
+        if risk == "HIGH":
+            groups[key]["high_risk"] += 1
+
+        village = clean(
+            report.get(
+                "village"
+            )
+        )
+
+        block = clean(
+            report.get(
+                "block"
+            )
+        )
+
+        if village:
+            groups[key][
+                "villages"
+            ].add(village)
+
+        if block:
+            groups[key][
+                "blocks"
+            ].add(block)
+
+    # --------------------------------------------------------
+    # BUILD CLUSTERS
+    # --------------------------------------------------------
+
+    for data in groups.values():
+
+        report_count = len(
+            data["reports"]
+        )
+
+        average_risk = (
+            round(
+                data["risk_total"]
+                / report_count
+            )
+            if report_count
+            else 0
+        )
+
+        # Outbreak signal:
+        # multiple reports OR multiple animals
+        # OR high risk report.
+        outbreak_signal = (
+            report_count >= 2
+            or data["affected"] >= 5
+            or data["high_risk"] >= 1
+        )
+
+        if not outbreak_signal:
+            continue
+
+        if (
+            data["high_risk"] >= 2
+            or data["affected"] >= 10
+            or average_risk >= 70
+        ):
+
+            risk = "HIGH"
+
+        elif (
+            data["high_risk"] >= 1
+            or data["affected"] >= 5
+            or average_risk >= 35
+        ):
+
+            risk = "MODERATE"
+
+        else:
+
+            risk = "LOW"
+
+        clusters.append({
+            "latitude": data[
+                "latitude"
+            ],
+            "longitude": data[
+                "longitude"
+            ],
+            "risk_level": risk,
+            "risk_score": average_risk,
+            "report_count": report_count,
+            "affected_count": data[
+                "affected"
+            ],
+            "high_risk_cases": data[
+                "high_risk"
+            ],
+            "villages": list(
+                data["villages"]
+            ),
+            "blocks": list(
+                data["blocks"]
+            ),
+            "outbreak_signal": True
+        })
+
+    clusters.sort(
+        key=lambda item: (
+            item["risk_score"],
+            item["affected_count"],
+            item["report_count"]
+        ),
+        reverse=True
+    )
+
+    return clusters
+
+
+# ============================================================
+# OUTBREAK RISK API
+# ============================================================
+
+@app.route(
+    "/api/outbreak-risk",
+    methods=["GET"]
+)
+def outbreak_risk():
+
+    reports = get_reports()
+
+    clusters = build_outbreak_clusters(
+        reports
+    )
+
+    high_risk_clusters = [
+        cluster
+        for cluster in clusters
+        if cluster.get(
+            "risk_level"
+        ) == "HIGH"
+    ]
+
+    return jsonify({
+        "success": True,
+        "clusters": clusters,
+        "high_risk_clusters": (
+            high_risk_clusters
+        ),
+        "total_clusters": len(
+            clusters
+        ),
+        "suspected_outbreaks": len(
+            high_risk_clusters
+        ),
+        "disclaimer": (
+            "Early-warning aid only; "
+            "not epidemiological confirmation."
+        )
+    })
+
+
+# ============================================================
+# DASHBOARD KPI API
+# ============================================================
+
+@app.route(
+    "/api/dashboard-kpis",
+    methods=["GET"]
+)
+def dashboard_kpis():
+
+    reports = get_reports()
+
+    # --------------------------------------------------------
+    # ANIMALS
+    # --------------------------------------------------------
+
+    animals = []
+
+    if supabase:
+
+        try:
+
+            response = (
+                supabase
+                .table("animals")
+                .select("*")
+                .limit(5000)
+                .execute()
+            )
+
+            animals = (
+                response.data
+                or []
+            )
+
+        except Exception as exc:
+
+            print(
+                "KPI animal fetch failed:",
+                repr(exc)
+            )
+
+    else:
+
+        animals = list(
+            _MEMORY_ANIMALS
+        )
+
+    # --------------------------------------------------------
+    # VACCINATIONS
+    # --------------------------------------------------------
+
+    vaccinations = []
+
+    if supabase:
+
+        try:
+
+            response = (
+                supabase
+                .table(
+                    "vaccination_records"
+                )
+                .select("*")
+                .limit(5000)
+                .execute()
+            )
+
+            vaccinations = (
+                response.data
+                or []
+            )
+
+        except Exception as exc:
+
+            print(
+                "KPI vaccination fetch failed:",
+                repr(exc)
+            )
+
+    else:
+
+        vaccinations = list(
+            _MEMORY_VACCINATIONS
+        )
+
+    def status(report):
+
+        return clean(
+            report.get(
+                "case_status",
+                report.get(
+                    "status",
+                    ""
+                )
+            )
+        ).upper()
+
+    def risk(report):
+
+        return clean(
+            report.get(
+                "risk_level",
+                report.get(
+                    "risk",
+                    ""
+                )
+            )
+        ).upper()
+
+    active_cases = sum(
+        1
+        for report in reports
+        if status(report)
+        not in {
+            "CLOSED",
+            "REJECTED",
+            "RESOLVED"
+        }
+    )
+
+    high_risk_cases = sum(
+        1
+        for report in reports
+        if risk(report) == "HIGH"
+    )
+
+    affected_animals = sum(
+        max(
+            safe_int(
+                report.get(
+                    "affected_count"
+                ),
+                1
+            ),
+            1
+        )
+        for report in reports
+    )
+
+    outbreak_clusters = (
+        build_outbreak_clusters(
+            reports
+        )
+    )
+
+    suspected_outbreaks = sum(
+        1
+        for cluster in outbreak_clusters
+        if cluster.get(
+            "risk_level"
+        ) == "HIGH"
+    )
+
+    # --------------------------------------------------------
+    # VACCINATED ANIMALS
+    # --------------------------------------------------------
+
+    animal_ids = {
+        clean(
+            animal.get("id")
+        )
+        for animal in animals
+        if clean(
+            animal.get("id")
+        )
+    }
+
+    vaccinated_ids = set()
+
+    for animal in animals:
+
+        animal_id = clean(
+            animal.get("id")
+        )
+
+        vaccination_status = clean(
+            animal.get(
+                "vaccination_status"
+            )
+        ).upper()
+
+        if (
+            animal_id
+            and vaccination_status
+            in {
+                "VACCINATED",
+                "UP_TO_DATE",
+                "COMPLETED",
+                "FULLY_VACCINATED"
+            }
+        ):
+
+            vaccinated_ids.add(
+                animal_id
+            )
+
+    for vaccination in vaccinations:
+
+        animal_id = clean(
+            vaccination.get(
+                "animal_id"
+            )
+        )
+
+        if (
+            animal_id
+            and animal_id in animal_ids
+        ):
+
+            vaccinated_ids.add(
+                animal_id
+            )
+
+    vaccinated_animals = len(
+        vaccinated_ids
+    )
+
+    total_animals = len(
+        animals
+    )
+
+    vaccination_coverage = (
+        round(
+            (
+                vaccinated_animals
+                / total_animals
+            ) * 100,
+            1
+        )
+        if total_animals
+        else 0
+    )
+
+    return jsonify({
+        "success": True,
+        "total_cases": len(
+            reports
+        ),
+        "active_cases": active_cases,
+        "high_risk_cases": (
+            high_risk_cases
+        ),
+        "moderate_cases": sum(
+            1
+            for report in reports
+            if risk(report) == "MODERATE"
+        ),
+        "verified_cases": sum(
+            1
+            for report in reports
+            if report.get(
+                "vet_verified"
+            ) is True
+        ),
+        "suspected_outbreaks": (
+            suspected_outbreaks
+        ),
+        "animals_affected": (
+            affected_animals
+        ),
+        "deaths": 0,
+        "total_animals": (
+            total_animals
+        ),
+        "vaccinated_animals": (
+            vaccinated_animals
+        ),
+        "vaccination_coverage": (
+            vaccination_coverage
+        )
+    })
+
+
+# ============================================================
+# OFFICIAL / GOVERNMENT DASHBOARD
+# ============================================================
+
+@app.route(
+    "/dashboard/official"
+)
 def dashboard_official():
 
     reports = get_reports()
+
+    # --------------------------------------------------------
+    # LOAD ANIMALS
+    # --------------------------------------------------------
+
+    animals = []
+
+    if supabase:
+
+        try:
+
+            response = (
+                supabase
+                .table("animals")
+                .select("*")
+                .limit(5000)
+                .execute()
+            )
+
+            animals = (
+                response.data
+                or []
+            )
+
+        except Exception as exc:
+
+            print(
+                "Official dashboard "
+                "animal fetch failed:",
+                repr(exc)
+            )
+
+    else:
+
+        animals = list(
+            _MEMORY_ANIMALS
+        )
+
+    # --------------------------------------------------------
+    # LOAD VACCINATIONS
+    # --------------------------------------------------------
+
+    vaccinations = []
+
+    if supabase:
+
+        try:
+
+            response = (
+                supabase
+                .table(
+                    "vaccination_records"
+                )
+                .select("*")
+                .limit(5000)
+                .execute()
+            )
+
+            vaccinations = (
+                response.data
+                or []
+            )
+
+        except Exception as exc:
+
+            print(
+                "Official dashboard "
+                "vaccination fetch failed:",
+                repr(exc)
+            )
+
+    else:
+
+        vaccinations = list(
+            _MEMORY_VACCINATIONS
+        )
+
+    # --------------------------------------------------------
+    # BLOCK DATA
+    # --------------------------------------------------------
 
     block_data = {}
 
     for report in reports:
 
-        block = str(
-            report.get("block") or "Unknown"
-        ).strip()
+        block = (
+            clean(
+                report.get(
+                    "block"
+                )
+            )
+            or "Unknown"
+        )
 
-        village = str(
-            report.get("village") or "Unknown"
-        ).strip()
+        village = (
+            clean(
+                report.get(
+                    "village"
+                )
+            )
+            or "Unknown"
+        )
 
         if block not in block_data:
 
@@ -1238,12 +2342,18 @@ def dashboard_official():
                 "high_risk": 0
             }
 
-        block_data[block]["villages"].add(village)
+        block_data[block][
+            "villages"
+        ].add(village)
 
-        status = str(
-            report.get("case_status")
-            or report.get("status")
-            or "OPEN"
+        status = clean(
+            report.get(
+                "case_status",
+                report.get(
+                    "status",
+                    "OPEN"
+                )
+            )
         ).upper()
 
         if status not in {
@@ -1251,73 +2361,197 @@ def dashboard_official():
             "REJECTED",
             "RESOLVED"
         }:
-            block_data[block]["open_reports"] += 1
 
-        if str(
-            report.get("risk_level") or ""
+            block_data[block][
+                "open_reports"
+            ] += 1
+
+        if clean(
+            report.get(
+                "risk_level"
+            )
         ).upper() == "HIGH":
 
-            block_data[block]["high_risk"] += 1
+            block_data[block][
+                "high_risk"
+            ] += 1
 
     block_summary = []
 
     for data in block_data.values():
 
         block_summary.append({
-            "block": data["block"],
+            "block": data[
+                "block"
+            ],
             "villages_reporting": len(
                 data["villages"]
             ),
-            "open_reports": data["open_reports"],
-            "high_risk": data["high_risk"]
+            "open_reports": data[
+                "open_reports"
+            ],
+            "high_risk": data[
+                "high_risk"
+            ]
         })
 
     block_summary.sort(
-        key=lambda item: item["open_reports"],
+        key=lambda item: (
+            item["open_reports"]
+        ),
         reverse=True
     )
 
-    totals = {
-        "total_open_reports": sum(
-            x["open_reports"]
-            for x in block_summary
-        ),
-        "total_high_risk": sum(
-            x["high_risk"]
-            for x in block_summary
-        ),
-        "blocks_reporting": len(
-            block_summary
-        ),
-        "vaccination_coverage": 0
+    # --------------------------------------------------------
+    # VACCINATION COVERAGE
+    # --------------------------------------------------------
+
+    animal_ids = {
+        clean(
+            animal.get("id")
+        )
+        for animal in animals
+        if clean(
+            animal.get("id")
+        )
     }
 
-    if supabase:
+    vaccinated_ids = set()
 
-        try:
+    for animal in animals:
 
-            vaccination_response = (
-                supabase
-                .table("vaccination_records")
-                .select("*")
-                .execute()
+        animal_id = clean(
+            animal.get("id")
+        )
+
+        vaccination_status = clean(
+            animal.get(
+                "vaccination_status"
+            )
+        ).upper()
+
+        if (
+            animal_id
+            and vaccination_status
+            in {
+                "VACCINATED",
+                "UP_TO_DATE",
+                "COMPLETED",
+                "FULLY_VACCINATED"
+            }
+        ):
+
+            vaccinated_ids.add(
+                animal_id
             )
 
-            if vaccination_response.data:
-                totals["vaccination_coverage"] = 100
+    for vaccination in vaccinations:
 
-        except Exception as exc:
-
-            print(
-                "Vaccination dashboard error:",
-                repr(exc)
+        animal_id = clean(
+            vaccination.get(
+                "animal_id"
             )
+        )
+
+        if (
+            animal_id
+            and animal_id in animal_ids
+        ):
+
+            vaccinated_ids.add(
+                animal_id
+            )
+
+    total_animals = len(
+        animals
+    )
+
+    vaccinated_animals = len(
+        vaccinated_ids
+    )
+
+    vaccination_coverage = (
+        round(
+            (
+                vaccinated_animals
+                / total_animals
+            ) * 100,
+            1
+        )
+        if total_animals
+        else 0
+    )
+
+    # --------------------------------------------------------
+    # OUTBREAKS
+    # --------------------------------------------------------
+
+    clusters = build_outbreak_clusters(
+        reports
+    )
+
+    suspected_outbreaks = sum(
+        1
+        for cluster in clusters
+        if cluster.get(
+            "risk_level"
+        ) == "HIGH"
+    )
+
+    # --------------------------------------------------------
+    # TOTALS
+    # --------------------------------------------------------
+
+    total_open_reports = sum(
+        item[
+            "open_reports"
+        ]
+        for item in block_summary
+    )
+
+    total_high_risk = sum(
+        item[
+            "high_risk"
+        ]
+        for item in block_summary
+    )
+
+    totals = {
+        "total_animals": (
+            total_animals
+        ),
+
+        "vaccinated_animals": (
+            vaccinated_animals
+        ),
+
+        "vaccination_coverage": (
+            vaccination_coverage
+        ),
+
+        "total_open_reports": (
+            total_open_reports
+        ),
+
+        "total_high_risk": (
+            total_high_risk
+        ),
+
+        "suspected_outbreaks": (
+            suspected_outbreaks
+        ),
+
+        "blocks_reporting": len(
+            block_summary
+        )
+    }
 
     return render_template(
         "dashboard_official.html",
         totals=totals,
         block_summary=block_summary,
-        reports=reports
+        reports=reports,
+        outbreak_clusters=clusters
     )
 
 
@@ -1325,12 +2559,10 @@ def dashboard_official():
 # DISTRICT OFFICER DASHBOARD
 # ============================================================
 
-@app.route("/dashboard/district")
+@app.route(
+    "/dashboard/district"
+)
 def dashboard_district():
-
-    # --------------------------------------------------------
-    # DISTRICT SELECTOR
-    # --------------------------------------------------------
 
     district_name = (
         request.args.get(
@@ -1360,7 +2592,10 @@ def dashboard_district():
                 .execute()
             )
 
-            animals = response.data or []
+            animals = (
+                response.data
+                or []
+            )
 
         except Exception as exc:
 
@@ -1376,7 +2611,7 @@ def dashboard_district():
         )
 
     # --------------------------------------------------------
-    # LOAD VACCINATION RECORDS
+    # LOAD VACCINATIONS
     # --------------------------------------------------------
 
     vaccinations = []
@@ -1387,47 +2622,66 @@ def dashboard_district():
 
             response = (
                 supabase
-                .table("vaccination_records")
+                .table(
+                    "vaccination_records"
+                )
                 .select("*")
                 .limit(5000)
                 .execute()
             )
 
-            vaccinations = response.data or []
+            vaccinations = (
+                response.data
+                or []
+            )
 
         except Exception as exc:
 
             print(
-                "District vaccination dashboard error:",
+                "District vaccination "
+                "dashboard error:",
                 repr(exc)
             )
+
+    else:
+
+        vaccinations = list(
+            _MEMORY_VACCINATIONS
+        )
 
     # --------------------------------------------------------
     # HELPERS
     # --------------------------------------------------------
 
-    def clean(value):
-        return str(value or "").strip()
-
     def report_status(report):
 
         return clean(
-            report.get("case_status")
-            or report.get("status")
-            or ""
+            report.get(
+                "case_status",
+                report.get(
+                    "status",
+                    ""
+                )
+            )
         ).upper()
 
     def report_risk(report):
 
         return clean(
-            report.get("risk_level")
-            or report.get("risk")
-            or ""
+            report.get(
+                "risk_level",
+                report.get(
+                    "risk",
+                    ""
+                )
+            )
         ).upper()
 
     def vaccinated_status(value):
 
-        return clean(value).upper() in {
+        return clean(
+            value
+        ).upper() in {
             "VACCINATED",
             "UP_TO_DATE",
             "COMPLETED",
@@ -1436,17 +2690,22 @@ def dashboard_district():
 
     def death_report(report):
 
-        status = report_status(report)
+        status = report_status(
+            report
+        )
 
         if status in {
             "DEATH",
             "DIED",
             "DECEASED"
         }:
+
             return True
 
         symptoms = clean(
-            report.get("symptoms")
+            report.get(
+                "symptoms"
+            )
         ).lower()
 
         return any(
@@ -1461,22 +2720,30 @@ def dashboard_district():
         )
 
     # --------------------------------------------------------
-    # DATA STRUCTURES
+    # DATA
     # --------------------------------------------------------
 
     village_data = {}
     block_data = {}
 
-    def get_village(name, block_name="Unknown"):
+    def get_village(
+        name,
+        block_name="Unknown"
+    ):
 
-        name = clean(name) or "Unknown Village"
+        name = (
+            clean(name)
+            or "Unknown Village"
+        )
 
         if name not in village_data:
 
             village_data[name] = {
                 "name": name,
-                "block": clean(block_name)
-                    or "Unknown",
+                "block": (
+                    clean(block_name)
+                    or "Unknown"
+                ),
                 "animals": 0,
                 "vaccinated_animals": set(),
                 "report_count": 0,
@@ -1491,7 +2758,10 @@ def dashboard_district():
 
     def get_block(name):
 
-        name = clean(name) or "Unknown Block"
+        name = (
+            clean(name)
+            or "Unknown Block"
+        )
 
         if name not in block_data:
 
@@ -1511,7 +2781,7 @@ def dashboard_district():
         return block_data[name]
 
     # --------------------------------------------------------
-    # ANIMAL REGISTRY
+    # ANIMALS
     # --------------------------------------------------------
 
     animal_map = {}
@@ -1523,39 +2793,48 @@ def dashboard_district():
         )
 
         if animal_id:
-            animal_map[animal_id] = animal
 
-        village_name = animal.get("village")
-        block_name = animal.get("block")
+            animal_map[
+                animal_id
+            ] = animal
 
         village = get_village(
-            village_name,
-            block_name
+            animal.get("village"),
+            animal.get("block")
         )
 
-        block = get_block(block_name)
+        block = get_block(
+            animal.get("block")
+        )
 
         village["animals"] += 1
-
         block["animals"] += 1
 
-        block["villages"].add(
+        block[
+            "villages"
+        ].add(
             village["name"]
         )
 
         if vaccinated_status(
-            animal.get("vaccination_status")
+            animal.get(
+                "vaccination_status"
+            )
         ):
 
             if animal_id:
 
                 village[
                     "vaccinated_animals"
-                ].add(animal_id)
+                ].add(
+                    animal_id
+                )
 
                 block[
                     "vaccinated_animals"
-                ].add(animal_id)
+                ].add(
+                    animal_id
+                )
 
     # --------------------------------------------------------
     # VACCINATION RECORDS
@@ -1564,7 +2843,9 @@ def dashboard_district():
     for vaccination in vaccinations:
 
         animal_id = clean(
-            vaccination.get("animal_id")
+            vaccination.get(
+                "animal_id"
+            )
         )
 
         animal = animal_map.get(
@@ -1574,27 +2855,33 @@ def dashboard_district():
         if animal:
 
             village = get_village(
-                animal.get("village"),
-                animal.get("block")
+                animal.get(
+                    "village"
+                ),
+                animal.get(
+                    "block"
+                )
             )
 
             block = get_block(
-                animal.get("block")
-            )
-
-            block["villages"].add(
-                village["name"]
+                animal.get(
+                    "block"
+                )
             )
 
             if animal_id:
 
                 village[
                     "vaccinated_animals"
-                ].add(animal_id)
+                ].add(
+                    animal_id
+                )
 
                 block[
                     "vaccinated_animals"
-                ].add(animal_id)
+                ].add(
+                    animal_id
+                )
 
     # --------------------------------------------------------
     # REPORT ANALYTICS
@@ -1602,31 +2889,29 @@ def dashboard_district():
 
     for report in reports:
 
-        village_name = report.get(
-            "village"
-        )
-
-        block_name = report.get(
-            "block"
-        )
-
         village = get_village(
-            village_name,
-            block_name
+            report.get("village"),
+            report.get("block")
         )
 
         block = get_block(
-            block_name
+            report.get("block")
         )
 
-        block["villages"].add(
+        block[
+            "villages"
+        ].add(
             village["name"]
         )
 
-        village["report_count"] += 1
-        block["report_count"] += 1
+        village[
+            "report_count"
+        ] += 1
 
-        # Affected animals
+        block[
+            "report_count"
+        ] += 1
+
         affected = max(
             safe_int(
                 report.get(
@@ -1645,7 +2930,6 @@ def dashboard_district():
             "affected_animals"
         ] += affected
 
-        # Active cases
         status = report_status(
             report
         )
@@ -1664,7 +2948,6 @@ def dashboard_district():
                 "active_cases"
             ] += 1
 
-        # High risk
         risk = report_risk(
             report
         )
@@ -1679,7 +2962,6 @@ def dashboard_district():
                 "high_risk"
             ] += 1
 
-        # Deaths
         if death_report(report):
 
             village[
@@ -1690,7 +2972,6 @@ def dashboard_district():
                 "deaths"
             ] += affected
 
-        # Outbreak signal
         if (
             risk == "HIGH"
             and affected >= 5
@@ -1705,7 +2986,7 @@ def dashboard_district():
             ] = True
 
     # --------------------------------------------------------
-    # VILLAGE SUMMARIES
+    # VILLAGES
     # --------------------------------------------------------
 
     villages = []
@@ -1737,7 +3018,9 @@ def dashboard_district():
         ]
 
         vaccinated_count = len(
-            data["vaccinated_animals"]
+            data[
+                "vaccinated_animals"
+            ]
         )
 
         coverage = (
@@ -1748,35 +3031,49 @@ def dashboard_district():
                 ) * 100,
                 1
             )
-            if animals_count > 0
+            if animals_count
             else 0
         )
 
         villages.append({
-            "name": data["name"],
-            "village": data["name"],
-            "block": data["block"],
+            "name": data[
+                "name"
+            ],
+            "village": data[
+                "name"
+            ],
+            "block": data[
+                "block"
+            ],
             "animals": animals_count,
-            "vaccinated_animals":
-                vaccinated_count,
-            "vaccination_coverage":
-                coverage,
-            "report_count":
-                data["report_count"],
-            "affected_animals":
-                data["affected_animals"],
-            "active_cases":
-                data["active_cases"],
-            "high_risk":
-                data["high_risk"],
-            "deaths":
-                data["deaths"],
-            "suspected_outbreak":
-                data["suspected_outbreak"],
-            "risk":
-                risk_level,
-            "risk_level":
-                risk_level
+            "vaccinated_animals": (
+                vaccinated_count
+            ),
+            "vaccination_coverage": (
+                coverage
+            ),
+            "report_count": data[
+                "report_count"
+            ],
+            "affected_animals": data[
+                "affected_animals"
+            ],
+            "active_cases": data[
+                "active_cases"
+            ],
+            "high_risk": data[
+                "high_risk"
+            ],
+            "deaths": data[
+                "deaths"
+            ],
+            "suspected_outbreak": (
+                data[
+                    "suspected_outbreak"
+                ]
+            ),
+            "risk": risk_level,
+            "risk_level": risk_level
         })
 
     villages.sort(
@@ -1797,7 +3094,7 @@ def dashboard_district():
     )
 
     # --------------------------------------------------------
-    # BLOCK SUMMARIES
+    # BLOCKS
     # --------------------------------------------------------
 
     blocks = []
@@ -1809,7 +3106,9 @@ def dashboard_district():
         ]
 
         vaccinated_count = len(
-            data["vaccinated_animals"]
+            data[
+                "vaccinated_animals"
+            ]
         )
 
         coverage = (
@@ -1820,7 +3119,7 @@ def dashboard_district():
                 ) * 100,
                 1
             )
-            if animals_count > 0
+            if animals_count
             else 0
         )
 
@@ -1845,32 +3144,44 @@ def dashboard_district():
             risk_level = "LOW"
 
         blocks.append({
-            "name": data["name"],
-            "block": data["name"],
+            "name": data[
+                "name"
+            ],
+            "block": data[
+                "name"
+            ],
             "villages": len(
                 data["villages"]
             ),
             "animals": animals_count,
-            "vaccinated_animals":
-                vaccinated_count,
-            "vaccination_coverage":
-                coverage,
-            "report_count":
-                data["report_count"],
-            "affected_animals":
-                data["affected_animals"],
-            "active_cases":
-                data["active_cases"],
-            "high_risk":
-                data["high_risk"],
-            "deaths":
-                data["deaths"],
-            "suspected_outbreak":
-                data["suspected_outbreak"],
-            "risk":
-                risk_level,
-            "risk_level":
-                risk_level
+            "vaccinated_animals": (
+                vaccinated_count
+            ),
+            "vaccination_coverage": (
+                coverage
+            ),
+            "report_count": data[
+                "report_count"
+            ],
+            "affected_animals": data[
+                "affected_animals"
+            ],
+            "active_cases": data[
+                "active_cases"
+            ],
+            "high_risk": data[
+                "high_risk"
+            ],
+            "deaths": data[
+                "deaths"
+            ],
+            "suspected_outbreak": (
+                data[
+                    "suspected_outbreak"
+                ]
+            ),
+            "risk": risk_level,
+            "risk_level": risk_level
         })
 
     blocks.sort(
@@ -1890,14 +3201,14 @@ def dashboard_district():
     )
 
     # --------------------------------------------------------
-    # DISTRICT TOTALS
+    # TOTALS
     # --------------------------------------------------------
 
     total_animals = len(
         animals
     )
 
-    vaccinated_animal_ids = set()
+    vaccinated_ids = set()
 
     for animal in animals:
 
@@ -1914,24 +3225,34 @@ def dashboard_district():
             )
         ):
 
-            vaccinated_animal_ids.add(
+            vaccinated_ids.add(
                 animal_id
             )
 
-    # Vaccination records
     for vaccination in vaccinations:
 
         animal_id = clean(
-            vaccination.get("animal_id")
+            vaccination.get(
+                "animal_id"
+            )
         )
 
-        if animal_id:
-            vaccinated_animal_ids.add(
+        if (
+            animal_id
+            and animal_id in {
+                clean(
+                    a.get("id")
+                )
+                for a in animals
+            }
+        ):
+
+            vaccinated_ids.add(
                 animal_id
             )
 
     vaccinated_animals = len(
-        vaccinated_animal_ids
+        vaccinated_ids
     )
 
     vaccination_coverage = (
@@ -1942,7 +3263,7 @@ def dashboard_district():
             ) * 100,
             1
         )
-        if total_animals > 0
+        if total_animals
         else 0
     )
 
@@ -1960,7 +3281,8 @@ def dashboard_district():
     high_risk_cases = sum(
         1
         for report in reports
-        if report_risk(report) == "HIGH"
+        if report_risk(report)
+        == "HIGH"
     )
 
     affected_animals = sum(
@@ -1993,13 +3315,17 @@ def dashboard_district():
     high_risk_villages = sum(
         1
         for village in villages
-        if village["risk_level"] == "HIGH"
+        if village[
+            "risk_level"
+        ] == "HIGH"
     )
 
     suspected_outbreaks = sum(
         1
         for village in villages
-        if village["suspected_outbreak"]
+        if village[
+            "suspected_outbreak"
+        ]
     )
 
     # --------------------------------------------------------
@@ -2010,23 +3336,28 @@ def dashboard_district():
 
     for village in villages:
 
-        if village["risk_level"] == "HIGH":
+        if village[
+            "risk_level"
+        ] == "HIGH":
 
             alerts.append({
                 "type": "HIGH RISK",
                 "severity": "HIGH",
-                "village":
-                    village["village"],
-                "block":
-                    village["block"],
-                "title":
-                    f"High-risk village: "
-                    f"{village['village']}",
+                "village": village[
+                    "village"
+                ],
+                "block": village[
+                    "block"
+                ],
+                "title": (
+                    "High-risk village: "
+                    + village["village"]
+                ),
                 "message": (
                     f"{village['high_risk']} "
-                    f"high-risk cases and "
+                    "high-risk cases and "
                     f"{village['active_cases']} "
-                    f"active cases detected."
+                    "active cases detected."
                 )
             })
 
@@ -2037,13 +3368,16 @@ def dashboard_district():
             alerts.append({
                 "type": "OUTBREAK",
                 "severity": "HIGH",
-                "village":
-                    village["village"],
-                "block":
-                    village["block"],
-                "title":
-                    f"Possible outbreak: "
-                    f"{village['village']}",
+                "village": village[
+                    "village"
+                ],
+                "block": village[
+                    "block"
+                ],
+                "title": (
+                    "Possible outbreak: "
+                    + village["village"]
+                ),
                 "message": (
                     f"{village['affected_animals']} "
                     "animals affected. "
@@ -2052,18 +3386,23 @@ def dashboard_district():
                 )
             })
 
-        elif village["deaths"] > 0:
+        elif village[
+            "deaths"
+        ] > 0:
 
             alerts.append({
                 "type": "MORTALITY",
                 "severity": "MEDIUM",
-                "village":
-                    village["village"],
-                "block":
-                    village["block"],
-                "title":
-                    f"Animal deaths: "
-                    f"{village['village']}",
+                "village": village[
+                    "village"
+                ],
+                "block": village[
+                    "block"
+                ],
+                "title": (
+                    "Animal deaths: "
+                    + village["village"]
+                ),
                 "message": (
                     f"{village['deaths']} "
                     "death(s) detected."
@@ -2077,13 +3416,16 @@ def dashboard_district():
             alerts.append({
                 "type": "WATCH",
                 "severity": "MEDIUM",
-                "village":
-                    village["village"],
-                "block":
-                    village["block"],
-                "title":
-                    f"Multiple active cases: "
-                    f"{village['village']}",
+                "village": village[
+                    "village"
+                ],
+                "block": village[
+                    "block"
+                ],
+                "title": (
+                    "Multiple active cases: "
+                    + village["village"]
+                ),
                 "message": (
                     "Multiple active disease "
                     "cases require monitoring."
@@ -2099,7 +3441,9 @@ def dashboard_district():
     for report in reports[:50]:
 
         recent_cases.append({
-            "id": report.get("id"),
+            "id": report.get(
+                "id"
+            ),
             "village": report.get(
                 "village",
                 "Unknown"
@@ -2129,51 +3473,42 @@ def dashboard_district():
             )
         })
 
-    # --------------------------------------------------------
-    # TOTALS OBJECT
-    # --------------------------------------------------------
-
     totals = {
-        "total_villages":
-            len(villages),
-
-        "total_animals":
-            total_animals,
-
-        "active_cases":
-            active_cases,
-
-        "high_risk_cases":
-            high_risk_cases,
-
-        "high_risk_villages":
-            high_risk_villages,
-
-        "suspected_outbreaks":
-            suspected_outbreaks,
-
-        "deaths":
-            deaths,
-
-        "affected_animals":
-            affected_animals,
-
-        "vaccination_records":
-            len(vaccinations),
-
-        "vaccinated_animals":
-            vaccinated_animals,
-
-        "vaccination_coverage":
-            vaccination_coverage,
-
-        "blocks":
-            len(blocks)
+        "total_villages": len(
+            villages
+        ),
+        "total_animals": (
+            total_animals
+        ),
+        "active_cases": (
+            active_cases
+        ),
+        "high_risk_cases": (
+            high_risk_cases
+        ),
+        "high_risk_villages": (
+            high_risk_villages
+        ),
+        "suspected_outbreaks": (
+            suspected_outbreaks
+        ),
+        "deaths": deaths,
+        "affected_animals": (
+            affected_animals
+        ),
+        "vaccination_records": len(
+            vaccinations
+        ),
+        "vaccinated_animals": (
+            vaccinated_animals
+        ),
+        "vaccination_coverage": (
+            vaccination_coverage
+        ),
+        "blocks": len(
+            blocks
+        )
     }
-
-    # --------------------------------------------------------
-    # RENDER
-    # --------------------------------------------------------
 
     return render_template(
         "district_dashboard.html",
@@ -2192,7 +3527,9 @@ def dashboard_district():
 # HEALTH CHECK
 # ============================================================
 
-@app.route("/api/health")
+@app.route(
+    "/api/health"
+)
 def health():
 
     return jsonify({
@@ -2207,43 +3544,50 @@ def health():
             supabase
         ),
 
-        "supabase_init_error":
-            SUPABASE_INIT_ERROR,
+        "supabase_init_error": (
+            SUPABASE_INIT_ERROR
+        ),
 
         "image_ai": bool(
             GEMINI_API_KEY
         ),
 
-        "feature_blueprint":
-            bool(feature_bp),
+        "feature_blueprint": bool(
+            feature_bp
+        ),
 
-        "feature_blueprint_error":
-            FEATURE_BLUEPRINT_ERROR,
+        "feature_blueprint_error": (
+            FEATURE_BLUEPRINT_ERROR
+        ),
 
-        "animal_registry":
-            True,
+        "animal_registry": True,
 
         "environment": {
 
-            "SUPABASE_URL":
-                bool(SUPABASE_URL),
+            "SUPABASE_URL": bool(
+                SUPABASE_URL
+            ),
 
-            "SUPABASE_KEY":
-                bool(SUPABASE_KEY),
+            "SUPABASE_KEY": bool(
+                SUPABASE_KEY
+            ),
 
-            "SUPABASE_PUBLISHABLE_KEY":
+            "SUPABASE_PUBLISHABLE_KEY": (
                 bool(
                     SUPABASE_PUBLISHABLE_KEY
-                ),
+                )
+            ),
 
-            "GEMINI_API_KEY":
-                bool(GEMINI_API_KEY)
+            "GEMINI_API_KEY": bool(
+                GEMINI_API_KEY
+            )
         },
 
-        "timestamp":
+        "timestamp": (
             datetime.now(
                 timezone.utc
             ).isoformat()
+        )
     })
 
 
