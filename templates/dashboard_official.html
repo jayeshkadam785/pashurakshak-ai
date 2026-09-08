@@ -1,991 +1,1538 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>PashuRakshak — Government Command Dashboard</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+>
 
 <link rel="stylesheet" href="/static/style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Leaflet map -->
+<!-- Leaflet -->
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
 
 <style>
-  .command-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:20px;
-    margin-bottom:24px;
-  }
 
-  .command-header h1 {
-    margin-bottom:6px;
-  }
+.command-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:24px;
+}
 
-  .subtitle {
-    color:var(--ink-600);
-    font-size:0.92rem;
-  }
+.command-header h1 {
+  margin-bottom:6px;
+}
 
-  .live-status {
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:#ecfdf5;
-    color:#047857;
-    font-size:0.82rem;
-    font-weight:700;
-  }
+.subtitle {
+  color:var(--ink-600);
+  font-size:.92rem;
+}
 
-  .live-dot {
-    width:8px;
-    height:8px;
-    border-radius:50%;
-    background:#10b981;
-  }
+.live-status {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#047857;
+  font-size:.82rem;
+  font-weight:700;
+}
+
+.live-dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#10b981;
+}
+
+.kpi-grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.kpi-card {
+  background:white;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 4px 14px rgba(0,0,0,.04);
+}
+
+.kpi-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.kpi-icon {
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  background:var(--wheat-100);
+}
+
+.kpi-label {
+  margin-top:14px;
+  color:var(--ink-600);
+  font-size:.86rem;
+}
+
+.kpi-value {
+  font-family:var(--font-head);
+  font-size:2rem;
+  font-weight:700;
+  color:var(--pasture-900);
+  margin-top:3px;
+}
+
+.danger-value {
+  color:var(--coral-500);
+}
+
+.warning-value {
+  color:#b7791f;
+}
+
+.success-value {
+  color:#15803d;
+}
+
+.section-title {
+  margin:28px 0 12px;
+}
+
+.dashboard-grid {
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:20px;
+}
+
+.card-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.card-header h3 {
+  margin:0;
+}
+
+.small-muted {
+  font-size:.8rem;
+  color:var(--ink-600);
+}
+
+#risk-map {
+  height:420px;
+  width:100%;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.alert-list {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.alert-item {
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  padding:13px;
+  border-radius:12px;
+  background:#fafafa;
+  border-left:4px solid #f59e0b;
+}
+
+.alert-item.high {
+  border-left-color:#ef4444;
+  background:#fff7f7;
+}
+
+.alert-item.watch {
+  border-left-color:#f59e0b;
+  background:#fffbeb;
+}
+
+.alert-icon {
+  font-size:20px;
+}
+
+.alert-title {
+  font-weight:700;
+  font-size:.9rem;
+}
+
+.alert-text {
+  font-size:.78rem;
+  color:var(--ink-600);
+  margin-top:3px;
+}
+
+.status-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.status-box {
+  padding:16px;
+  border-radius:12px;
+  background:#fafafa;
+}
+
+.status-number {
+  font-family:var(--font-head);
+  font-size:1.7rem;
+  font-weight:700;
+}
+
+.status-label {
+  color:var(--ink-600);
+  font-size:.78rem;
+  margin-top:3px;
+}
+
+.progress-wrap {
+  margin-top:14px;
+}
+
+.progress-label {
+  display:flex;
+  justify-content:space-between;
+  font-size:.78rem;
+  margin-bottom:6px;
+}
+
+.progress {
+  height:8px;
+  border-radius:999px;
+  background:#eee;
+  overflow:hidden;
+}
+
+.progress-bar {
+  height:100%;
+  border-radius:999px;
+  background:#16a34a;
+}
+
+.table-scroll {
+  overflow-x:auto;
+}
+
+.risk-pill {
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:700;
+}
+
+.risk-high {
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.risk-watch {
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.risk-low {
+  background:#dcfce7;
+  color:#166534;
+}
+
+.empty-state {
+  padding:25px;
+  text-align:center;
+  color:var(--ink-600);
+  font-size:.9rem;
+}
+
+.refresh-btn {
+  cursor:pointer;
+}
+
+@media(max-width:1100px) {
 
   .kpi-grid {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:16px;
-    margin-bottom:20px;
-  }
-
-  .kpi-card {
-    background:white;
-    border:1px solid rgba(0,0,0,.06);
-    border-radius:16px;
-    padding:18px;
-    box-shadow:0 4px 14px rgba(0,0,0,.04);
-  }
-
-  .kpi-top {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-
-  .kpi-icon {
-    width:42px;
-    height:42px;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:20px;
-    background:var(--wheat-100);
-  }
-
-  .kpi-label {
-    margin-top:14px;
-    color:var(--ink-600);
-    font-size:.86rem;
-  }
-
-  .kpi-value {
-    font-family:var(--font-head);
-    font-size:2rem;
-    font-weight:700;
-    color:var(--pasture-900);
-    margin-top:3px;
-  }
-
-  .danger-value {
-    color:var(--coral-500);
-  }
-
-  .warning-value {
-    color:#b7791f;
-  }
-
-  .success-value {
-    color:#15803d;
-  }
-
-  .section-title {
-    margin:28px 0 12px;
+    grid-template-columns:repeat(2,1fr);
   }
 
   .dashboard-grid {
-    display:grid;
-    grid-template-columns:1.5fr 1fr;
-    gap:20px;
+    grid-template-columns:1fr;
   }
 
-  .card-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    margin-bottom:14px;
+}
+
+@media(max-width:650px) {
+
+  .kpi-grid {
+    grid-template-columns:1fr;
   }
 
-  .card-header h3 {
-    margin:0;
-  }
-
-  .small-muted {
-    font-size:.8rem;
-    color:var(--ink-600);
-  }
-
-  #risk-map {
-    height:420px;
-    width:100%;
-    border-radius:12px;
-    overflow:hidden;
-  }
-
-  .alert-list {
-    display:flex;
+  .command-header {
     flex-direction:column;
-    gap:10px;
-  }
-
-  .alert-item {
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-    padding:13px;
-    border-radius:12px;
-    background:#fafafa;
-    border-left:4px solid #f59e0b;
-  }
-
-  .alert-item.high {
-    border-left-color:#ef4444;
-    background:#fff7f7;
-  }
-
-  .alert-item.watch {
-    border-left-color:#f59e0b;
-    background:#fffbeb;
-  }
-
-  .alert-icon {
-    font-size:20px;
-  }
-
-  .alert-title {
-    font-weight:700;
-    font-size:.9rem;
-  }
-
-  .alert-text {
-    font-size:.78rem;
-    color:var(--ink-600);
-    margin-top:3px;
   }
 
   .status-grid {
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:12px;
+    grid-template-columns:1fr;
   }
 
-  .status-box {
-    padding:16px;
-    border-radius:12px;
-    background:#fafafa;
-  }
+}
 
-  .status-number {
-    font-family:var(--font-head);
-    font-size:1.7rem;
-    font-weight:700;
-  }
-
-  .status-label {
-    color:var(--ink-600);
-    font-size:.78rem;
-    margin-top:3px;
-  }
-
-  .progress-wrap {
-    margin-top:14px;
-  }
-
-  .progress-label {
-    display:flex;
-    justify-content:space-between;
-    font-size:.78rem;
-    margin-bottom:6px;
-  }
-
-  .progress {
-    height:8px;
-    border-radius:999px;
-    background:#eee;
-    overflow:hidden;
-  }
-
-  .progress-bar {
-    height:100%;
-    border-radius:999px;
-    background:#16a34a;
-  }
-
-  .table-scroll {
-    overflow-x:auto;
-  }
-
-  .risk-pill {
-    display:inline-block;
-    padding:5px 9px;
-    border-radius:999px;
-    font-size:.72rem;
-    font-weight:700;
-  }
-
-  .risk-high {
-    background:#fee2e2;
-    color:#b91c1c;
-  }
-
-  .risk-watch {
-    background:#fef3c7;
-    color:#92400e;
-  }
-
-  .risk-low {
-    background:#dcfce7;
-    color:#166534;
-  }
-
-  .empty-state {
-    padding:25px;
-    text-align:center;
-    color:var(--ink-600);
-    font-size:.9rem;
-  }
-
-  .refresh-btn {
-    cursor:pointer;
-  }
-
-  @media(max-width:1100px) {
-    .kpi-grid {
-      grid-template-columns:repeat(2,1fr);
-    }
-
-    .dashboard-grid {
-      grid-template-columns:1fr;
-    }
-  }
-
-  @media(max-width:650px) {
-    .kpi-grid {
-      grid-template-columns:1fr;
-    }
-
-    .command-header {
-      flex-direction:column;
-    }
-
-    .status-grid {
-      grid-template-columns:1fr;
-    }
-  }
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="app-shell">
 
-  {% include "_nav.html" %}
+{% include "_nav.html" %}
 
-  <main class="main">
 
-    <!-- HEADER -->
-    <div class="command-header">
+<main class="main">
 
-      <div>
-        <h1>Government Command Dashboard</h1>
 
-        <div class="subtitle">
-          Satara District · Livestock Disease Surveillance & Response
-        </div>
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
-        <div class="small-muted" style="margin-top:6px;">
-          Early-warning and response monitoring system
-        </div>
-      </div>
+<div class="command-header">
 
-      <div style="display:flex;gap:10px;align-items:center;">
+  <div>
 
-        <span class="live-status">
-          <span class="live-dot"></span>
-          Live Monitoring
-        </span>
+    <h1>
+      Government Command Dashboard
+    </h1>
 
-        <button
-          class="btn btn-ghost refresh-btn"
-          onclick="refreshDashboard()">
-          🔄 Refresh
-        </button>
-
-        <button
-          class="btn btn-ghost"
-          onclick="exportBlockSummaryCSV()">
-          ⬇ Export CSV
-        </button>
-
-      </div>
-
+    <div class="subtitle">
+      Satara District · Livestock Disease Surveillance & Response
     </div>
-
-
-    <!-- ========================= -->
-    <!-- GOVERNMENT KPI SECTION -->
-    <!-- ========================= -->
-
-    <div class="kpi-grid">
-
-      <!-- Total Animals -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">🐄</div>
-        </div>
-
-        <div class="kpi-label">
-          Total Registered Animals
-        </div>
-
-        <div class="kpi-value" id="kpi-animals">
-          —
-        </div>
-      </div>
-
-
-      <!-- Active Cases -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">📋</div>
-        </div>
-
-        <div class="kpi-label">
-          Active Disease Cases
-        </div>
-
-        <div class="kpi-value" id="kpi-active">
-          {{ totals.total_open_reports }}
-        </div>
-      </div>
-
-
-      <!-- Outbreaks -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">🚨</div>
-        </div>
-
-        <div class="kpi-label">
-          Suspected Outbreaks
-        </div>
-
-        <div class="kpi-value danger-value" id="kpi-outbreaks">
-          —
-        </div>
-      </div>
-
-
-      <!-- High Risk Villages -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">⚠️</div>
-        </div>
-
-        <div class="kpi-label">
-          High-Risk Villages
-        </div>
-
-        <div class="kpi-value danger-value" id="kpi-high-risk">
-          {{ totals.total_high_risk }}
-        </div>
-      </div>
-
-
-      <!-- Vaccination -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">💉</div>
-        </div>
-
-        <div class="kpi-label">
-          Vaccination Coverage
-        </div>
-
-        <div class="kpi-value success-value" id="kpi-vaccination">
-          {{ totals.vaccination_coverage }}%
-        </div>
-      </div>
-
-
-      <!-- Deaths -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">☠️</div>
-        </div>
-
-        <div class="kpi-label">
-          Deaths This Month
-        </div>
-
-        <div class="kpi-value danger-value" id="kpi-deaths">
-          —
-        </div>
-      </div>
-
-
-      <!-- Pending Vet -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">🩺</div>
-        </div>
-
-        <div class="kpi-label">
-          Pending Vet Actions
-        </div>
-
-        <div class="kpi-value warning-value" id="kpi-vet">
-          —
-        </div>
-      </div>
-
-
-      <!-- Blocks -->
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <div class="kpi-icon">🏘️</div>
-        </div>
-
-        <div class="kpi-label">
-          Blocks Reporting
-        </div>
-
-        <div class="kpi-value">
-          {{ totals.blocks_reporting }}
-        </div>
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- MAP + ALERTS -->
-    <!-- ========================= -->
-
-    <h2 class="section-title">
-      Disease Risk Monitoring
-    </h2>
-
-    <div class="dashboard-grid">
-
-      <!-- MAP -->
-      <div class="card">
-
-        <div class="card-header">
-
-          <div>
-            <h3>🗺️ Government Risk Map</h3>
-
-            <div class="small-muted">
-              Disease cases, hotspots and outbreak risk
-            </div>
-          </div>
-
-          <span class="risk-pill risk-low">
-            Live
-          </span>
-
-        </div>
-
-        <div id="risk-map"></div>
-
-      </div>
-
-
-      <!-- ALERTS -->
-      <div class="card">
-
-        <div class="card-header">
-
-          <div>
-            <h3>🚨 Priority Alerts</h3>
-
-            <div class="small-muted">
-              Areas requiring immediate attention
-            </div>
-          </div>
-
-        </div>
-
-        <div id="alert-list" class="alert-list">
-
-          <div class="empty-state">
-            Loading alerts...
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- RESPONSE + LAB -->
-    <!-- ========================= -->
-
-    <h2 class="section-title">
-      Response Operations
-    </h2>
-
-    <div class="dashboard-grid">
-
-      <!-- RESPONSE STATUS -->
-      <div class="card">
-
-        <div class="card-header">
-
-          <div>
-            <h3>🩺 Veterinary Response</h3>
-
-            <div class="small-muted">
-              Current case response pipeline
-            </div>
-          </div>
-
-        </div>
-
-        <div class="status-grid">
-
-          <div class="status-box">
-            <div class="status-number" id="response-review">
-              —
-            </div>
-
-            <div class="status-label">
-              Under Review
-            </div>
-          </div>
-
-          <div class="status-box">
-            <div class="status-number" id="response-treatment">
-              —
-            </div>
-
-            <div class="status-label">
-              Treatment
-            </div>
-          </div>
-
-          <div class="status-box">
-            <div class="status-number" id="response-isolated">
-              —
-            </div>
-
-            <div class="status-label">
-              Isolated
-            </div>
-          </div>
-
-        </div>
-
-        <div class="progress-wrap">
-
-          <div class="progress-label">
-            <span>Case verification progress</span>
-            <strong id="verification-percent">0%</strong>
-          </div>
-
-          <div class="progress">
-            <div
-              class="progress-bar"
-              id="verification-progress"
-              style="width:0%">
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- LAB -->
-      <div class="card">
-
-        <div class="card-header">
-
-          <div>
-            <h3>🧪 Laboratory Escalation</h3>
-
-            <div class="small-muted">
-              Samples requiring laboratory action
-            </div>
-          </div>
-
-        </div>
-
-        <div class="status-grid">
-
-          <div class="status-box">
-            <div
-              class="status-number warning-value"
-              id="lab-requested">
-              —
-            </div>
-
-            <div class="status-label">
-              Requested
-            </div>
-          </div>
-
-          <div class="status-box">
-            <div
-              class="status-number"
-              id="lab-testing">
-              —
-            </div>
-
-            <div class="status-label">
-              Testing
-            </div>
-          </div>
-
-          <div class="status-box">
-            <div
-              class="status-number success-value"
-              id="lab-results">
-              —
-            </div>
-
-            <div class="status-label">
-              Results
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- VACCINATION -->
-    <!-- ========================= -->
-
-    <h2 class="section-title">
-      💉 Vaccination Coverage
-    </h2>
-
-    <div class="card">
-
-      <div class="card-header">
-
-        <div>
-          <h3>District Vaccination Status</h3>
-
-          <div class="small-muted">
-            Registered livestock vaccination monitoring
-          </div>
-        </div>
-
-        <strong id="vaccination-header">
-          {{ totals.vaccination_coverage }}%
-        </strong>
-
-      </div>
-
-      <div class="progress">
-
-        <div
-          class="progress-bar"
-          id="vaccination-progress"
-          style="width:{{ totals.vaccination_coverage }}%">
-        </div>
-
-      </div>
-
-      <div
-        style="display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--ink-600);">
-
-        <span>
-          Vaccinated
-        </span>
-
-        <span>
-          Target: 80%
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- BLOCK CHART -->
-    <!-- ========================= -->
-
-    <h2 class="section-title">
-      📊 Disease Reports by Block
-    </h2>
-
-    <div class="card">
-
-      <div class="card-header">
-
-        <div>
-          <h3>Block-wise Surveillance</h3>
-
-          <div class="small-muted">
-            Open reports and high-risk cases
-          </div>
-        </div>
-
-      </div>
-
-      <canvas id="block-chart" height="110"></canvas>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- BLOCK TABLE -->
-    <!-- ========================= -->
-
-    <h2 class="section-title">
-      🏘️ Block-wise Operational Summary
-    </h2>
 
     <div
-      class="card"
-      style="padding:0;overflow:hidden;"
-      id="block-summary-table">
+      class="small-muted"
+      style="margin-top:6px;">
 
-      <div class="table-scroll">
-
-        <table>
-
-          <thead>
-
-            <tr>
-              <th>Block</th>
-              <th>Villages Reporting</th>
-              <th>Open Reports</th>
-              <th>High Risk</th>
-              <th>Risk Status</th>
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {% for b in block_summary %}
-
-            <tr>
-
-              <td>
-                <strong>{{ b.block }}</strong>
-              </td>
-
-              <td>
-                {{ b.villages_reporting }}
-              </td>
-
-              <td>
-                {{ b.open_reports }}
-              </td>
-
-              <td>
-
-                {% if b.high_risk > 0 %}
-
-                  <span class="risk-pill risk-high">
-                    {{ b.high_risk }}
-                  </span>
-
-                {% else %}
-
-                  <span class="risk-pill risk-low">
-                    0
-                  </span>
-
-                {% endif %}
-
-              </td>
-
-              <td>
-
-                {% if b.high_risk >= 5 %}
-
-                  <span class="risk-pill risk-high">
-                    HIGH
-                  </span>
-
-                {% elif b.high_risk > 0 %}
-
-                  <span class="risk-pill risk-watch">
-                    WATCH
-                  </span>
-
-                {% else %}
-
-                  <span class="risk-pill risk-low">
-                    LOW
-                  </span>
-
-                {% endif %}
-
-              </td>
-
-            </tr>
-
-            {% else %}
-
-            <tr>
-              <td colspan="5">
-                <div class="empty-state">
-                  No block surveillance data available.
-                </div>
-              </td>
-            </tr>
-
-            {% endfor %}
-
-          </tbody>
-
-        </table>
-
-      </div>
+      Early-warning and response monitoring system
 
     </div>
 
+  </div>
 
-    <!-- ========================= -->
-    <!-- SYSTEM DISCLAIMER -->
-    <!-- ========================= -->
 
-    <div
-      class="card"
-      style="margin-top:20px;background:#fffbeb;border:1px solid #fde68a;">
+  <div
+    style="display:flex;gap:10px;align-items:center;">
 
-      <strong>⚠️ Early-warning notice</strong>
+    <span class="live-status">
 
-      <div
-        style="font-size:.8rem;color:var(--ink-600);margin-top:5px;">
+      <span class="live-dot"></span>
 
-        PashuRakshak AI provides decision-support and early-warning
-        signals. Risk scores do not constitute veterinary diagnosis or
-        epidemiological confirmation. Government/veterinary authorities
-        should verify alerts before taking official action.
+      Live Monitoring
 
-      </div>
+    </span>
 
-    </div>
 
-  </main>
+    <button
+      class="btn btn-ghost refresh-btn"
+      onclick="refreshDashboard()">
+
+      🔄 Refresh
+
+    </button>
+
+
+    <button
+      class="btn btn-ghost"
+      onclick="exportBlockSummaryCSV()">
+
+      ⬇ Export CSV
+
+    </button>
+
+  </div>
 
 </div>
 
 
+
+<!-- =====================================================
+     GOVERNMENT KPI SECTION
+===================================================== -->
+
+<div class="kpi-grid">
+
+
+<!-- TOTAL ANIMALS -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      🐄
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Total Registered Animals
+  </div>
+
+  <div
+    class="kpi-value"
+    id="kpi-animals">
+
+    {{ totals.total_animals or 0 }}
+
+  </div>
+
+</div>
+
+
+
+<!-- ACTIVE CASES -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      📋
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Active Disease Cases
+  </div>
+
+  <div
+    class="kpi-value"
+    id="kpi-active">
+
+    {{ totals.total_open_reports or 0 }}
+
+  </div>
+
+</div>
+
+
+
+<!-- OUTBREAKS -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      🚨
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Suspected Outbreaks
+  </div>
+
+  <div
+    class="kpi-value danger-value"
+    id="kpi-outbreaks">
+
+    0
+
+  </div>
+
+</div>
+
+
+
+<!-- HIGH RISK -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      ⚠️
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    High-Risk Villages
+  </div>
+
+  <div
+    class="kpi-value danger-value"
+    id="kpi-high-risk">
+
+    {{ totals.total_high_risk or 0 }}
+
+  </div>
+
+</div>
+
+
+
+<!-- VACCINATION -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      💉
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Vaccination Coverage
+  </div>
+
+  <div
+    class="kpi-value success-value"
+    id="kpi-vaccination">
+
+    {{ totals.vaccination_coverage or 0 }}%
+
+  </div>
+
+</div>
+
+
+
+<!-- DEATHS -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      ☠️
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Deaths This Month
+  </div>
+
+  <div
+    class="kpi-value danger-value"
+    id="kpi-deaths">
+
+    0
+
+  </div>
+
+</div>
+
+
+
+<!-- PENDING VET -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      🩺
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Pending Vet Actions
+  </div>
+
+  <div
+    class="kpi-value warning-value"
+    id="kpi-vet">
+
+    0
+
+  </div>
+
+</div>
+
+
+
+<!-- BLOCKS -->
+
+<div class="kpi-card">
+
+  <div class="kpi-top">
+
+    <div class="kpi-icon">
+      🏘️
+    </div>
+
+  </div>
+
+  <div class="kpi-label">
+    Blocks Reporting
+  </div>
+
+  <div
+    class="kpi-value"
+    id="kpi-blocks">
+
+    {{ totals.blocks_reporting or 0 }}
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     DISEASE RISK MONITORING
+===================================================== -->
+
+<h2 class="section-title">
+  Disease Risk Monitoring
+</h2>
+
+
+<div class="dashboard-grid">
+
+
+<!-- MAP -->
+
+<div class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h3>
+        🗺️ Government Risk Map
+      </h3>
+
+      <div class="small-muted">
+
+        Disease cases, hotspots and outbreak risk
+
+      </div>
+
+    </div>
+
+
+    <span class="risk-pill risk-low">
+      Live
+    </span>
+
+  </div>
+
+
+  <div id="risk-map"></div>
+
+</div>
+
+
+
+<!-- ALERTS -->
+
+<div class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h3>
+        🚨 Priority Alerts
+      </h3>
+
+      <div class="small-muted">
+
+        Areas requiring immediate attention
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="alert-list"
+    class="alert-list">
+
+    <div class="empty-state">
+
+      Loading alerts...
+
+    </div>
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     RESPONSE OPERATIONS
+===================================================== -->
+
+<h2 class="section-title">
+  Response Operations
+</h2>
+
+
+<div class="dashboard-grid">
+
+
+<!-- VETERINARY RESPONSE -->
+
+<div class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h3>
+        🩺 Veterinary Response
+      </h3>
+
+      <div class="small-muted">
+
+        Current case response pipeline
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="status-grid">
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number"
+        id="response-review">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Under Review
+      </div>
+
+    </div>
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number"
+        id="response-treatment">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Treatment
+      </div>
+
+    </div>
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number"
+        id="response-isolated">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Isolated
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+  <div class="progress-wrap">
+
+    <div class="progress-label">
+
+      <span>
+        Case verification progress
+      </span>
+
+      <strong id="verification-percent">
+        0%
+      </strong>
+
+    </div>
+
+
+    <div class="progress">
+
+      <div
+        class="progress-bar"
+        id="verification-progress"
+        style="width:0%">
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- LAB -->
+
+<div class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h3>
+        🧪 Laboratory Escalation
+      </h3>
+
+      <div class="small-muted">
+
+        Samples requiring laboratory action
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="status-grid">
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number warning-value"
+        id="lab-requested">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Requested
+      </div>
+
+    </div>
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number"
+        id="lab-testing">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Testing
+      </div>
+
+    </div>
+
+
+    <div class="status-box">
+
+      <div
+        class="status-number success-value"
+        id="lab-results">
+
+        0
+
+      </div>
+
+      <div class="status-label">
+        Results
+      </div>
+
+    </div>
+
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     VACCINATION
+===================================================== -->
+
+<h2 class="section-title">
+  💉 Vaccination Coverage
+</h2>
+
+
+<div class="card">
+
+
+<div class="card-header">
+
+  <div>
+
+    <h3>
+      District Vaccination Status
+    </h3>
+
+    <div class="small-muted">
+
+      Registered livestock vaccination monitoring
+
+    </div>
+
+  </div>
+
+
+  <strong id="vaccination-header">
+
+    {{ totals.vaccination_coverage or 0 }}%
+
+  </strong>
+
+</div>
+
+
+<div class="progress">
+
+  <div
+    class="progress-bar"
+    id="vaccination-progress"
+    style="width:{{ totals.vaccination_coverage or 0 }}%">
+
+  </div>
+
+</div>
+
+
+<div
+  style="
+    display:flex;
+    justify-content:space-between;
+    margin-top:8px;
+    font-size:.8rem;
+    color:var(--ink-600);
+  ">
+
+  <span>
+    Vaccinated
+  </span>
+
+  <span>
+    Target: 80%
+  </span>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     BLOCK CHART
+===================================================== -->
+
+<h2 class="section-title">
+  📊 Disease Reports by Block
+</h2>
+
+
+<div class="card">
+
+
+<div class="card-header">
+
+  <div>
+
+    <h3>
+      Block-wise Surveillance
+    </h3>
+
+    <div class="small-muted">
+
+      Open reports and high-risk cases
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div style="height:320px;">
+
+  <canvas id="block-chart"></canvas>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     BLOCK TABLE
+===================================================== -->
+
+<h2 class="section-title">
+  🏘️ Block-wise Operational Summary
+</h2>
+
+
+<div
+  class="card"
+  style="padding:0;overflow:hidden;"
+  id="block-summary-table">
+
+
+<div class="table-scroll">
+
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+  Block
+</th>
+
+<th>
+  Villages Reporting
+</th>
+
+<th>
+  Open Reports
+</th>
+
+<th>
+  High Risk
+</th>
+
+<th>
+  Risk Status
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+{% for b in block_summary %}
+
+
+<tr>
+
+
+<td>
+
+<strong>
+  {{ b.block }}
+</strong>
+
+</td>
+
+
+<td>
+  {{ b.villages_reporting }}
+</td>
+
+
+<td>
+  {{ b.open_reports }}
+</td>
+
+
+<td>
+
+
+{% if b.high_risk > 0 %}
+
+<span class="risk-pill risk-high">
+  {{ b.high_risk }}
+</span>
+
+{% else %}
+
+<span class="risk-pill risk-low">
+  0
+</span>
+
+{% endif %}
+
+
+</td>
+
+
+<td>
+
+
+{% if b.high_risk >= 5 %}
+
+<span class="risk-pill risk-high">
+  HIGH
+</span>
+
+
+{% elif b.high_risk > 0 %}
+
+<span class="risk-pill risk-watch">
+  WATCH
+</span>
+
+
+{% else %}
+
+<span class="risk-pill risk-low">
+  LOW
+</span>
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="5">
+
+<div class="empty-state">
+
+  No block surveillance data available.
+
+</div>
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================================
+     DISCLAIMER
+===================================================== -->
+
+<div
+  class="card"
+  style="
+    margin-top:20px;
+    background:#fffbeb;
+    border:1px solid #fde68a;
+  ">
+
+
+<strong>
+  ⚠️ Early-warning notice
+</strong>
+
+
+<div
+  style="
+    font-size:.8rem;
+    color:var(--ink-600);
+    margin-top:5px;
+  ">
+
+  PashuRakshak AI provides decision-support and early-warning
+  signals. Risk scores do not constitute veterinary diagnosis or
+  epidemiological confirmation. Government/veterinary authorities
+  should verify alerts before taking official action.
+
+</div>
+
+
+</div>
+
+
+</main>
+
+</div>
+
+
+
+<!-- =====================================================
+     APP JAVASCRIPT
+===================================================== -->
+
 <script src="/static/app.js"></script>
+
 
 <script>
 
-  /* =========================================
-     SERVER-SIDE BLOCK DATA
-  ========================================= */
+/* =========================================================
+   SERVER DATA
+========================================================= */
 
-  const BLOCK_SUMMARY = {{ block_summary|tojson }};
+const DASHBOARD_TOTALS =
+  {{ totals | tojson }};
+
+const BLOCK_SUMMARY =
+  {{ block_summary | tojson }};
 
 
-  /* =========================================
-     BLOCK CHART
-  ========================================= */
+/* =========================================================
+   UPDATE KPI VALUES
+========================================================= */
 
-  function initBlockChart(data) {
+function updateDashboardKPIs() {
 
-    const canvas = document.getElementById("block-chart");
 
-    if (!canvas) return;
+  /* Total Animals */
 
-    if (window.blockChart) {
-      window.blockChart.destroy();
-    }
+  const animals =
+    document.getElementById("kpi-animals");
 
-    const labels = data.map(item => item.block);
+  if (animals) {
 
-    const reports = data.map(
-      item => Number(item.open_reports || 0)
+    animals.textContent =
+      Number(
+        DASHBOARD_TOTALS.total_animals || 0
+      ).toLocaleString();
+
+  }
+
+
+  /* Active Cases */
+
+  const active =
+    document.getElementById("kpi-active");
+
+  if (active) {
+
+    active.textContent =
+      Number(
+        DASHBOARD_TOTALS.total_open_reports || 0
+      ).toLocaleString();
+
+  }
+
+
+  /* High Risk */
+
+  const highRisk =
+    document.getElementById("kpi-high-risk");
+
+  if (highRisk) {
+
+    highRisk.textContent =
+      Number(
+        DASHBOARD_TOTALS.total_high_risk || 0
+      ).toLocaleString();
+
+  }
+
+
+  /* Vaccination */
+
+  const coverage =
+    Number(
+      DASHBOARD_TOTALS.vaccination_coverage || 0
     );
 
-    const highRisk = data.map(
-      item => Number(item.high_risk || 0)
+
+  const vaccination =
+    document.getElementById(
+      "kpi-vaccination"
     );
 
-    window.blockChart = new Chart(canvas, {
 
-      type: "bar",
+  if (vaccination) {
+
+    vaccination.textContent =
+      coverage.toFixed(1) + "%";
+
+  }
+
+
+  /* Vaccination Header */
+
+  const vaccinationHeader =
+    document.getElementById(
+      "vaccination-header"
+    );
+
+
+  if (vaccinationHeader) {
+
+    vaccinationHeader.textContent =
+      coverage.toFixed(1) + "%";
+
+  }
+
+
+  /* Vaccination Progress */
+
+  const vaccinationProgress =
+    document.getElementById(
+      "vaccination-progress"
+    );
+
+
+  if (vaccinationProgress) {
+
+    vaccinationProgress.style.width =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          coverage
+        )
+      ) + "%";
+
+  }
+
+
+  /* Blocks */
+
+  const blocks =
+    document.getElementById(
+      "kpi-blocks"
+    );
+
+
+  if (blocks) {
+
+    blocks.textContent =
+      Number(
+        DASHBOARD_TOTALS.blocks_reporting || 0
+      ).toLocaleString();
+
+  }
+
+}
+
+
+/* =========================================================
+   BLOCK CHART
+========================================================= */
+
+let blockChart = null;
+
+
+function initBlockChart() {
+
+
+  const canvas =
+    document.getElementById(
+      "block-chart"
+    );
+
+
+  if (
+    !canvas ||
+    typeof Chart === "undefined"
+  ) {
+
+    return;
+
+  }
+
+
+  if (blockChart) {
+
+    blockChart.destroy();
+
+  }
+
+
+  const data =
+    Array.isArray(BLOCK_SUMMARY)
+      ? BLOCK_SUMMARY
+      : [];
+
+
+  const labels =
+    data.map(
+      item =>
+        item.block || "Unknown"
+    );
+
+
+  const reports =
+    data.map(
+      item =>
+        Number(
+          item.open_reports || 0
+        )
+    );
+
+
+  const highRisk =
+    data.map(
+      item =>
+        Number(
+          item.high_risk || 0
+        )
+    );
+
+
+  blockChart =
+    new Chart(canvas, {
+
+      type:"bar",
+
 
       data: {
 
-        labels: labels,
+        labels:labels,
 
-        datasets: [
+
+        datasets:[
 
           {
-            label: "Open Reports",
-            data: reports
+
+            label:"Open Reports",
+
+            data:reports
+
           },
 
+
           {
-            label: "High Risk",
-            data: highRisk
+
+            label:"High Risk",
+
+            data:highRisk
+
           }
 
         ]
 
       },
 
+
       options: {
 
-        responsive: true,
+        responsive:true,
+
+        maintainAspectRatio:false,
+
 
         interaction: {
-          mode: "index",
-          intersect: false
+
+          mode:"index",
+
+          intersect:false
+
         },
 
+
         plugins: {
+
           legend: {
-            position: "bottom"
+
+            position:"bottom"
+
           }
+
         },
+
 
         scales: {
 
           y: {
-            beginAtZero: true,
+
+            beginAtZero:true,
+
             ticks: {
-              precision: 0
+
+              precision:0
+
             }
+
           }
 
         }
@@ -994,177 +1541,389 @@
 
     });
 
-  }
+}
 
 
-  /* =========================================
-     MAP
-  ========================================= */
+/* =========================================================
+   RISK MAP
+========================================================= */
 
-  let riskMap = null;
+let riskMap = null;
 
-  function initRiskMap() {
 
-    const mapElement = document.getElementById("risk-map");
+function initRiskMap() {
 
-    if (!mapElement) return;
 
-    riskMap = L.map("risk-map").setView(
-      [17.6805, 74.0183],
-      9
+  const mapElement =
+    document.getElementById(
+      "risk-map"
     );
 
-    L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution:
-          "&copy; OpenStreetMap contributors"
-      }
-    ).addTo(riskMap);
 
-    /*
-      Block summary may not contain GPS.
-      Therefore we show Satara district as the
-      initial monitoring centre.
-    */
+  if (
+    !mapElement ||
+    typeof L === "undefined"
+  ) {
 
-    L.marker([17.6805, 74.0183])
-      .addTo(riskMap)
-      .bindPopup(
-        "<strong>Satara District</strong><br>" +
-        "PashuRakshak AI monitoring centre"
-      );
+    return;
 
   }
 
 
-  /* =========================================
-     LOAD OUTBREAK DATA
-  ========================================= */
+  riskMap =
+    L.map(
+      "risk-map"
+    ).setView(
 
-  async function loadOutbreakRisk() {
+      [17.6805,74.0183],
 
-    try {
+      9
 
-      const response =
-        await fetch("/api/outbreak-risk");
+    );
 
-      if (!response.ok) {
-        throw new Error("Outbreak API failed");
-      }
 
-      const data = await response.json();
+  L.tileLayer(
 
-      if (!data.success) {
-        throw new Error(data.error || "Outbreak API error");
-      }
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 
-      const clusters = data.clusters || [];
+    {
 
+      maxZoom:19,
+
+      attribution:
+        "&copy; OpenStreetMap contributors"
+
+    }
+
+  ).addTo(riskMap);
+
+
+  L.marker(
+    [17.6805,74.0183]
+  )
+  .addTo(riskMap)
+  .bindPopup(
+
+    "<strong>Satara District</strong><br>" +
+    "PashuRakshak AI monitoring centre"
+
+  );
+
+}
+
+
+/* =========================================================
+   OUTBREAK RISK
+========================================================= */
+
+async function loadOutbreakRisk() {
+
+
+  try {
+
+
+    const response =
+      await fetch(
+        "/api/outbreak-risk"
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Outbreak API failed"
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "Outbreak API error"
+      );
+
+    }
+
+
+    const clusters =
+      Array.isArray(
+        data.clusters
+      )
+      ? data.clusters
+      : [];
+
+
+    /* HIGH outbreak count */
+
+    const highRiskClusters =
+      clusters.filter(
+        cluster => {
+
+          const level =
+            String(
+
+              cluster.outbreak_level ||
+              cluster.risk_level ||
+              ""
+
+            ).toUpperCase();
+
+
+          return level === "HIGH";
+
+        }
+      );
+
+
+    const outbreakElement =
       document.getElementById(
         "kpi-outbreaks"
-      ).textContent =
-        clusters.filter(
-          c => c.outbreak_level === "HIGH"
-        ).length;
-
-
-      updateAlerts(clusters);
-
-      addMapClusters(clusters);
-
-    } catch (error) {
-
-      console.error(
-        "Outbreak monitoring error:",
-        error
       );
 
+
+    if (outbreakElement) {
+
+      outbreakElement.textContent =
+        highRiskClusters.length
+          .toLocaleString();
+
+    }
+
+
+    updateAlerts(
+      clusters
+    );
+
+
+    addMapClusters(
+      clusters
+    );
+
+
+  }
+
+  catch(error) {
+
+
+    console.error(
+      "Outbreak monitoring error:",
+      error
+    );
+
+
+    const outbreakElement =
+      document.getElementById(
+        "kpi-outbreaks"
+      );
+
+
+    if (outbreakElement) {
+
+      outbreakElement.textContent =
+        "0";
+
+    }
+
+
+    const alertList =
       document.getElementById(
         "alert-list"
-      ).innerHTML = `
+      );
+
+
+    if (alertList) {
+
+      alertList.innerHTML = `
+
         <div class="empty-state">
+
           Outbreak monitoring data unavailable.
+
         </div>
+
       `;
 
     }
 
   }
 
+}
 
-  /* =========================================
-     ALERTS
-  ========================================= */
 
-  function updateAlerts(clusters) {
+/* =========================================================
+   ALERTS
+========================================================= */
 
-    const container =
-      document.getElementById("alert-list");
+function updateAlerts(
+  clusters
+) {
 
-    if (!clusters.length) {
 
-      container.innerHTML = `
-        <div class="empty-state">
-          ✅ No significant outbreak clusters detected.
-        </div>
-      `;
+  const container =
+    document.getElementById(
+      "alert-list"
+    );
 
-      return;
 
-    }
+  if (!container) {
 
-    const important =
-      clusters
-        .filter(
-          c =>
-            c.outbreak_level === "HIGH" ||
-            c.outbreak_level === "WATCH"
-        )
-        .slice(0, 6);
+    return;
 
-    if (!important.length) {
+  }
 
-      container.innerHTML = `
-        <div class="empty-state">
-          ✅ No high-priority alerts.
-        </div>
-      `;
 
-      return;
+  if (!clusters.length) {
 
-    }
+    container.innerHTML = `
 
-    container.innerHTML =
-      important.map(cluster => {
+      <div class="empty-state">
 
-        const high =
-          cluster.outbreak_level === "HIGH";
+        ✅ No significant outbreak clusters detected.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  const important =
+    clusters
+      .filter(cluster => {
+
+        const level =
+          String(
+
+            cluster.outbreak_level ||
+            cluster.risk_level ||
+            ""
+
+          ).toUpperCase();
+
+
+        return (
+          level === "HIGH" ||
+          level === "WATCH"
+        );
+
+      })
+      .slice(0,6);
+
+
+  if (!important.length) {
+
+    container.innerHTML = `
+
+      <div class="empty-state">
+
+        ✅ No high-priority alerts.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    important.map(
+      cluster => {
+
+
+        const level =
+          String(
+
+            cluster.outbreak_level ||
+            cluster.risk_level ||
+            "WATCH"
+
+          ).toUpperCase();
+
+
+        const isHigh =
+          level === "HIGH";
+
+
+        const area =
+          cluster.area ||
+          cluster.village ||
+          cluster.location ||
+          "Unknown Area";
+
+
+        const reports =
+          Number(
+
+            cluster.reports ||
+            cluster.case_count ||
+            cluster.cases ||
+            0
+
+          );
+
+
+        const affected =
+          Number(
+
+            cluster.affected ||
+            cluster.animals_affected ||
+            0
+
+          );
+
+
+        const score =
+          Number(
+
+            cluster.outbreak_score ||
+            cluster.risk_score ||
+            0
+
+          );
+
 
         return `
 
-          <div class="alert-item ${high ? "high" : "watch"}">
+          <div class="alert-item ${
+            isHigh ? "high" : "watch"
+          }">
 
             <div class="alert-icon">
-              ${high ? "🚨" : "⚠️"}
+
+              ${isHigh ? "🚨" : "⚠️"}
+
             </div>
+
 
             <div>
 
               <div class="alert-title">
-                ${escapeHTML(cluster.area || "Unknown Area")}
+
+                ${escapeHTML(area)}
+
               </div>
+
 
               <div class="alert-text">
 
-                ${cluster.reports || 0}
+                ${reports}
                 reports ·
 
-                ${cluster.affected || 0}
+                ${affected}
                 animals affected ·
 
                 Risk score:
-                ${cluster.outbreak_score || 0}
+                ${score}
 
               </div>
 
@@ -1174,213 +1933,303 @@
 
         `;
 
-      }).join("");
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   MAP CLUSTERS
+========================================================= */
+
+function addMapClusters(
+  clusters
+) {
+
+
+  if (!riskMap) {
+
+    return;
 
   }
 
 
-  /* =========================================
-     MAP CLUSTERS
-  ========================================= */
+  clusters.forEach(
+    cluster => {
 
-  function addMapClusters(clusters) {
-
-    if (!riskMap) return;
-
-    clusters.forEach(cluster => {
 
       const lat =
-        Number(cluster.lat);
+        Number(
+
+          cluster.lat ??
+          cluster.latitude
+
+        );
+
 
       const lng =
-        Number(cluster.lng);
+        Number(
+
+          cluster.lng ??
+          cluster.longitude
+
+        );
+
 
       if (
+
         !Number.isFinite(lat) ||
         !Number.isFinite(lng)
+
       ) {
+
         return;
+
       }
+
 
       const score =
-        Number(cluster.outbreak_score || 0);
+        Number(
 
-      let color = "green";
+          cluster.outbreak_score ||
+          cluster.risk_score ||
+          0
+
+        );
+
+
+      let riskColor =
+        "green";
+
 
       if (score >= 60) {
-        color = "red";
-      } else if (score >= 30) {
-        color = "orange";
+
+        riskColor = "red";
+
       }
 
+      else if (score >= 30) {
+
+        riskColor = "orange";
+
+      }
+
+
+      const area =
+        cluster.area ||
+        cluster.village ||
+        cluster.location ||
+        "Unknown Area";
+
+
       L.circle(
-        [lat, lng],
+
+        [lat,lng],
+
         {
-          radius: Math.max(
+
+          radius:Math.max(
+
             500,
-            Math.min(score * 30, 5000)
+
+            Math.min(
+
+              score * 30,
+
+              5000
+
+            )
+
           ),
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.35
+
+          color:riskColor,
+
+          fillColor:riskColor,
+
+          fillOpacity:.35
+
         }
+
       )
+
       .addTo(riskMap)
+
       .bindPopup(`
 
         <strong>
-          ${escapeHTML(cluster.area || "Unknown")}
+
+          ${escapeHTML(area)}
+
         </strong>
 
         <br>
 
         Outbreak Risk:
+
         <strong>
-          ${escapeHTML(cluster.outbreak_level || "LOW")}
+
+          ${escapeHTML(
+
+            cluster.outbreak_level ||
+            cluster.risk_level ||
+            "LOW"
+
+          )}
+
         </strong>
 
         <br>
 
         Reports:
-        ${cluster.reports || 0}
+
+        ${Number(
+
+          cluster.reports ||
+          cluster.case_count ||
+          0
+
+        )}
 
         <br>
 
         Animals affected:
-        ${cluster.affected || 0}
+
+        ${Number(
+
+          cluster.affected ||
+          cluster.animals_affected ||
+          0
+
+        )}
 
       `);
-
-    });
-
-  }
-
-
-  /* =========================================
-     DASHBOARD KPIs
-  ========================================= */
-
-  async function loadDashboardKPIs() {
-
-    try {
-
-      const response =
-        await fetch("/api/dashboard-kpis");
-
-      if (!response.ok) {
-        throw new Error("KPI API failed");
-      }
-
-      const data =
-        await response.json();
-
-      if (!data.success) {
-        throw new Error(
-          data.error || "KPI API error"
-        );
-      }
-
-      document.getElementById(
-        "kpi-active"
-      ).textContent =
-        data.total_cases ?? "0";
-
-      document.getElementById(
-        "kpi-high-risk"
-      ).textContent =
-        data.high_risk_cases ?? "0";
-
-      document.getElementById(
-        "kpi-vet"
-      ).textContent =
-        Math.max(
-          0,
-          (data.total_cases || 0) -
-          (data.verified_cases || 0)
-        );
-
-    } catch (error) {
-
-      console.error(
-        "KPI loading error:",
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =========================================
-     REFRESH
-  ========================================= */
-
-  async function refreshDashboard() {
-
-    const button =
-      document.querySelector(".refresh-btn");
-
-    if (button) {
-      button.textContent = "⏳ Refreshing...";
-      button.disabled = true;
-    }
-
-    try {
-
-      await Promise.all([
-        loadDashboardKPIs(),
-        loadOutbreakRisk()
-      ]);
-
-    } finally {
-
-      if (button) {
-        button.textContent = "🔄 Refresh";
-        button.disabled = false;
-      }
-
-    }
-
-  }
-
-
-  /* =========================================
-     SECURITY
-  ========================================= */
-
-  function escapeHTML(value) {
-
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-
-  }
-
-
-  /* =========================================
-     START DASHBOARD
-  ========================================= */
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    function() {
-
-      initBlockChart(BLOCK_SUMMARY);
-
-      initRiskMap();
-
-      loadDashboardKPIs();
-
-      loadOutbreakRisk();
 
     }
   );
 
+}
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+function escapeHTML(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
+}
+
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+async function refreshDashboard() {
+
+
+  const button =
+    document.querySelector(
+      ".refresh-btn"
+    );
+
+
+  if (button) {
+
+    button.textContent =
+      "⏳ Refreshing...";
+
+    button.disabled = true;
+
+  }
+
+
+  /*
+     Reload the complete page.
+
+     Flask will query Supabase again
+     and calculate fresh totals.
+  */
+
+  setTimeout(
+    () => {
+
+      window.location.reload();
+
+    },
+
+    300
+
+  );
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+
+    /* KPI */
+
+    updateDashboardKPIs();
+
+
+    /* Chart */
+
+    initBlockChart();
+
+
+    /* Map */
+
+    initRiskMap();
+
+
+    /* Outbreak */
+
+    loadOutbreakRisk();
+
+
+  }
+);
+
 </script>
 
+
 </body>
+
 </html>
-```
