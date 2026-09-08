@@ -5,7 +5,7 @@ import urllib.request
 import math
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, render_template_string
 
 try:
     from supabase import create_client
@@ -591,6 +591,143 @@ def login_page():
 # FARMER APPLICATION HOME
 @app.route("/home")
 def application_home():
+            current_role_label="Farmer"
+    )
+# ============================================================
+# LANGUAGE SELECTION
+# ============================================================
+
+@app.route("/onboarding/language")
+def language_page():
+    return render_template_string("""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Language - PashuRakshak AI</title>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #f4f8f5;
+        }
+
+        .card {
+            width: 90%;
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        button:hover {
+            background: #f0f8f2;
+        }
+
+        .back {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back button {
+            background: #eee;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>🌐 Select Language</h1>
+
+    <p>Choose your preferred language</p>
+
+    <button onclick="selectLanguage('English')">
+        🇬🇧 English
+    </button>
+
+    <button onclick="selectLanguage('Hindi')">
+        🇮🇳 हिंदी
+    </button>
+
+    <button onclick="selectLanguage('Marathi')">
+        🇮🇳 मराठी
+    </button>
+
+    <button onclick="selectLanguage('Kannada')">
+        🇮🇳 ಕನ್ನಡ
+    </button>
+
+    <div class="back">
+        <button onclick="goBack()">
+            ← Back to Home
+        </button>
+    </div>
+
+</div>
+
+<script>
+
+function selectLanguage(language) {
+
+    localStorage.setItem(
+        "pashurakshak_language",
+        language
+    );
+
+    localStorage.setItem(
+        "pashurakshak_language_selected",
+        "true"
+    );
+
+    window.location.href =
+        "/home?lang=" + encodeURIComponent(language);
+}
+
+function goBack() {
+
+    window.location.href = "/home";
+
+}
+
+</script>
+
+</body>
+</html>
+""")
 
     def translate(key):
 
