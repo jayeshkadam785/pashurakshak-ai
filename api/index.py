@@ -586,7 +586,6 @@ def login_page():
             SUPABASE_PUBLISHABLE_KEY
         )
     )
-
 # ============================================================
 # FARMER APPLICATION HOME
 # ============================================================
@@ -612,217 +611,501 @@ def application_home():
         "Kannada": "ಕನ್ನಡ"
     }
 
+    # Fallback to English for unsupported language
+    if selected_language not in supported_languages:
+        selected_language = "English"
+
     current_lang_label = supported_languages.get(
         selected_language,
         "English"
     )
 
-    def translate(key):
+    # ========================================================
+    # TRANSLATIONS
+    # ========================================================
 
     translations = {
 
+        # ----------------------------------------------------
+        # ENGLISH
+        # ----------------------------------------------------
+
         "English": {
+
             "namaskar": "Namaskar",
             "herd": "Herd",
             "animals": "animals",
             "report_symptom": "Report symptom",
-            "village_outbreak_risk": "Village outbreak risk",
+
+            "village_outbreak_risk":
+                "Village outbreak risk",
+
             "low": "Low",
-            "no_unusual_clusters": "No unusual case clusters nearby",
-            "reports_this_week": "Reports this week",
-            "vaccination_due": "Vaccination due",
-            "active_advisories": "Active advisories",
-            "nearest_facility": "Nearest facility",
-            "distance_unavailable": "Distance unavailable",
-            "view_on_map": "View on map",
-            "report_heading": "Report livestock health issue",
-            "report_body": "Report symptoms with a photo, voice, location and animal details for early AI risk screening.",
-            "take_picture": "Take a picture",
-            "ai_risk_screening": "AI risk screening",
-            "get_vet_advice": "Get vet advice",
-            "start_report": "Start report",
-            "recent_advisories": "Recent advisories",
-            "recent": "Recent",
-            "livestock_health_reminder": "Livestock health reminder",
-            "health_reminder_body": "Keep vaccination records updated and report unusual symptoms early.",
-            "today": "Today",
-            "quick_actions": "Quick actions",
-            "animal_registry": "Animal Registry",
-            "animal_registry_body": "Register animals, owners, vaccination and treatment history.",
-            "manage_animals": "Manage animals",
-            "vaccination": "Vaccination",
-            "vaccination_body": "Record vaccinations and monitor upcoming due dates.",
-            "vaccination_records": "Vaccination records",
-            "case_records": "Case Records",
-            "case_records_body": "View previously reported livestock disease cases and risk assessments.",
-            "view_records": "View records",
-            "health_alerts": "Health alerts",
-            "health_alerts_body": "Check important livestock-health alerts for your area.",
-            "view_alerts": "View alerts",
-            "footer_description": "Early livestock health warning and veterinary decision support"
+
+            "no_unusual_clusters":
+                "No unusual case clusters nearby",
+
+            "reports_this_week":
+                "Reports this week",
+
+            "vaccination_due":
+                "Vaccination due",
+
+            "active_advisories":
+                "Active advisories",
+
+            "nearest_facility":
+                "Nearest facility",
+
+            "distance_unavailable":
+                "Distance unavailable",
+
+            "view_on_map":
+                "View on map",
+
+            "report_heading":
+                "Report livestock health issue",
+
+            "report_body":
+                "Report symptoms with a photo, voice, location and animal details for early AI risk screening.",
+
+            "take_picture":
+                "Take a picture",
+
+            "ai_risk_screening":
+                "AI risk screening",
+
+            "get_vet_advice":
+                "Get vet advice",
+
+            "start_report":
+                "Start report",
+
+            "recent_advisories":
+                "Recent advisories",
+
+            "recent":
+                "Recent",
+
+            "livestock_health_reminder":
+                "Livestock health reminder",
+
+            "health_reminder_body":
+                "Keep vaccination records updated and report unusual symptoms early.",
+
+            "today":
+                "Today",
+
+            "quick_actions":
+                "Quick actions",
+
+            "animal_registry":
+                "Animal Registry",
+
+            "animal_registry_body":
+                "Register animals, owners, vaccination and treatment history.",
+
+            "manage_animals":
+                "Manage animals",
+
+            "vaccination":
+                "Vaccination",
+
+            "vaccination_body":
+                "Record vaccinations and monitor upcoming due dates.",
+
+            "vaccination_records":
+                "Vaccination records",
+
+            "case_records":
+                "Case Records",
+
+            "case_records_body":
+                "View previously reported livestock disease cases and risk assessments.",
+
+            "view_records":
+                "View records",
+
+            "health_alerts":
+                "Health alerts",
+
+            "health_alerts_body":
+                "Check important livestock-health alerts for your area.",
+
+            "view_alerts":
+                "View alerts",
+
+            "footer_description":
+                "Early livestock health warning and veterinary decision support"
         },
 
+        # ----------------------------------------------------
+        # HINDI
+        # ----------------------------------------------------
+
         "Hindi": {
+
             "namaskar": "नमस्कार",
             "herd": "झुंड",
             "animals": "पशु",
             "report_symptom": "लक्षण रिपोर्ट करें",
-            "village_outbreak_risk": "गाँव में बीमारी का जोखिम",
+
+            "village_outbreak_risk":
+                "गाँव में बीमारी का जोखिम",
+
             "low": "कम",
-            "no_unusual_clusters": "आस-पास कोई असामान्य बीमारी का समूह नहीं",
-            "reports_this_week": "इस सप्ताह की रिपोर्ट",
-            "vaccination_due": "टीकाकरण बाकी",
-            "active_advisories": "सक्रिय सलाह",
-            "nearest_facility": "निकटतम सुविधा",
-            "distance_unavailable": "दूरी उपलब्ध नहीं",
-            "view_on_map": "मानचित्र पर देखें",
-            "report_heading": "पशु स्वास्थ्य समस्या की रिपोर्ट करें",
-            "report_body": "फोटो, आवाज़, स्थान और पशु की जानकारी के साथ लक्षणों की रिपोर्ट करें।",
-            "take_picture": "फोटो लें",
-            "ai_risk_screening": "AI जोखिम जाँच",
-            "get_vet_advice": "पशु चिकित्सक की सलाह लें",
-            "start_report": "रिपोर्ट शुरू करें",
-            "recent_advisories": "हाल की सलाह",
-            "recent": "हाल ही में",
-            "livestock_health_reminder": "पशु स्वास्थ्य अनुस्मारक",
-            "health_reminder_body": "टीकाकरण रिकॉर्ड अपडेट रखें और असामान्य लक्षणों की तुरंत रिपोर्ट करें।",
-            "today": "आज",
-            "quick_actions": "त्वरित कार्य",
-            "animal_registry": "पशु रजिस्ट्ररी",
-            "animal_registry_body": "पशुओं, मालिकों, टीकाकरण और उपचार का इतिहास दर्ज करें।",
-            "manage_animals": "पशु प्रबंधित करें",
-            "vaccination": "टीकाकरण",
-            "vaccination_body": "टीकाकरण दर्ज करें और आने वाली तारीखों पर नज़र रखें।",
-            "vaccination_records": "टीकाकरण रिकॉर्ड",
-            "case_records": "केस रिकॉर्ड",
-            "case_records_body": "पहले रिपोर्ट किए गए पशु रोग मामलों और जोखिम आकलन देखें।",
-            "view_records": "रिकॉर्ड देखें",
-            "health_alerts": "स्वास्थ्य अलर्ट",
-            "health_alerts_body": "अपने क्षेत्र के महत्वपूर्ण पशु स्वास्थ्य अलर्ट देखें।",
-            "view_alerts": "अलर्ट देखें",
-            "footer_description": "पशु स्वास्थ्य की प्रारंभिक चेतावनी और पशु चिकित्सा निर्णय सहायता"
+
+            "no_unusual_clusters":
+                "आस-पास कोई असामान्य बीमारी का समूह नहीं",
+
+            "reports_this_week":
+                "इस सप्ताह की रिपोर्ट",
+
+            "vaccination_due":
+                "टीकाकरण बाकी",
+
+            "active_advisories":
+                "सक्रिय सलाह",
+
+            "nearest_facility":
+                "निकटतम सुविधा",
+
+            "distance_unavailable":
+                "दूरी उपलब्ध नहीं",
+
+            "view_on_map":
+                "मानचित्र पर देखें",
+
+            "report_heading":
+                "पशु स्वास्थ्य समस्या की रिपोर्ट करें",
+
+            "report_body":
+                "फोटो, आवाज़, स्थान और पशु की जानकारी के साथ लक्षणों की रिपोर्ट करें।",
+
+            "take_picture":
+                "फोटो लें",
+
+            "ai_risk_screening":
+                "AI जोखिम जाँच",
+
+            "get_vet_advice":
+                "पशु चिकित्सक की सलाह लें",
+
+            "start_report":
+                "रिपोर्ट शुरू करें",
+
+            "recent_advisories":
+                "हाल की सलाह",
+
+            "recent":
+                "हाल ही में",
+
+            "livestock_health_reminder":
+                "पशु स्वास्थ्य अनुस्मारक",
+
+            "health_reminder_body":
+                "टीकाकरण रिकॉर्ड अपडेट रखें और असामान्य लक्षणों की तुरंत रिपोर्ट करें।",
+
+            "today":
+                "आज",
+
+            "quick_actions":
+                "त्वरित कार्य",
+
+            "animal_registry":
+                "पशु रजिस्ट्ररी",
+
+            "animal_registry_body":
+                "पशुओं, मालिकों, टीकाकरण और उपचार का इतिहास दर्ज करें।",
+
+            "manage_animals":
+                "पशु प्रबंधित करें",
+
+            "vaccination":
+                "टीकाकरण",
+
+            "vaccination_body":
+                "टीकाकरण दर्ज करें और आने वाली तारीखों पर नज़र रखें।",
+
+            "vaccination_records":
+                "टीकाकरण रिकॉर्ड",
+
+            "case_records":
+                "केस रिकॉर्ड",
+
+            "case_records_body":
+                "पहले रिपोर्ट किए गए पशु रोग मामलों और जोखिम आकलन देखें।",
+
+            "view_records":
+                "रिकॉर्ड देखें",
+
+            "health_alerts":
+                "स्वास्थ्य अलर्ट",
+
+            "health_alerts_body":
+                "अपने क्षेत्र के महत्वपूर्ण पशु स्वास्थ्य अलर्ट देखें।",
+
+            "view_alerts":
+                "अलर्ट देखें",
+
+            "footer_description":
+                "पशु स्वास्थ्य की प्रारंभिक चेतावनी और पशु चिकित्सा निर्णय सहायता"
         },
 
+        # ----------------------------------------------------
+        # MARATHI
+        # ----------------------------------------------------
+
         "Marathi": {
+
             "namaskar": "नमस्कार",
             "herd": "कळप",
             "animals": "पशू",
             "report_symptom": "लक्षणांची नोंद करा",
-            "village_outbreak_risk": "गावातील रोगाचा धोका",
+
+            "village_outbreak_risk":
+                "गावातील रोगाचा धोका",
+
             "low": "कमी",
-            "no_unusual_clusters": "जवळपास कोणतेही असामान्य रोगाचे समूह नाहीत",
-            "reports_this_week": "या आठवड्यातील नोंदी",
-            "vaccination_due": "लसीकरण बाकी",
-            "active_advisories": "सक्रिय सूचना",
-            "nearest_facility": "जवळची सुविधा",
-            "distance_unavailable": "अंतर उपलब्ध नाही",
-            "view_on_map": "नकाशावर पहा",
-            "report_heading": "पशू आरोग्य समस्येची नोंद करा",
-            "report_body": "फोटो, आवाज, स्थान आणि पशूची माहिती वापरून लक्षणांची नोंद करा.",
-            "take_picture": "फोटो काढा",
-            "ai_risk_screening": "AI जोखीम तपासणी",
-            "get_vet_advice": "पशुवैद्यकीय सल्ला घ्या",
-            "start_report": "नोंद सुरू करा",
-            "recent_advisories": "अलीकडील सूचना",
-            "recent": "अलीकडे",
-            "livestock_health_reminder": "पशू आरोग्य स्मरणपत्र",
-            "health_reminder_body": "लसीकरणाचे रेकॉर्ड अद्ययावत ठेवा आणि असामान्य लक्षणांची लवकर नोंद करा.",
-            "today": "आज",
-            "quick_actions": "जलद कृती",
-            "animal_registry": "पशू नोंदणी",
-            "animal_registry_body": "पशू, मालक, लसीकरण आणि उपचाराचा इतिहास नोंदवा.",
-            "manage_animals": "पशू व्यवस्थापित करा",
-            "vaccination": "लसीकरण",
-            "vaccination_body": "लसीकरणाची नोंद करा आणि आगामी तारखांवर लक्ष ठेवा.",
-            "vaccination_records": "लसीकरण रेकॉर्ड",
-            "case_records": "केस रेकॉर्ड",
-            "case_records_body": "पूर्वी नोंदवलेले पशू रोग आणि जोखीम मूल्यांकन पहा.",
-            "view_records": "रेकॉर्ड पहा",
-            "health_alerts": "आरोग्य सूचना",
-            "health_alerts_body": "तुमच्या परिसरातील महत्त्वाच्या पशू आरोग्य सूचना पहा.",
-            "view_alerts": "सूचना पहा",
-            "footer_description": "पशू आरोग्याची पूर्वसूचना आणि पशुवैद्यकीय निर्णय सहाय्य"
+
+            "no_unusual_clusters":
+                "जवळपास कोणतेही असामान्य रोगाचे समूह नाहीत",
+
+            "reports_this_week":
+                "या आठवड्यातील नोंदी",
+
+            "vaccination_due":
+                "लसीकरण बाकी",
+
+            "active_advisories":
+                "सक्रिय सूचना",
+
+            "nearest_facility":
+                "जवळची सुविधा",
+
+            "distance_unavailable":
+                "अंतर उपलब्ध नाही",
+
+            "view_on_map":
+                "नकाशावर पहा",
+
+            "report_heading":
+                "पशू आरोग्य समस्येची नोंद करा",
+
+            "report_body":
+                "फोटो, आवाज, स्थान आणि पशूची माहिती वापरून लक्षणांची नोंद करा.",
+
+            "take_picture":
+                "फोटो काढा",
+
+            "ai_risk_screening":
+                "AI जोखीम तपासणी",
+
+            "get_vet_advice":
+                "पशुवैद्यकीय सल्ला घ्या",
+
+            "start_report":
+                "नोंद सुरू करा",
+
+            "recent_advisories":
+                "अलीकडील सूचना",
+
+            "recent":
+                "अलीकडे",
+
+            "livestock_health_reminder":
+                "पशू आरोग्य स्मरणपत्र",
+
+            "health_reminder_body":
+                "लसीकरणाचे रेकॉर्ड अद्ययावत ठेवा आणि असामान्य लक्षणांची लवकर नोंद करा.",
+
+            "today":
+                "आज",
+
+            "quick_actions":
+                "जलद कृती",
+
+            "animal_registry":
+                "पशू नोंदणी",
+
+            "animal_registry_body":
+                "पशू, मालक, लसीकरण आणि उपचाराचा इतिहास नोंदवा.",
+
+            "manage_animals":
+                "पशू व्यवस्थापित करा",
+
+            "vaccination":
+                "लसीकरण",
+
+            "vaccination_body":
+                "लसीकरणाची नोंद करा आणि आगामी तारखांवर लक्ष ठेवा.",
+
+            "vaccination_records":
+                "लसीकरण रेकॉर्ड",
+
+            "case_records":
+                "केस रेकॉर्ड",
+
+            "case_records_body":
+                "पूर्वी नोंदवलेले पशू रोग आणि जोखीम मूल्यांकन पहा.",
+
+            "view_records":
+                "रेकॉर्ड पहा",
+
+            "health_alerts":
+                "आरोग्य सूचना",
+
+            "health_alerts_body":
+                "तुमच्या परिसरातील महत्त्वाच्या पशू आरोग्य सूचना पहा.",
+
+            "view_alerts":
+                "सूचना पहा",
+
+            "footer_description":
+                "पशू आरोग्याची पूर्वसूचना आणि पशुवैद्यकीय निर्णय सहाय्य"
         },
 
+        # ----------------------------------------------------
+        # KANNADA
+        # ----------------------------------------------------
+
         "Kannada": {
+
             "namaskar": "ನಮಸ್ಕಾರ",
             "herd": "ಹಿಂಡು",
             "animals": "ಪ್ರಾಣಿಗಳು",
             "report_symptom": "ಲಕ್ಷಣ ವರದಿ ಮಾಡಿ",
-            "village_outbreak_risk": "ಗ್ರಾಮದ ರೋಗದ ಅಪಾಯ",
-            "low": "ಕಡಿಮೆ",
-            "no_unusual_clusters": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಅಸಾಮಾನ್ಯ ರೋಗ ಗುಂಪುಗಳಿಲ್ಲ",
-            "reports_this_week": "ಈ ವಾರದ ವರದಿಗಳು",
-            "vaccination_due": "ಲಸಿಕೆ ಬಾಕಿ",
-            "active_advisories": "ಸಕ್ರಿಯ ಸಲಹೆಗಳು",
-            "nearest_facility": "ಹತ್ತಿರದ ಸೌಲಭ್ಯ",
-            "distance_unavailable": "ದೂರ ಲಭ್ಯವಿಲ್ಲ",
-            "view_on_map": "ನಕ್ಷೆಯಲ್ಲಿ ನೋಡಿ",
-            "report_heading": "ಜಾನುವಾರು ಆರೋಗ್ಯ ಸಮಸ್ಯೆಯನ್ನು ವರದಿ ಮಾಡಿ",
-            "report_body": "ಫೋಟೋ, ಧ್ವನಿ, ಸ್ಥಳ ಮತ್ತು ಪ್ರಾಣಿಯ ಮಾಹಿತಿಯೊಂದಿಗೆ ಲಕ್ಷಣಗಳನ್ನು ವರದಿ ಮಾಡಿ.",
-            "take_picture": "ಚಿತ್ರ ತೆಗೆದುಕೊಳ್ಳಿ",
-            "ai_risk_screening": "AI ಅಪಾಯ ಪರಿಶೀಲನೆ",
-            "get_vet_advice": "ಪಶುವೈದ್ಯರ ಸಲಹೆ ಪಡೆಯಿರಿ",
-            "start_report": "ವರದಿ ಪ್ರಾರಂಭಿಸಿ",
-            "recent_advisories": "ಇತ್ತೀಚಿನ ಸಲಹೆಗಳು",
-            "recent": "ಇತ್ತೀಚೆಗೆ",
-            "livestock_health_reminder": "ಜಾನುವಾರು ಆರೋಗ್ಯ ಜ್ಞಾಪನೆ",
-            "health_reminder_body": "ಲಸಿಕೆ ದಾಖಲೆಗಳನ್ನು ನವೀಕರಿಸಿ ಮತ್ತು ಅಸಾಮಾನ್ಯ ಲಕ್ಷಣಗಳನ್ನು ತ್ವರಿತವಾಗಿ ವರದಿ ಮಾಡಿ.",
-            "today": "ಇಂದು",
-            "quick_actions": "ತ್ವರಿತ ಕಾರ್ಯಗಳು",
-            "animal_registry": "ಪ್ರಾಣಿ ನೋಂದಣಿ",
-            "animal_registry_body": "ಪ್ರಾಣಿಗಳು, ಮಾಲೀಕರು, ಲಸಿಕೆ ಮತ್ತು ಚಿಕಿತ್ಸೆಯ ಇತಿಹಾಸವನ್ನು ನೋಂದಾಯಿಸಿ.",
-            "manage_animals": "ಪ್ರಾಣಿಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
-            "vaccination": "ಲಸಿಕೆ",
-            "vaccination_body": "ಲಸಿಕೆಗಳನ್ನು ದಾಖಲಿಸಿ ಮತ್ತು ಮುಂಬರುವ ದಿನಾಂಕಗಳನ್ನು ಗಮನಿಸಿ.",
-            "vaccination_records": "ಲಸಿಕೆ ದಾಖಲೆಗಳು",
-            "case_records": "ಕೇಸ್ ದಾಖಲೆಗಳು",
-            "case_records_body": "ಹಿಂದೆ ವರದಿ ಮಾಡಿದ ಜಾನುವಾರು ರೋಗ ಪ್ರಕರಣಗಳು ಮತ್ತು ಅಪಾಯ ಮೌಲ್ಯಮಾಪನಗಳನ್ನು ನೋಡಿ.",
-            "view_records": "ದಾಖಲೆಗಳನ್ನು ನೋಡಿ",
-            "health_alerts": "ಆರೋಗ್ಯ ಎಚ್ಚರಿಕೆಗಳು",
-            "health_alerts_body": "ನಿಮ್ಮ ಪ್ರದೇಶದ ಪ್ರಮುಖ ಜಾನುವಾರು ಆರೋಗ್ಯ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
-            "view_alerts": "ಎಚ್ಚರಿಕೆಗಳನ್ನು ನೋಡಿ",
-            "footer_description": "ಜಾನುವಾರು ಆರೋಗ್ಯದ ಮುಂಚಿತ ಎಚ್ಚರಿಕೆ ಮತ್ತು ಪಶುವೈದ್ಯಕೀಯ ನಿರ್ಧಾರ ಸಹಾಯ"
-        }
 
+            "village_outbreak_risk":
+                "ಗ್ರಾಮದ ರೋಗದ ಅಪಾಯ",
+
+            "low": "ಕಡಿಮೆ",
+
+            "no_unusual_clusters":
+                "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಅಸಾಮಾನ್ಯ ರೋಗ ಗುಂಪುಗಳಿಲ್ಲ",
+
+            "reports_this_week":
+                "ಈ ವಾರದ ವರದಿಗಳು",
+
+            "vaccination_due":
+                "ಲಸಿಕೆ ಬಾಕಿ",
+
+            "active_advisories":
+                "ಸಕ್ರಿಯ ಸಲಹೆಗಳು",
+
+            "nearest_facility":
+                "ಹತ್ತಿರದ ಸೌಲಭ್ಯ",
+
+            "distance_unavailable":
+                "ದೂರ ಲಭ್ಯವಿಲ್ಲ",
+
+            "view_on_map":
+                "ನಕ್ಷೆಯಲ್ಲಿ ನೋಡಿ",
+
+            "report_heading":
+                "ಜಾನುವಾರು ಆರೋಗ್ಯ ಸಮಸ್ಯೆಯನ್ನು ವರದಿ ಮಾಡಿ",
+
+            "report_body":
+                "ಫೋಟೋ, ಧ್ವನಿ, ಸ್ಥಳ ಮತ್ತು ಪ್ರಾಣಿಯ ಮಾಹಿತಿಯೊಂದಿಗೆ ಲಕ್ಷಣಗಳನ್ನು ವರದಿ ಮಾಡಿ.",
+
+            "take_picture":
+                "ಚಿತ್ರ ತೆಗೆದುಕೊಳ್ಳಿ",
+
+            "ai_risk_screening":
+                "AI ಅಪಾಯ ಪರಿಶೀಲನೆ",
+
+            "get_vet_advice":
+                "ಪಶುವೈದ್ಯರ ಸಲಹೆ ಪಡೆಯಿರಿ",
+
+            "start_report":
+                "ವರದಿ ಪ್ರಾರಂಭಿಸಿ",
+
+            "recent_advisories":
+                "ಇತ್ತೀಚಿನ ಸಲಹೆಗಳು",
+
+            "recent":
+                "ಇತ್ತೀಚೆಗೆ",
+
+            "livestock_health_reminder":
+                "ಜಾನುವಾರು ಆರೋಗ್ಯ ಜ್ಞಾಪನೆ",
+
+            "health_reminder_body":
+                "ಲಸಿಕೆ ದಾಖಲೆಗಳನ್ನು ನವೀಕರಿಸಿ ಮತ್ತು ಅಸಾಮಾನ್ಯ ಲಕ್ಷಣಗಳನ್ನು ತ್ವರಿತವಾಗಿ ವರದಿ ಮಾಡಿ.",
+
+            "today":
+                "ಇಂದು",
+
+            "quick_actions":
+                "ತ್ವರಿತ ಕಾರ್ಯಗಳು",
+
+            "animal_registry":
+                "ಪ್ರಾಣಿ ನೋಂದಣಿ",
+
+            "animal_registry_body":
+                "ಪ್ರಾಣಿಗಳು, ಮಾಲೀಕರು, ಲಸಿಕೆ ಮತ್ತು ಚಿಕಿತ್ಸೆಯ ಇತಿಹಾಸವನ್ನು ನೋಂದಾಯಿಸಿ.",
+
+            "manage_animals":
+                "ಪ್ರಾಣಿಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+
+            "vaccination":
+                "ಲಸಿಕೆ",
+
+            "vaccination_body":
+                "ಲಸಿಕೆಗಳನ್ನು ದಾಖಲಿಸಿ ಮತ್ತು ಮುಂಬರುವ ದಿನಾಂಕಗಳನ್ನು ಗಮನಿಸಿ.",
+
+            "vaccination_records":
+                "ಲಸಿಕೆ ದಾಖಲೆಗಳು",
+
+            "case_records":
+                "ಕೇಸ್ ದಾಖಲೆಗಳು",
+
+            "case_records_body":
+                "ಹಿಂದೆ ವರದಿ ಮಾಡಿದ ಜಾನುವಾರು ರೋಗ ಪ್ರಕರಣಗಳು ಮತ್ತು ಅಪಾಯ ಮೌಲ್ಯಮಾಪನಗಳನ್ನು ನೋಡಿ.",
+
+            "view_records":
+                "ದಾಖಲೆಗಳನ್ನು ನೋಡಿ",
+
+            "health_alerts":
+                "ಆರೋಗ್ಯ ಎಚ್ಚರಿಕೆಗಳು",
+
+            "health_alerts_body":
+                "ನಿಮ್ಮ ಪ್ರದೇಶದ ಪ್ರಮುಖ ಜಾನುವಾರು ಆರೋಗ್ಯ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+
+            "view_alerts":
+                "ಎಚ್ಚರಿಕೆಗಳನ್ನು ನೋಡಿ",
+
+            "footer_description":
+                "ಜಾನುವಾರು ಆರೋಗ್ಯದ ಮುಂಚಿತ ಎಚ್ಚರಿಕೆ ಮತ್ತು ಪಶುವೈದ್ಯಕೀಯ ನಿರ್ಧಾರ ಸಹಾಯ"
+        }
     }
 
-    language_data = translations.get(
-        selected_language,
-        translations["English"]
-    )
+    # ========================================================
+    # TRANSLATION FUNCTION
+    # ========================================================
 
-    return language_data.get(
-        key,
-        key.replace("_", " ").title()
-    ) ),
+    def translate(key):
 
-            "report_body": (
-                "Report symptoms with a photo, voice, "
-                "location and animal details for early "
-                "AI risk screening."
-            ),
-
-            "start_report": (
-                "Start report"
-            )
-        }
-
-        return translations.get(
-            key,
-            key.replace(
-                "_",
-                " "
-            ).title()
+        language_data = translations.get(
+            selected_language,
+            translations["English"]
         )
+
+        return language_data.get(
+            key,
+            key.replace("_", " ").title()
+        )
+
+    # ========================================================
+    # HOME PAGE
+    # ========================================================
 
     return render_template(
 
         "index.html",
 
-        # ====================================================
+        # ----------------------------------------------------
         # SUPABASE
-        # ====================================================
+        # ----------------------------------------------------
 
         supabase_url=SUPABASE_URL,
 
@@ -830,9 +1113,9 @@ def application_home():
             SUPABASE_PUBLISHABLE_KEY
         ),
 
-        # ====================================================
-        # HOME PAGE DEFAULTS
-        # ====================================================
+        # ----------------------------------------------------
+        # HOME DEFAULT DATA
+        # ----------------------------------------------------
 
         farmer_name="Farmer",
 
@@ -866,9 +1149,9 @@ def application_home():
 
         advisories=[],
 
-        # ====================================================
+        # ----------------------------------------------------
         # TRANSLATION
-        # ====================================================
+        # ----------------------------------------------------
 
         t=translate,
 
@@ -883,7 +1166,6 @@ def application_home():
 # ============================================================
 # LANGUAGE SELECTION
 # ============================================================
-
 @app.route("/onboarding/language")
 def language_page():
 
